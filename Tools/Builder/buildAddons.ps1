@@ -1,6 +1,7 @@
 param (
     [string]$modFileName = "mod.cpp",
-    [string]$WorkshopID = ""
+    [string]$WorkshopID = "",
+    [string]$customOutputPath = "@Antistasi-CHAOS"
 )
 
 "Workshop ID: $WorkshopID`n`n"
@@ -23,12 +24,12 @@ if (Test-Path "..\build") {
     Remove-Item -Path "..\build" -Recurse -Force
 }
 New-Item -Path "..\build" -ItemType Directory -Force > $null
-New-Item -Path "..\build\A3A" -ItemType Directory -Force > $null
-New-Item -Path "..\build\A3A\addons" -ItemType Directory -Force > $null
-New-Item -Path "..\build\A3A\Keys" -ItemType Directory -Force > $null
+New-Item -Path "..\build\$customOutputPath" -ItemType Directory -Force > $null
+New-Item -Path "..\build\$customOutputPath\addons" -ItemType Directory -Force > $null
+New-Item -Path "..\build\$customOutputPath\Keys" -ItemType Directory -Force > $null
 
 $addonLocation = "." # We are here already
-$addonOutLocation = "$PSScriptRoot\..\..\build\A3A"
+$addonOutLocation = "$PSScriptRoot\..\..\build\$customOutputPath"
 $addonsOutLocation = "$addonOutLocation\addons"
 
 "`nBuild addons..."
