@@ -3,10 +3,8 @@
 private _categoryOverrideTable = [
 //Bespoke, a3a
 ["a3a_UK3CB_CZ550_8mm", ["SniperRifles","Weapons"]], //UK3CB_CZ550 in 8mm
-// add after (first entry):
-// WP3 BAR Fortify Tool: force to CargoMisc (Unknown+Items) so it is not treated as a Toolkit.
-// Uncomment once the class name is known (run WP0 discovery in-game).
-// ["BAR_FortifyTool", ["Unknown","Items"]],    // TODO WP0: Replace class name
+// WP3: ACE_Fortify (BAR Fortify Tool) — CargoMisc tab; prevents AI treating it as a toolkit
+["ACE_Fortify", ["Unknown","Items"]],
 
 //Vanilla
 ["launch_NLAW_F", ["MissileLaunchers","Weapons","AT"]],

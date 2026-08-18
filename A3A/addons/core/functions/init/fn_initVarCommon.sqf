@@ -134,10 +134,6 @@ A3A_hasIFA = false;			// this one is everywhere, just mark it false and remove l
 A3A_hasZen = (isClass (configFile >> "CfgPatches" >> "zen_common"));
 
 // BuildAndRessources (BAR). Hard-requires ACE; gate on both.
-// TODO WP0: Verify the CfgPatches class name in-game:
-//   { diag_log format ["PATCH: %1", configName _x] } forEach
-//       (("true" configClasses (configFile >> "CfgPatches")) select
-//           { (configName _x) regexMatch "(?i).*(bar|build|ressource).*" });
 A3A_hasBAR = A3A_hasACE && isClass (configFile >> "CfgPatches" >> "BuildAndRessources");
 if (A3A_hasBAR) then { Info("BuildAndRessources detected.") };
 

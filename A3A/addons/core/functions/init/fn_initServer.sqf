@@ -199,14 +199,11 @@ if (_startType != "load") then {
     Info_1("Creating new campaign with ID %1", _newID);
 };
 
-// WP3: BAR Fortify Tool convergent unlock — applies to new campaigns AND loaded saves.
-// TODO WP0: Once the class name is known, uncomment and replace 'BAR_FortifyTool'.
-//           Run in-game: { diag_log format ["ITEM: %1 | %2", configName _x, getText (_x >> "displayName")] } forEach
-//               ("(getText (_x >> 'displayName')) regexMatch '(?i).*fortif.*'" configClasses (configFile >> "CfgWeapons"));
-// if (A3A_hasBAR) then {
-//     private _barTool = "BAR_FortifyTool";   // TODO WP0: Replace with actual class name
-//     if !(_barTool in unlockedItems) then { [_barTool] call A3A_fnc_unlockEquipment };
-// };
+// WP3: BAR Fortify Tool convergent unlock — runs on new campaigns AND loaded saves.
+if (A3A_hasBAR) then {
+    private _barTool = "ACE_Fortify";
+    if !(_barTool in unlockedItems) then { [_barTool] call A3A_fnc_unlockEquipment };
+};
 
 // ********************** Post-load init ****************************************************
 
