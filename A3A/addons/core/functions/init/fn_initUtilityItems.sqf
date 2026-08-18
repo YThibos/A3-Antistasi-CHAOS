@@ -35,7 +35,7 @@ private _items = [
     ["Land_WoodenCrate_01_F", 1500, "buildboxlarge", "", ["place", "move", "build"]]
 //    ["Land_WoodenCrate_01_stack_x5_F", 5000, "buildboxcolossal", "", ["place", "build", "hugebuild"]],
 //    ["Land_Cargo10_cyan_F", 10000, "buildboxenormous", "", ["place", "build", "hugebuild"]]
-    
+
 ];
 
 if (LootToCrateRadius == 0) then { _items deleteAt 0 };
@@ -45,6 +45,21 @@ if(A3A_hasACE) then {
     _items pushBack ["ACE_Wheel", 5, "", "", []];
     _items pushBack ["ACE_Track", 5, "", "", []];       // check names
 };
+
+// BAR (BuildAndRessources) resource crates and depot.
+// noclear is load-bearing: prevents cargo wipe that would empty BAR resource contents.
+if (A3A_hasBAR) then {
+    _items pushBack ["RessourceCrate_Concrete", 750, "barcrate_concrete", "", ["place","move","rotate","save","noclear"]];
+    _items pushBack ["RessourceCrate_Metal",    750, "barcrate_metal",    "", ["place","move","rotate","save","noclear"]];
+    _items pushBack ["RessourceCrate_Sand",     750, "barcrate_sand",     "", ["place","move","rotate","save","noclear"]];
+    _items pushBack ["RessourceCrate_Wood",     750, "barcrate_wood",     "", ["place","move","rotate","save","noclear"]];
+    _items pushBack ["RessourceDepot",         3000, "bardepot",          "", ["cmmdr","place","move","rotate","save","noclear"]];
+};
+
+// Construction Yard — gates the military (basetier) build catalogue.
+// hqonly: must be placed within 75 m of HQ, one per campaign.
+// no 'move' flag: a yard that can be carried defeats the point.
+_items pushBack ["Land_Shed_Big_F", 5000, "constructionyard", "", ["cmmdr","hqonly","place","rotate","save","noclear"]];
 
 // Apply item name localization
 {

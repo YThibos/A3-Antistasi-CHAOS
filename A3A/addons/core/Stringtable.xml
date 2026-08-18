@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project name="A3-Antistasi">
   <Package name="A3-Antistasi core">
     <Container name="A3A_actions">
@@ -16784,6 +16784,34 @@
       </Key>
       <Key ID="STR_A3A_mod_blacklist_textServer">
         <Original>Antistasi has detected a blacklisted mod on your server:&lt;br/&gt;&lt;br/&gt;%1&lt;br/&gt;&lt;br/&gt;It is highly recommended that you remove this mod; it may break the gamemode in unpredictable ways.&lt;br/&gt;&lt;br/&gt;Dev comment: %2</Original>
+      </Key>
+
+      <!-- WP2: BAR (BuildAndRessources) utility item names -->
+      <Key ID="STR_A3A_Utility_Items_Name_barcrate_concrete">
+        <Original>BAR Concrete Crate</Original>
+      </Key>
+      <Key ID="STR_A3A_Utility_Items_Name_barcrate_metal">
+        <Original>BAR Metal Crate</Original>
+      </Key>
+      <Key ID="STR_A3A_Utility_Items_Name_barcrate_sand">
+        <Original>BAR Sand Crate</Original>
+      </Key>
+      <Key ID="STR_A3A_Utility_Items_Name_barcrate_wood">
+        <Original>BAR Wood Crate</Original>
+      </Key>
+      <Key ID="STR_A3A_Utility_Items_Name_bardepot">
+        <Original>BAR Resource Depot</Original>
+      </Key>
+
+      <!-- WP4: Construction Yard and hqonly hints -->
+      <Key ID="STR_A3A_Utility_Items_Name_constructionyard">
+        <Original>Construction Yard</Original>
+      </Key>
+      <Key ID="STR_A3A_Utility_Items_HQ_Only">
+        <Original>This item must be placed within 75 m of the HQ.</Original>
+      </Key>
+      <Key ID="STR_A3A_Utility_Items_HQ_Duplicate">
+        <Original>Only one Construction Yard is allowed per campaign.</Original>
       </Key>
     </Container>
   </Package>
