@@ -48,18 +48,22 @@ if(A3A_hasACE) then {
 
 // BAR (BuildAndRessources) resource crates and depot.
 // noclear is load-bearing: prevents cargo wipe that would empty BAR resource contents.
+// No 'move'/'rotate': these are freight, not gear. They move by flatbed or by air only,
+// which BAR and Advanced Sling Loading already handle.
+// barsupply puts a "resupply nearby crates" action on the depot - BAR itself only ever
+// builds out of crates, so without it a depot is inert to the build menu.
 if (A3A_hasBAR) then {
-    _items pushBack ["RessourceCrate_Concrete", 750, "barcrate_concrete", "", ["place","move","rotate","save","noclear"]];
-    _items pushBack ["RessourceCrate_Metal",    750, "barcrate_metal",    "", ["place","move","rotate","save","noclear"]];
-    _items pushBack ["RessourceCrate_Sand",     750, "barcrate_sand",     "", ["place","move","rotate","save","noclear"]];
-    _items pushBack ["RessourceCrate_Wood",     750, "barcrate_wood",     "", ["place","move","rotate","save","noclear"]];
-    _items pushBack ["RessourceDepot",         3000, "bardepot",          "", ["cmmdr","place","move","rotate","save","noclear"]];
+    _items pushBack ["RessourceCrate_Concrete", 750, "barcrate_concrete", "", ["place","save","noclear"]];
+    _items pushBack ["RessourceCrate_Metal",    750, "barcrate_metal",    "", ["place","save","noclear"]];
+    _items pushBack ["RessourceCrate_Sand",     750, "barcrate_sand",     "", ["place","save","noclear"]];
+    _items pushBack ["RessourceCrate_Wood",     750, "barcrate_wood",     "", ["place","save","noclear"]];
+    _items pushBack ["RessourceDepot",         3000, "bardepot",          "", ["cmmdr","place","save","noclear","barsupply"]];
 };
 
 // Construction Yard — gates the military (basetier) build catalogue.
-// hqonly: must be placed within 75 m of HQ, one per campaign.
+// hqonly: must be placed inside the HQ build radius, one per campaign.
 // no 'move' flag: a yard that can be carried defeats the point.
-_items pushBack ["Land_Shed_Big_F", 5000, "constructionyard", "", ["cmmdr","hqonly","place","rotate","save","noclear"]];
+_items pushBack ["a3a_constructionYard", 5000, "constructionyard", "", ["cmmdr","hqonly","place","rotate","save","noclear"]];
 
 // Apply item name localization
 {

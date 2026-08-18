@@ -66,8 +66,7 @@ if ("build" in _flags) then {
     _object addAction [
         localize "STR_A3A_fn_UtilItem_initObjRem_addact_build",
         {
-            // WP5a: scale build radius with war tier (75 m @ WT1 → 210 m @ WT10)
-            private _radius = 75 + 15 * ((tierWar max 1) - 1);
+            private _radius = call A3A_fnc_hqBuildRadius;
             [_this#0, _radius, _this#0] spawn A3A_fnc_buildingPlacerStart
         },
         nil, 1.5, true, true, "",
@@ -118,3 +117,15 @@ if (typeOf _object == "Land_MedicalTent_01_MTP_closed_F") then {
 if ("hqonly" in _flags) then {
     _object setVariable ["A3A_isConstructionYard", true, true];
 };
+
+// BAR resource depot: add an action to resupply nearby crates from the depot's stock.
+// Runs on server so the resource transfer is authoritative.
+if ("barsupply" in _flags) then {
+    _object addAction [
+        localize "STR_A3A_Utility_Items_BAR_Resupply",
+        { [_this#3, _this#0] remoteExec ["A3A_fnc_barResupply", 2] },
+        _object, 1.5, true, true, "",
+        "(vehicle _this == _this)", 8
+    ];
+};
+

@@ -57,3 +57,4 @@ private _simplifiedPath = [];
     };
 } forEach _path;
 _simplifiedPath;
+*/

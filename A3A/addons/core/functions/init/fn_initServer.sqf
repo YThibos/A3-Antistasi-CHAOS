@@ -1,4 +1,4 @@
-﻿#include "..\..\script_component.hpp"
+#include "..\..\script_component.hpp"
 FIX_LINE_NUMBERS()
 
 //Define and publish logLevel first thing, so we can start logging appropriately.

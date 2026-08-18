@@ -6,7 +6,7 @@ if (isServer) then {
 	petros allowdamage false;
 
 	// Set all main markers to occupant control by default, overridden by mrkSDK & mrkCSAT
-	{ 
+	{
 		if (sidesX getVariable _x != Occupants) then { sidesX setVariable [_x, Occupants, true] };
 	} forEach (airportsX + resourcesX + factories + outposts + seaports);
 
@@ -203,6 +203,14 @@ if (isServer) then {
 			if (isNil {_playerData get "moneyX"}) then { Error_1("Saved player %1 has no money var", _uid); continue };
 			A3A_playerSaveData set [_uid, _playerData];
 		} forEach _savedPlayers;
+	};
+
+	// BAR (Build And Resources) - restore placed structures and crate resource amounts.
+	if (A3A_hasBAR) then {
+		["A3A_barSaveData"] call A3A_fnc_getStatVariable;
+		if (!isNil "A3A_barSaveData") then {
+			[A3A_barSaveData] call A3A_fnc_barLoad;
+		};
 	};
 
     Info("Persistent Load Completed.");

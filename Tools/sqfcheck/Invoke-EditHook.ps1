@@ -41,8 +41,16 @@ if ($payload.PSObject.Properties.Name -contains 'tool_input' -and
     }
 }
 
+# tests/*.sqf are deliberately broken fixtures, so checking one would block an agent that is
+# legitimately maintaining the self-test suite. Test-Checker.ps1 owns them.
+$fixturePrefix = (Join-Path $PSScriptRoot 'tests') + [IO.Path]::DirectorySeparatorChar
+
 $sqf = @($paths | Where-Object { $_ -and $_.EndsWith('.sqf', [System.StringComparison]::OrdinalIgnoreCase) } |
-    Where-Object { Test-Path -LiteralPath $_ } | Select-Object -Unique)
+    Where-Object { Test-Path -LiteralPath $_ } |
+    Where-Object {
+        -not (Resolve-Path -LiteralPath $_).Path.StartsWith(
+            $fixturePrefix, [System.StringComparison]::OrdinalIgnoreCase)
+    } | Select-Object -Unique)
 if ($sqf.Count -eq 0) { exit 0 }
 
 $checker = Join-Path $PSScriptRoot 'Check-Sqf.ps1'

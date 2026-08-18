@@ -52,8 +52,8 @@ execution model, multiplayer, performance, pitfalls, debugging) — read the one
 A3A/addons/core        main game logic, macros (Includes/), CfgFunctions.hpp, Params.hpp
 A3A/addons/events      declared event bus (Events.hpp + fn_triggerEvent/addEventListener)
 A3A/addons/garage gear gui logistics maps tasks patcom jeroen_arsenal config_fixes
-Tools/sqfcheck         dependency-free SQF syntax checker (PowerShell) + tests + baseline
-Tools/sqfvalidator     vendored Python sqflint (deeper analysis; optional, needs Python)
+Tools/sqfcheck         SQF syntax checker: PowerShell + Python engines, same rules, + tests
+Tools/sqfvalidator     vendored Python sqflint (deeper analysis; run with `py`, noisy on macros)
 Tools/Builder          mod build scripts;  build_dev.ps1 / build_stable.ps1 at the root
 How to build.md        build setup
 WORK.md                this fork's open bugs and improvement notes
@@ -86,6 +86,16 @@ Append durable, non-obvious findings about Arma 3 scripting or this codebase her
 matching skill, which is usually the better home). Keep it factual and dated when it refers to a
 specific version.
 
-- 2026-08-18: Python is not installed on the captain's workstation, so `Tools/sqfcheck`
-  (PowerShell, zero dependencies) is the checker of record; `Tools/sqfvalidator` (Python) remains
-  for CI and deeper analysis.
+- 2026-08-18: `Tools/sqfcheck` is the checker of record. It ships two engines with an identical
+  rule set — `Check-Sqf.ps1` and the much faster `sqfcheck.py` — and delegates to the Python one
+  automatically when an interpreter is on `PATH`, so hard rule 1's command is unchanged either way
+  (a whole-repo scan drops from minutes to ~6 s). `Test-Checker.ps1` runs every fixture through
+  both engines and fails if they disagree.
+- 2026-08-18: Python 3.14 **is** installed on the captain's workstation, but only as the `py`
+  launcher — `python` and `python3` are not on `PATH` in Git Bash. Anything invoking Python
+  directly must use `py`, or probe all three names the way the checker does. (Supersedes an
+  earlier note in this file that said Python was unavailable.)
+- 2026-08-18: `Tools/sqfvalidator` (vendored LordGolias `sqflint`) therefore runs too, via
+  `py Tools/sqfvalidator/sqflint.py <file>` or `-d <dir>`. It does deeper type and scope analysis,
+  but it does not expand this codebase's macros, so every `Info_1(…)`/`Debug_2(…)` call yields a
+  spurious "can't interpret statement" error. A second opinion, never a gate.

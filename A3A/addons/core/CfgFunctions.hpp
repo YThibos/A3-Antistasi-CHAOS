@@ -159,6 +159,7 @@ class CfgFunctions
             class getVehiclesGroundTransport {};
             class hasWeapons {};
             class hideCorpses {};
+            class hqBuildRadius {};
             class HQGarbageClean {};
             class vehicleBoxRestore {};
             class initPetros {};
@@ -660,6 +661,8 @@ class CfgFunctions
 
         class Save {
             file = QPATHTOFOLDER(functions\Save);
+            class barLoad {};
+            class barSave {};
             class collectSaveData {};
             class convert310Vehicles {};
             class convertSavedGarrisons {};
@@ -877,6 +880,7 @@ class CfgFunctions
         class UtilityItems {
             file = QPATHTOFOLDER(functions\UtilityItems);
             class attachedObjects {};
+            class barResupply {};
             class buyItem {};
             class carryItem {};
             class dropItem {};

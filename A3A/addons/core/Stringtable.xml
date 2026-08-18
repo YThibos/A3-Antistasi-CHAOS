@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project name="A3-Antistasi">
   <Package name="A3-Antistasi core">
     <Container name="A3A_actions">
@@ -16808,10 +16808,21 @@
         <Original>Construction Yard</Original>
       </Key>
       <Key ID="STR_A3A_Utility_Items_HQ_Only">
-        <Original>This item must be placed within 75 m of the HQ.</Original>
+        <Original>This item must be placed within %1 m of the HQ.</Original>
       </Key>
       <Key ID="STR_A3A_Utility_Items_HQ_Duplicate">
         <Original>Only one Construction Yard is allowed per campaign.</Original>
+      </Key>
+
+      <!-- BAR resource depot resupply -->
+      <Key ID="STR_A3A_Utility_Items_BAR_Resupply">
+        <Original>Resupply nearby crates from depot</Original>
+      </Key>
+      <Key ID="STR_A3A_Utility_Items_BAR_Resupply_Sent">
+        <Original>Resupplying %1 nearby crate(s) from the depot.</Original>
+      </Key>
+      <Key ID="STR_A3A_Utility_Items_BAR_Resupply_None">
+        <Original>No resource crates within %1 m of this depot.</Original>
       </Key>
     </Container>
   </Package>

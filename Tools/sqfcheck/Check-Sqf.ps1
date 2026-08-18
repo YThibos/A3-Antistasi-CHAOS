@@ -1,11 +1,21 @@
 <#
 .SYNOPSIS
-    Static syntax checker for Arma 3 SQF files. No external dependencies (pure PowerShell 5.1+/7+).
+    Static syntax checker for Arma 3 SQF files. Runs with no dependencies at all (pure
+    PowerShell 5.1+/7+), and transparently hands off to the faster Python engine when one is
+    available.
 
 .DESCRIPTION
     Lexes SQF (comments, single/double quoted strings, preprocessor directives, macros)
     and reports structural syntax problems that would otherwise only surface as a
     silent script failure or a cryptic .rpt line at runtime.
+
+    Two engines apply identical rules: this script, and sqfcheck.py beside it. When a Python
+    interpreter is on PATH the work is delegated to sqfcheck.py, which scans the whole repository
+    in seconds rather than minutes; Test-Checker.ps1 runs every fixture through both and fails if
+    they ever disagree. Use -Engine to pin one explicitly.
+
+    Fixtures under tests/ are deliberately broken and are skipped by directory and git-based
+    discovery; naming one explicitly still checks it, which is how the self-test drives them.
 
     Findings are either ERROR (certain: the file cannot parse) or WARN (very likely wrong,
     but SQF's context-free-ish grammar leaves a little room for a false positive).
@@ -22,13 +32,18 @@
       W002  ',' used at code-block scope inside '{ }'
       W003  Single '=' inside an if/while condition (assignment, not comparison)
       W004  Assignment to an undeclared local variable (-Strict only)
+      E008  File starts with a UTF-8 BOM (hides a leading #include from the preprocessor)
 
 .PARAMETER Path
     Files or directories to check. Directories are searched recursively for *.sqf.
     Defaults to the repository root.
 
 .PARAMETER Changed
-    Check only files changed against the merge base with the given ref (default: HEAD).
+    Check only files changed against HEAD (plus untracked files). Combine with -Against to compare
+    against a different ref.
+
+.PARAMETER Against
+    Ref for -Changed to diff against. Ignored unless -Changed is given. Defaults to HEAD.
 
 .PARAMETER Staged
     Check only files staged in git.
@@ -50,7 +65,11 @@
     Print only findings and the summary line.
 
 .PARAMETER Json
-    Emit findings as JSON on stdout instead of text.
+    Emit findings as JSON on stdout instead of text. Always valid JSON, '[]' when nothing matched.
+
+.PARAMETER Engine
+    Which implementation to run: 'auto' (default, prefers Python when present), 'python' (fail if
+    no interpreter is found), or 'powershell' (never delegate).
 
 .EXAMPLE
     pwsh -File Tools/sqfcheck/Check-Sqf.ps1 -Changed
@@ -65,20 +84,65 @@
 param(
     [Parameter(Position = 0, ValueFromRemainingArguments = $true)]
     [string[]] $Path,
-    [string] $Changed,
+    # A switch, not a string: PowerShell has no optional-value parameters, and bare '-Changed' is
+    # the command AGENTS.md mandates. Use -Against to diff against something other than HEAD.
+    [switch] $Changed,
+    [string] $Against,
     [switch] $Staged,
     [string] $Baseline,
     [switch] $UpdateBaseline,
     [switch] $Strict,
     [switch] $WarningsAsErrors,
     [switch] $Quiet,
-    [switch] $Json
+    [switch] $Json,
+    [ValidateSet('auto', 'python', 'powershell')]
+    [string] $Engine = 'auto'
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 $script:RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
+
+# ------------------------------------------------------------ engine ------
+# The Python engine applies identical rules (Test-Checker.ps1 enforces parity)
+# and scans the whole repository ~35x faster, so prefer it when available.
+function Get-PythonCommand {
+    foreach ($candidate in 'py', 'python3', 'python') {
+        $cmd = Get-Command $candidate -ErrorAction SilentlyContinue
+        if (-not $cmd) { continue }
+        try {
+            $null = & $candidate -c 'import sys' 2>&1
+            if ($LASTEXITCODE -eq 0) { return $candidate }
+        } catch { }
+    }
+    return $null
+}
+
+if ($Engine -ne 'powershell') {
+    $python = Get-PythonCommand
+    if (-not $python -and $Engine -eq 'python') {
+        Write-Error 'sqfcheck: -Engine python requested but no working Python interpreter was found.'
+        exit 2
+    }
+    if ($python) {
+        $pyArgs = @((Join-Path $PSScriptRoot 'sqfcheck.py'))
+        if ($Path) { $pyArgs += $Path }
+        if ($Changed) {
+            $pyArgs += if ([string]::IsNullOrWhiteSpace($Against)) { '--changed' } else { @('--changed', $Against) }
+        }
+        if ($Staged) { $pyArgs += '--staged' }
+        if ($Baseline) { $pyArgs += @('--baseline', $Baseline) }
+        if ($UpdateBaseline) { $pyArgs += '--update-baseline' }
+        if ($Strict) { $pyArgs += '--strict' }
+        if ($WarningsAsErrors) { $pyArgs += '--warnings-as-errors' }
+        if ($Quiet) { $pyArgs += '--quiet' }
+        if ($Json) { $pyArgs += '--json' }
+
+        & $python @pyArgs
+        exit $LASTEXITCODE
+    }
+}
 
 # ---------------------------------------------------------------- lexer ----
 
@@ -168,7 +232,12 @@ function Test-SqfFile([string] $FilePath, [bool] $StrictMode) {
     }
     $rel = $rel -replace '\\', '/'
 
-    $text = [System.IO.File]::ReadAllText($FilePath)
+    $text = [System.IO.File]::ReadAllText($FilePath)   # strips a BOM, so detect it separately
+    $bomBytes = [byte[]]::new(3)
+    $fs = [System.IO.File]::OpenRead($FilePath)
+    try { $null = $fs.Read($bomBytes, 0, 3) } finally { $fs.Dispose() }
+    $hasBom = ($bomBytes[0] -eq 0xEF -and $bomBytes[1] -eq 0xBB -and $bomBytes[2] -eq 0xBF)
+
     $starts = Get-LineStarts $text
     $lines = @($text -split "\r?\n")
     $findings = [System.Collections.Generic.List[object]]::new()
@@ -178,6 +247,10 @@ function Test-SqfFile([string] $FilePath, [bool] $StrictMode) {
         $src = ''
         if ($pos.Line -le $lines.Count) { $src = $lines[$pos.Line - 1].Trim() }
         $findings.Add((New-Finding $rel $pos.Line $pos.Col $Level $Code $Message $src)) | Out-Null
+    }
+
+    if ($hasBom) {
+        Add-Finding 0 'ERROR' 'E008' "File starts with a UTF-8 BOM - Arma's preprocessor may not see a leading #include"
     }
 
     # --- tokenize, and detect anything the lexer could not account for -------
@@ -399,22 +472,35 @@ function Test-SqfFile([string] $FilePath, [bool] $StrictMode) {
 
 # --------------------------------------------------------------- driver ----
 
+# tests/*.sqf are deliberately broken fixtures for the self-test, so they must never turn up in a
+# discovered file set - otherwise every push touching Tools/sqfcheck fails CI. Naming one
+# explicitly still checks it, which is exactly what Test-Checker.ps1 relies on.
+$script:FixtureDir = (Join-Path $PSScriptRoot 'tests')
+
+function Test-IsFixture([string] $FullPath) {
+    return $FullPath.StartsWith(($script:FixtureDir + [IO.Path]::DirectorySeparatorChar),
+        [System.StringComparison]::OrdinalIgnoreCase)
+}
+
 function Resolve-TargetFiles {
     $files = [System.Collections.Generic.List[string]]::new()
 
-    if ($Staged -or $PSBoundParameters.ContainsKey('Changed')) {
+    if ($Staged -or $Changed) {
         Push-Location $script:RepoRoot
         try {
             if ($Staged) {
                 $out = git diff --name-only --diff-filter=ACMR --cached
             } else {
-                $ref = if ([string]::IsNullOrWhiteSpace($Changed)) { 'HEAD' } else { $Changed }
+                $ref = if ([string]::IsNullOrWhiteSpace($Against)) { 'HEAD' } else { $Against }
                 $out = @(git diff --name-only --diff-filter=ACMR $ref) + @(git ls-files --others --exclude-standard)
             }
             foreach ($f in $out) {
                 if ($f -and $f.EndsWith('.sqf', [System.StringComparison]::OrdinalIgnoreCase)) {
                     $full = Join-Path $script:RepoRoot $f
-                    if (Test-Path -LiteralPath $full) { $files.Add((Resolve-Path -LiteralPath $full).Path) | Out-Null }
+                    if (Test-Path -LiteralPath $full) {
+                        $resolved = (Resolve-Path -LiteralPath $full).Path
+                        if (-not (Test-IsFixture $resolved)) { $files.Add($resolved) | Out-Null }
+                    }
                 }
             }
         } finally { Pop-Location }
@@ -431,6 +517,7 @@ function Resolve-TargetFiles {
         if ($item.PSIsContainer) {
             Get-ChildItem -LiteralPath $p -Recurse -Filter *.sqf -File |
                 Where-Object { $_.FullName -notmatch '\\(\.git|build|\.idea)\\' } |
+                Where-Object { -not (Test-IsFixture $_.FullName) } |
                 ForEach-Object { $files.Add($_.FullName) | Out-Null }
         } elseif ($item.Extension -ieq '.sqf') {
             $files.Add($item.FullName) | Out-Null
@@ -450,7 +537,9 @@ function Get-FindingKey($f) {
 
 $targetFiles = @(Resolve-TargetFiles)
 if ($targetFiles.Count -eq 0) {
-    if (-not $Quiet) { Write-Host 'sqfcheck: no .sqf files to check.' }
+    # -Json must always emit valid JSON, so machine consumers do not have to parse prose.
+    if ($Json) { Write-Output '[]' }
+    elseif (-not $Quiet) { Write-Host 'sqfcheck: no .sqf files to check.' }
     exit 0
 }
 

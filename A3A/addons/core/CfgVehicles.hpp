@@ -156,4 +156,16 @@ class CfgVehicles
         magazines[] = {};
         weapons[] = {"Throw","Put"};
     };
+
+    // Construction Yard - unlocks the military (basetier) build catalogue at HQ.
+    // Deliberately its own class rather than a reused vanilla building: the yard is
+    // identified by class alone, so the "one per campaign" test cannot be tripped by
+    // scenery. Reusing Land_Shed_Big_F did exactly that, because that class occurs
+    // naturally on most terrains.
+    class Land_Cargo_HQ_V1_F;
+    class a3a_constructionYard : Land_Cargo_HQ_V1_F {
+        scope = 2;
+        scopeCurator = 2;
+        displayName = $STR_A3A_Utility_Items_Name_constructionyard;
+    };
 };

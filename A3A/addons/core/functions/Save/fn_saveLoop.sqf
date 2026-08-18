@@ -152,7 +152,7 @@ private _saveGarrison = +A3A_garrison;
 		private _cat = if (_x#1 isEqualType 0) then {_places#(_x#1)#0} else {"free"};
 		//_cat = _catTranslate getOrDefault [_cat, _cat];
 		private _catData = _vehicles2 getOrDefault [_cat, [], true];
-		_catData pushBack (if (isNil {_x#2}) then {_x select [0, 2]} else {_x select [0, 3]}); 
+		_catData pushBack (if (isNil {_x#2}) then {_x select [0, 2]} else {_x select [0, 3]});
 	} forEach (_y deleteAt "vehicles");
 
 	// Convert vehicles to older storage format
@@ -313,6 +313,12 @@ _fuelAmountleftArray = [];
 
 //Saving the state of the testing timer
 ["testingTimerIsActive", testingTimerIsActive] call A3A_fnc_setStatVariable;
+
+// BAR (Build And Resources) persistence - placed structures and crate resource levels.
+if (A3A_hasBAR) then {
+    private _barData = call A3A_fnc_barSave;
+    ["A3A_barSaveData", _barData] call A3A_fnc_setStatVariable;
+};
 
 // Write the JSON blob to the save header & complete
 call A3A_fnc_finalizeSave;

@@ -27,18 +27,27 @@ private _fnc_placed = {
     params ["_item", "_unit", "_price", "_flags"];
     if (isNull _item) exitWith {};          // placement cancelled
 
-    // WP4: hqonly flag — must be within 75 m of HQ, one item of this type per campaign
+    // Re-localized here on purpose. Manual placement runs this block from the placer's
+    // own scope, long after buyItem's has gone, so buyItem's _titleStr is not visible.
+    private _titleStr = localize "STR_A3A_Utility_Items_Purchase_Title";
+
+    // "hqonly": must sit inside the HQ build area.
+    // The one-per-campaign duplicate check is done earlier (before the garage ghost is
+    // created) so that allMissionObjects only sees genuinely-placed yards here.
+    private _hqRefusal = "";
     if ("hqonly" in _flags) then {
-        private _hqPos = getMarkerPos "Synd_HQ";
-        if (_item distance2D _hqPos > 75) exitWith {
-            [_titleStr, localize "STR_A3A_Utility_Items_HQ_Only"] call A3A_fnc_customHint;
-            deleteVehicle _item;
+        _hqRefusal = call {
+            private _radius = call A3A_fnc_hqBuildRadius;
+            if (_item distance2D (getMarkerPos "Synd_HQ") > _radius) exitWith {
+                format [localize "STR_A3A_Utility_Items_HQ_Only", round _radius]
+            };
+            ""
         };
-        private _existing = (_hqPos nearObjects [typeof _item, 500]) select {_x != _item};
-        if (_existing isNotEqualTo []) exitWith {
-            [_titleStr, localize "STR_A3A_Utility_Items_HQ_Duplicate"] call A3A_fnc_customHint;
-            deleteVehicle _item;
-        };
+    };
+
+    if (_hqRefusal isNotEqualTo "") exitWith {
+        [_titleStr, _hqRefusal] call A3A_fnc_customHint;
+        deleteVehicle _item;
     };
 
     if ((_unit == theBoss && server getVariable ["resourcesFIA", 0] < _price) || (_unit != theBoss && _unit getVariable ["moneyX", 0] < _price)) exitWith {
@@ -70,6 +79,17 @@ if (("cmmdr" in _flags) && player isNotEqualTo theBoss) exitwith {
 
 if ((_unit == theBoss && server getVariable ["resourcesFIA", 0] < _price) || (_unit != theBoss && _unit getVariable ["moneyX", 0] < _price)) exitWith {
     [_titleStr, localize "STR_A3A_Utility_Items_Insufficient_Funds"] call A3A_fnc_customHint;
+};
+
+// hqonly items: check for an existing instance NOW — before the garage placer
+// creates its ghost (createVehicleLocal). The ghost appears in allMissionObjects
+// since Arma 1.94, so checking inside _fnc_placed (after the ghost exists) is
+// unreliable even with an alive filter. Checking here means allMissionObjects
+// only ever sees genuinely-placed yards.
+if ("hqonly" in _flags) then {
+    if ((allMissionObjects _itemClass) findIf { alive _x } != -1) exitWith {
+        [_titleStr, localize "STR_A3A_Utility_Items_HQ_Duplicate"] call A3A_fnc_customHint;
+    };
 };
 
 // Simple random placement
