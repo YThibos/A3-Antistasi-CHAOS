@@ -34,6 +34,11 @@ if(A3A_hasACE) then {
 
 ["attributesVehicles", []] call _fnc_saveToTemplate;
 
+// add here:
+// WP6: default war-tier gate for static weapons. Empty = no restrictions.
+// Override in faction templates with e.g. createHashMapFromArray [["B_AAA_System_01_F", 7]]
+["staticMinTier", createHashMap] call _fnc_saveToTemplate;
+
 //FIA Rebells as Example
 ["faces", ["GreekHead_A3_02","GreekHead_A3_03","GreekHead_A3_04","GreekHead_A3_05","GreekHead_A3_06","GreekHead_A3_07","GreekHead_A3_08","GreekHead_A3_09","Ioannou","Mavros"]] call _fnc_saveToTemplate;
 ["voices", ["Male01GRE", "Male02GRE", "Male03GRE", "Male04GRE", "Male05GRE", "Male06GRE"]] call _fnc_saveToTemplate;

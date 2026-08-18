@@ -41,7 +41,7 @@ switch (_mode) do
         Debug_1("MainDialog switching tab to %1.", _selectedTab);
 
         private _selectedTabIDC = -1;
-        switch (_selectedTab) do 
+        switch (_selectedTab) do
         {
             case ("civilian"):
             {_selectedTabIDC = A3A_IDC_BUYCIVVEHICLEMAIN;};
@@ -81,14 +81,14 @@ switch (_mode) do
 
     case ("onLoad"):
     {
-        private _civilianVehicles = 
+        private _civilianVehicles =
         (A3A_faction_reb get 'vehiclesCivCar') +
         (A3A_faction_reb get 'vehiclesCivTruck') +
         (A3A_faction_reb get 'vehiclesCivHeli') +
         (A3A_faction_reb get 'vehiclesCivPlane') +
         (A3A_faction_reb get 'vehiclesCivBoat');
 
-        private _militaryVehicles = 
+        private _militaryVehicles =
         (A3A_faction_reb get 'vehiclesBasic') +
         (A3A_faction_reb get 'vehiclesLightUnarmed') +
         (A3A_faction_reb get 'vehiclesTruck') +
@@ -99,11 +99,15 @@ switch (_mode) do
         (A3A_faction_reb get 'vehiclesBoat') +
         (A3A_faction_reb get 'vehiclesPlane');
 
-        private _statics = 
+        private _statics =
         (A3A_faction_reb get 'staticMGs') +
         (A3A_faction_reb get 'staticMortars') +
         (A3A_faction_reb get 'staticAA') +
         (A3A_faction_reb get 'staticAT');
+
+        // WP6: filter statics by war tier — hide entries below their minimum tier requirement
+        private _staticMinTier = A3A_faction_reb getOrDefault ["staticMinTier", createHashMap];
+        _statics = _statics select { tierWar >= (_staticMinTier getOrDefault [_x, 1]) };
 
         ["vehicles", [A3A_IDC_BUYCIVVEHICLEMAIN, A3A_IDC_CIVVEHICLESGROUP, _civilianVehicles]] call A3A_GUI_fnc_buyVehicleTabs;
         ["vehicles", [A3A_IDC_BUYREBVEHICLEMAIN, A3A_IDC_REBVEHICLESGROUP, _militaryVehicles]] call A3A_GUI_fnc_buyVehicleTabs;

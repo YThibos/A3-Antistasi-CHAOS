@@ -71,7 +71,16 @@ if ("ws" in A3A_enabledDLC) then {
 ["vehiclesAT", _vehiclesAT] call _fnc_saveToTemplate;
 
 ["vehiclesAA", _vehicleAA] call _fnc_saveToTemplate;
+
+// WP6: add Praetorian 1C as high-tier static AA. CRAM mod makes it intercept mortar/arty rounds.
+// Gated behind WT7 via staticMinTier below — not purchasable until late game.
+_staticAA pushBack "B_AAA_System_01_F";
 ["staticAA", _staticAA] call _fnc_saveToTemplate;
+
+// WP6: war-tier minimum requirements for this faction's statics
+["staticMinTier", createHashMapFromArray [
+    ["B_AAA_System_01_F", 7]    // Praetorian 1C (CRAM-capable) — WT7 capstone base defence
+]] call _fnc_saveToTemplate;
 
 #include "Vanilla_Reb_Vehicle_Attributes.sqf"
 
@@ -235,7 +244,7 @@ private _squadLeaderTemplate = {
 private _riflemanTemplate = {
     ["uniforms"] call _fnc_setUniform;
     [selectRandomWeighted [[], 1.25, "glasses", 1, "goggles", 0.75, "facemask", 1]] call _fnc_setFacewear;
-    
+
     ["items_medical_standard"] call _fnc_addItemSet;
     ["items_miscEssentials"] call _fnc_addItemSet;
 
