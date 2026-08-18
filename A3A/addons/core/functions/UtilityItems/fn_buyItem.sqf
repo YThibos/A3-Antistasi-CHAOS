@@ -27,6 +27,20 @@ private _fnc_placed = {
     params ["_item", "_unit", "_price", "_flags"];
     if (isNull _item) exitWith {};          // placement cancelled
 
+    // WP4: hqonly flag — must be within 75 m of HQ, one item of this type per campaign
+    if ("hqonly" in _flags) then {
+        private _hqPos = getMarkerPos "Synd_HQ";
+        if (_item distance2D _hqPos > 75) exitWith {
+            [_titleStr, localize "STR_A3A_Utility_Items_HQ_Only"] call A3A_fnc_customHint;
+            deleteVehicle _item;
+        };
+        private _existing = (_hqPos nearObjects [typeof _item, 500]) select {_x != _item};
+        if (_existing isNotEqualTo []) exitWith {
+            [_titleStr, localize "STR_A3A_Utility_Items_HQ_Duplicate"] call A3A_fnc_customHint;
+            deleteVehicle _item;
+        };
+    };
+
     if ((_unit == theBoss && server getVariable ["resourcesFIA", 0] < _price) || (_unit != theBoss && _unit getVariable ["moneyX", 0] < _price)) exitWith {
         [_titleStr, localize "STR_A3A_Utility_Items_Insufficient_Funds"] call A3A_fnc_customHint;
         deleteVehicle _item;

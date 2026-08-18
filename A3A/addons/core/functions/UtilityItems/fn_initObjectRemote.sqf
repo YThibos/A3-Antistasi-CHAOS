@@ -65,7 +65,11 @@ if ("loot" in _flags && lootToCrateRadius > 0) then {
 if ("build" in _flags) then {
     _object addAction [
         localize "STR_A3A_fn_UtilItem_initObjRem_addact_build",
-        { [_this#0, 75, _this#0] spawn A3A_fnc_buildingPlacerStart },
+        {
+            // WP5a: scale build radius with war tier (75 m @ WT1 → 210 m @ WT10)
+            private _radius = 75 + 15 * ((tierWar max 1) - 1);
+            [_this#0, _radius, _this#0] spawn A3A_fnc_buildingPlacerStart
+        },
         nil, 1.5, true, true, "",
         "(isNull attachedTo _originalTarget)", 4
     ];
@@ -73,7 +77,7 @@ if ("build" in _flags) then {
 
 // building placer box with huge crap
 if ("hugebuild" in _flags) then {
-    if(A3A_hasACE) then 
+    if(A3A_hasACE) then
     {
         [_object, 4] call ace_cargo_fnc_setSize;
     };
@@ -108,4 +112,9 @@ if (typeOf _object == "Land_MedicalTent_01_MTP_closed_F") then {
         nil, 1.5, true, true, "",
         "true", 10
     ];
+};
+
+// hqonly utility item (Construction Yard): mark for relocation tracking
+if ("hqonly" in _flags) then {
+    _object setVariable ["A3A_isConstructionYard", true, true];
 };

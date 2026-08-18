@@ -102,6 +102,19 @@ switch (_mode) do
 				_button ctrlEnable false;
 				_button ctrlSetTooltip localize "STR_antistasi_teamleader_placer_cannotBuildHelipad";
 			};
+			// WP4: basetier gate — requires Construction Yard at HQ AND player inside HQ build area
+			if (_ability isEqualTo "basetier") then {
+				private _hqPos = getMarkerPos "Synd_HQ";
+				private _hqRadius = 75 + 15 * ((tierWar max 1) - 1);   // matches WP5a build radius
+				private _playerAtHQ = (player distance2D _hqPos) <= _hqRadius;
+				private _yardExists = (nearestObjects [_hqPos, ["Land_Shed_Big_F"], _hqRadius]) findIf {
+					_x getVariable ["A3A_isConstructionYard", false]
+				} != -1;
+				if (!_playerAtHQ || !_yardExists) then {
+					_button ctrlEnable false;
+					_button ctrlSetTooltip localize "STR_A3A_basetier_no_yard";
+				};
+			};
 
 			_button ctrlAddEventHandler ["ButtonDown", {
 				params ["_control"];

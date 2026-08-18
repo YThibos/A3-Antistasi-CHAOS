@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project name="A3-Antistasi">
   <Package name="A3-Antistasi gui">
     <Container name="arsenal_limits_dialog">
@@ -133,6 +133,10 @@
         <Original>You can only build helipads at captured friendly markers or HQ.</Original>
         <Czech>Můžete stavět helipady jenom na zabráných přátelských značkách nebo HQ.</Czech>
         <Spanish>Solo puedes construir helipuertos en marcadores aliados capturados o en el cuartel general.</Spanish>
+      </Key>
+      <!-- WP4: military-tier build gate -->
+      <Key ID="STR_A3A_basetier_no_yard">
+        <Original>Military-tier structures require a Construction Yard at HQ. You must also be inside the HQ build area.</Original>
       </Key>
       <Key ID="STR_antistasi_teamleader_placer_e_key">
         <Original>E: Rotate counter-clockwise</Original>
