@@ -37,7 +37,16 @@ _building setVariable ["A3A_building", true, true];            // Used to identi
 // Add to garrison data if it's within one
 private _marker = [getPosATL _building] call A3A_fnc_getMarkerForPos;
 if (sidesX getVariable _marker == teamPlayer) then { [_marker, _building] call A3A_fnc_garrisonServer_addVehicle }
-    else { A3A_buildingsToSave pushBack _building };
+else {
+    // WP5b: If built within the HQ's current build radius, still attribute it to the HQ garrison
+    // so it registers for calcBuildingReveal and calcBuildingCosts regardless of marker size.
+    private _hqRadius = 75 + 15 * ((tierWar max 1) - 1);
+    if ((_building distance2D (getMarkerPos "Synd_HQ")) <= _hqRadius) then {
+        ["Synd_HQ", _building] call A3A_fnc_garrisonServer_addVehicle
+    } else {
+        A3A_buildingsToSave pushBack _building
+    };
+};
 
 // Allowing flagpole construction is probably not a good idea due to how markerChange handles flags atm
 if (_className isEqualTo (A3A_faction_reb get "flag")) then {

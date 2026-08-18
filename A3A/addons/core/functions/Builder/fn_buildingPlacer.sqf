@@ -38,8 +38,11 @@ A3A_cam cameraEffect ["Internal", "top"];
 player enableSimulation false;
 
 A3A_boundingCircle = [];
-for "_i" from 1 to 36 do {
-    private _posStart = [_buildingRadius * (cos(10*_i)), _buildingRadius * (sin(10*_i)),0] vectorAdd getPos _centerObject;
+// WP5d: scale sphere count with radius (~10 m spacing), min 12, max 120
+private _sphereCount = ((floor (2 * pi * _buildingRadius / 10)) min 120) max 12;
+for "_i" from 0 to (_sphereCount - 1) do {
+    private _angle = (_i / _sphereCount) * 360;
+    private _posStart = [_buildingRadius * (cos(_angle)), _buildingRadius * (sin(_angle)),0] vectorAdd getPos _centerObject;
     private _piece = "Sign_Sphere100cm_F" createVehicleLocal _posStart;
     _piece enableSimulation false;
     A3A_boundingCircle pushBack _piece;
