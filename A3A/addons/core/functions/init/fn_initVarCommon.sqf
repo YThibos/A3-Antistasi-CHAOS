@@ -133,6 +133,14 @@ A3A_hasIFA = false;			// this one is everywhere, just mark it false and remove l
 // Zeus enhanced
 A3A_hasZen = (isClass (configFile >> "CfgPatches" >> "zen_common"));
 
+// BuildAndRessources (BAR). Hard-requires ACE; gate on both.
+// TODO WP0: Verify the CfgPatches class name in-game:
+//   { diag_log format ["PATCH: %1", configName _x] } forEach
+//       (("true" configClasses (configFile >> "CfgPatches")) select
+//           { (configName _x) regexMatch "(?i).*(bar|build|ressource).*" });
+A3A_hasBAR = A3A_hasACE && isClass (configFile >> "CfgPatches" >> "BuildAndRessources");
+if (A3A_hasBAR) then { Info("BuildAndRessources detected.") };
+
 //Content Mods (Units, Vehicles, Weapons, Clothes etc.)
 //These are handled by a script in the Templates folder to keep integrators away from critical code.
 //call A3A_fnc_detector;
@@ -147,7 +155,7 @@ A3A_buildingWhitelist = [
 ];
 A3A_milBuildingWhitelist = A3A_buildingWhitelist + [
 	"Land_Radar_01_HQ_F","Land_Cargo_HQ_V1_F","Land_Cargo_HQ_V2_F","Land_Cargo_HQ_V3_F","Land_Cargo_HQ_V4_F","Land_Cargo_Patrol_V1_F","Land_Cargo_Patrol_V2_F","Land_Cargo_Patrol_V3_F", "Land_Cargo_Patrol_V4_F","Land_HelipadSquare_F","Land_Posed","Land_Hlaska","Land_fortified_nest_small_EP1",
-	"Land_fortified_nest_small","Fort_Nest","Fortress1","Land_GuardShed","Land_BagBunker_Small_F","Land_BagBunker_01_small_green_F","Land_vn_b_tower_01","Land_vn_o_shelter_05","Land_vn_bagbunker_01_small_green_f","Land_vn_bagbunker_small_f", "Land_vn_o_tower_01","Land_vn_o_tower_02", "Land_vn_o_tower_03","Land_vn_hut_tower_01", 
+	"Land_fortified_nest_small","Fort_Nest","Fortress1","Land_GuardShed","Land_BagBunker_Small_F","Land_BagBunker_01_small_green_F","Land_vn_b_tower_01","Land_vn_o_shelter_05","Land_vn_bagbunker_01_small_green_f","Land_vn_bagbunker_small_f", "Land_vn_o_tower_01","Land_vn_o_tower_02", "Land_vn_o_tower_03","Land_vn_hut_tower_01",
 	"Land_vn_o_platform_05","Land_vn_o_platform_06","Land_vn_o_snipertree_01","Land_vn_o_snipertree_02","Land_vn_o_snipertree_03","Land_vn_o_snipertree_04","Land_vn_o_platform_01","Land_vn_o_platform_02","Land_vn_o_platform_03", "Land_vn_hlaska", "Land_vn_b_trench_bunker_04_01", "Land_vn_pillboxbunker_02_hex_f", "Land_vn_guardtower_01_f",
 	"Land_vn_strazni_vez", "Land_vn_b_trench_firing_05", "Land_vn_cementworks_01_grey_f", "Land_vn_cementworks_01_brick_f", "Land_vn_radar_01_hq_f", "Land_vn_a_office01", "Land_SPE_Sandbag_Nest"
 ];
