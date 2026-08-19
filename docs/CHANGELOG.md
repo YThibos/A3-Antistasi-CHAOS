@@ -6,6 +6,8 @@ Newest entries at the top. One line per change when possible.
 
 ## 2026-08-19
 
+- `Tools/pboextract/pboextract.py`: new reusable PBO extractor (CLI + library); replaces `build/extract_bar*.py`; handles sreV-headers, extension filters, `--list` mode; documented in `antistasi-codebase` skill and `AGENTS.md`.
+- Fix: CHAOS CBA Addon Options not appearing — `preInit = 1` runs at mission start, not game startup. Moved registration to `Extended_PreInit_EventHandlers` in `config.cpp` (same mechanism BAR uses for its settings).
 - New CBA Addon Option "Antistasi CHAOS > Construction > Build time multiplier" (`A3A_CHAOS_buildTimeMult`, default 1.0, range 0.1–5.0). Applies to Antistasi build-box hold times (`fn_placeBuilderObjects`) and BAR structure placement times (via `BuildAndRessources_fnc_placeObject` wrapper installed on each client). ACE Fortify's own "Time-Cost Coefficient" setting has no effect on either system — Antistasi uses vanilla hold-actions and BAR only checks ACE_Fortify as an item prerequisite.
 - Construction Yard moved from garage purchase to the Team Leader build catalogue (5000€, `"constructionyard"` ability); button disabled when outside HQ radius or a yard already exists; `fn_buildingComplete` sets `A3A_isConstructionYard` so HQ relocation still works.
 - Fix: `fn_relocateHQObjects` and `fn_teamLeaderRTSPlacerDialog` used `Land_Shed_Big_F` to find the Construction Yard — the yard never relocated with HQ and the basetier build gate was always locked. Changed to `a3a_constructionYard` in both; also replaced the inline radius formula in the dialog with `call A3A_fnc_hqBuildRadius`.

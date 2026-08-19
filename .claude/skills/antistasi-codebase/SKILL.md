@@ -124,6 +124,43 @@ cross-machine signalling.
 - Test in a **dedicated local server + separate client**, not only the editor: this mission is
   multiplayer-first and hosted-host hides locality bugs.
 
+## PBO inspection and extraction
+
+Use `Tools/pboextract/pboextract.py` whenever you need to read a compiled mod's source.
+It requires only the Python standard library and handles both plain PBOs and PBOs with a `sreV`
+properties header (the common Arma 3 format).
+
+```powershell
+# List contents
+py Tools/pboextract/pboextract.py path/to/file.pbo --list
+
+# Extract SQF / HPP / CPP to a directory
+py Tools/pboextract/pboextract.py path/to/file.pbo output_dir --exts sqf,hpp,cpp --verbose
+
+# Default output dir when dest is omitted: <stem>_extracted/ next to the PBO
+py Tools/pboextract/pboextract.py path/to/file.pbo --exts sqf
+```
+
+**Library API** (import into another script):
+
+```python
+from Tools.pboextract.pboextract import PboReader
+
+reader = PboReader("path/to/file.pbo").parse()
+print(reader.properties)            # sreV metadata dict, e.g. {'prefix': 'Foo'}
+for entry in reader.entries:
+    print(entry.name, entry.data_size, entry.ext)
+
+reader.extract("output/dir", exts=["sqf", "hpp"], verbose=True)
+data = reader.read_entry(reader.entries[0])   # bytes, no disk I/O
+
+for entry, data in reader.iter_entries(exts=["sqf"]):
+    process(entry.name, data)
+```
+
+See `Tools/pboextract/README.md` for the full PBO format summary and the common BAR mod invocation.
+Do **not** re-implement PBO parsing inline; always import or call the tool.
+
 ## Fork hygiene
 
 - Keep CHAOS-specific behaviour behind settings or clearly-scoped functions where practical.

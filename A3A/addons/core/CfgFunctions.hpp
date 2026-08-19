@@ -415,7 +415,7 @@ class CfgFunctions
             class initGarrisons {};
             class initMarkerTypes {};
             class initPoliceStations {};
-            class initCHAOSSettings { preInit = 1; };     // CHAOS CBA Addon Options (before any mission)
+            class initCHAOSSettings {};                   // CHAOS CBA Addon Options — called via Extended_PreInit_EventHandlers in config.cpp
             class initPreJIP { preInit = 1; };
             class initSpawnPlaces {};
             class initSpawnPlaceStats {};

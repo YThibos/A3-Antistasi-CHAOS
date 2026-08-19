@@ -54,6 +54,7 @@ A3A/addons/events      declared event bus (Events.hpp + fn_triggerEvent/addEvent
 A3A/addons/garage gear gui logistics maps tasks patcom jeroen_arsenal config_fixes
 Tools/sqfcheck         SQF syntax checker: PowerShell + Python engines, same rules, + tests
 Tools/sqfvalidator     vendored Python sqflint (deeper analysis; run with `py`, noisy on macros)
+Tools/pboextract       reusable PBO extractor (CLI + library); see its README.md
 Tools/Builder          mod build scripts;  build_dev.ps1 / build_stable.ps1 at the root
 How to build.md        build setup
 docs/CHANGELOG.md      fork changelog — append a line here for every change you make
@@ -102,6 +103,11 @@ specific version.
   `py Tools/sqfvalidator/sqflint.py <file>` or `-d <dir>`. It does deeper type and scope analysis,
   but it does not expand this codebase's macros, so every `Info_1(…)`/`Debug_2(…)` call yields a
   spurious "can't interpret statement" error. A second opinion, never a gate.
+- 2026-08-19: `Tools/pboextract/pboextract.py` is the canonical PBO extractor. It handles plain
+  PBOs and the sreV properties format, works as a CLI (`py Tools/pboextract/pboextract.py <file>
+  [dest] [--exts sqf,hpp] [--list] [-v]`) and as an importable library (`PboReader`). Replaces
+  the one-off scripts in `build/extract_bar*.py`. Always import/call it rather than re-implementing
+  PBO parsing inline. See `Tools/pboextract/README.md` and the `antistasi-codebase` skill.
 - 2026-08-19: **BAR (BuildAndRessources) real API** — verified by extracting
   `BuildAndRessources.pbo` (Python PBO parser in `build/read_pbo.py`).
   Key facts for integration code:

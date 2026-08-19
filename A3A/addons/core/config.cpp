@@ -61,6 +61,14 @@ class A3A {
 
 #include "keybinds.hpp"
 
+// Register CHAOS CBA Addon Options at game startup (before any mission loads).
+// Extended_PreInit_EventHandlers is the correct hook for this — mirrors BAR's fn_initSettings approach.
+class Extended_PreInit_EventHandlers {
+    class A3A_CHAOS_settings {
+        init = "call A3A_fnc_initCHAOSSettings";
+    };
+};
+
 class CfgMPGameTypes {
     class ANTI {
         name = "Antistasi";
