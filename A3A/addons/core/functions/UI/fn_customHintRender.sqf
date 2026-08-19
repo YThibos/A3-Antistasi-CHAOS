@@ -30,8 +30,15 @@ private _filename = "fn_customHintRender.sqf";
 if (!hasInterface || !A3A_customHintEnable) exitWith {false;}; // Disabled for server & HC.
 
 if (A3A_customHint_MSGs isEqualTo []) then {
-    hintSilent "";
-} else{
+    // Only clear the hint box on the one frame when the queue drains.
+    // Without this guard, hintSilent "" was called every ~15 frames even when the queue had
+    // been empty for a long time, which wiped any vanilla hint placed by another mod.
+    if (A3A_customHint_WasShowing) then {
+        hintSilent "";
+        A3A_customHint_WasShowing = false;
+    };
+} else {
+    A3A_customHint_WasShowing = true;
     private _autoDismiss = 15;  // Number of seconds for message lifetime  // Constant Value
     if (serverTime - A3A_customHint_UpdateTime > _autoDismiss) exitWith {
         [true] call A3A_fnc_customHintDismiss;
