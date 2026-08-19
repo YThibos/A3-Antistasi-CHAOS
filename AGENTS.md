@@ -56,19 +56,22 @@ Tools/sqfcheck         SQF syntax checker: PowerShell + Python engines, same rul
 Tools/sqfvalidator     vendored Python sqflint (deeper analysis; run with `py`, noisy on macros)
 Tools/Builder          mod build scripts;  build_dev.ps1 / build_stable.ps1 at the root
 How to build.md        build setup
-WORK.md                this fork's open bugs and improvement notes
+docs/CHANGELOG.md      fork changelog — append a line here for every change you make
+WORK.md                project owner's private notes; not tracked by agents, not committed
 .github/workflows      CI: dev build publish, stringtable sync
 ```
 
 ## Workflow
 
-1. Read `WORK.md` and the relevant skill before touching an area.
+1. Read the relevant skill before touching an area.
 2. Locate the owning component; extend it rather than piling into `core`.
 3. Write the change with a proper function header (arguments, return value, scope, environment).
 4. Run the syntax checker on the changed files.
 5. Say plainly what was **not** verified — in-game behaviour cannot be tested from the CLI. Never
    claim a feature works when only the syntax was checked.
-6. Update `WORK.md` when you fix or discover something listed there.
+6. Append a brief entry to `docs/CHANGELOG.md` (single line when possible) for every change you
+   make. Newest entries go at the top. Do not edit `WORK.md` — that file belongs to the project
+   owner and is not committed to the repo.
 
 ## Testing reality
 

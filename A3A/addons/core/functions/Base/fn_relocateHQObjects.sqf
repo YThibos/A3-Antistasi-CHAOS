@@ -38,7 +38,7 @@ vehicleBox setPos _pos;
 {_x call _alignNormals} forEach [fireX, boxX, mapX, vehicleBox];
 
 // WP4: move Construction Yard with HQ (follows HQ option from §6d)
-private _yards = (nearestObjects [_oldHQPos, ["Land_Shed_Big_F"], 400]) select {
+private _yards = (nearestObjects [_oldHQPos, ["a3a_constructionYard"], 400]) select {
     _x getVariable ["A3A_isConstructionYard", false]
 };
 if (_yards isNotEqualTo []) then {

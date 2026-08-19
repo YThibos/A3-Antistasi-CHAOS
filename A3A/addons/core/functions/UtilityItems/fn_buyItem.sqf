@@ -60,7 +60,7 @@ private _fnc_placed = {
         [-_price] call A3A_fnc_resourcesPlayer;     // uh, we're just assuming _unit == player here
     };
 
-    _unit setVariable ["A3A_spawnItem_cooldown", time + 15];
+    _unit setVariable ["A3A_spawnItem_cooldown", time + 5];
 
     _item call A3A_fnc_initObject;
 };
