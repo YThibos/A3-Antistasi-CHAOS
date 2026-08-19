@@ -34,7 +34,7 @@ private _constructionObjects = [
     private _planks = createVehicle [_plankClass, [0,0,0], [], 0, "CAN_COLLIDE"];
     _planks setVariable ["A3A_build_timeout", time + 1200];
     _planks setVariable ["A3A_build_price", _price];
- 
+
     // Most stuff only needs to be server visible
     private _buildName = getText (configFile / "CfgVehicles" / _className / "displayName");
     if (isNull _repairObj) then
@@ -69,7 +69,10 @@ private _constructionObjects = [
     A3A_unbuiltObjects pushBack _planks;
 
     // Should be the only actions on this object, so we can just JIP on the object
-    private _holdTime = 1.2 * sqrt _price;
+    // Hold time scales with price, applying the server-admin build time multiplier (A3A_CHAOS_buildTimeMult).
+    // Reduced by 25 % for objects placed near HQ (<100 m) — command has deep pockets.
+    private _buildMult = missionNamespace getVariable ["A3A_CHAOS_buildTimeMult", 1.0];
+    private _holdTime = 1.2 * sqrt _price * _buildMult;
     if (_planks distance2D (getMarkerPos "Synd_HQ") < 100) then { _holdTime = _holdTime * 0.75}; // command has a half million dollars and cant build a petros bunker in less than a minute
     [_planks, _holdTime] remoteExecCall ["A3A_fnc_addBuildingActions", 0, _planks];
 

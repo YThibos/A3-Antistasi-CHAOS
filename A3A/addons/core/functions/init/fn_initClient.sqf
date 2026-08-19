@@ -240,7 +240,7 @@ GVAR(keys_battleMenu) = false; //initilize key flags to false
 
 
 {
-    _x addAction [localize "STR_A3A_fn_init_initclient_addact_move", A3A_fnc_carryItem, 
+    _x addAction [localize "STR_A3A_fn_init_initclient_addact_move", A3A_fnc_carryItem,
         nil,0,false,true,"", "(_this == theBoss) and (isNull objectParent _this) and !(call A3A_fnc_isCarrying)", 4];
 } forEach [boxX, flagX, vehicleBox, fireX, mapX];
 
@@ -315,6 +315,20 @@ _layer = ["statisticsX"] call bis_fnc_rscLayer;
 [] spawn A3A_fnc_createDialog_shouldLoadPersonalSave;
 
 if (A3A_hasACE) then {call A3A_fnc_initACE};
+
+// BAR: apply the A3A_CHAOS_buildTimeMult setting to BAR structure placement times.
+// BAR calls BuildAndRessources_fnc_placeObject via remoteExec to the building player; we
+// wrap the function so _time is scaled before it reaches BAR's progress-bar logic.
+// ACE Fortify's own timeCostCoef has no effect on BAR — BAR only uses ACE_Fortify as an
+// item prerequisite check, not as a build-time framework.
+if (A3A_hasBAR) then {
+    A3A_CHAOS_origBarPlaceObject = BuildAndRessources_fnc_placeObject;
+    BuildAndRessources_fnc_placeObject = {
+        params ["_class","_cost","_name","_time","_caller","_maxHeight","_minHeight"];
+        _time = _time * (missionNamespace getVariable ["A3A_CHAOS_buildTimeMult", 1.0]);
+        [_class, _cost, _name, _time, _caller, _maxHeight, _minHeight] call A3A_CHAOS_origBarPlaceObject;
+    };
+};
 
 [allCurators] call A3A_fnc_initZeusLogging;
 

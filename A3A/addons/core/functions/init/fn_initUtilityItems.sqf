@@ -61,8 +61,6 @@ if (A3A_hasBAR) then {
     _items pushBack ["RessourceDepot",         3000, "bardepot",          "", ["cmmdr","place","save","noclear","barsupply"]];
 };
 
-// Construction Yard is now in the build catalogue (fn_initBuildableObjects), not the garage.
-
 // Apply item name localization
 {
     if (_x#2 == "") then { continue };
