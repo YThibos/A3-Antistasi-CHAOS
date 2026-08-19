@@ -107,12 +107,31 @@ switch (_mode) do
 				private _hqPos = getMarkerPos "Synd_HQ";
 				private _hqRadius = call A3A_fnc_hqBuildRadius;
 				private _playerAtHQ = (player distance2D _hqPos) <= _hqRadius;
+				// Accept either the utility-item variable (legacy) or A3A_building flag (build-system yard)
 				private _yardExists = (nearestObjects [_hqPos, ["a3a_constructionYard"], _hqRadius]) findIf {
-					_x getVariable ["A3A_isConstructionYard", false]
+					(_x getVariable ["A3A_isConstructionYard", false]) || (_x getVariable ["A3A_building", false])
 				} != -1;
 				if (!_playerAtHQ || !_yardExists) then {
 					_button ctrlEnable false;
 					_button ctrlSetTooltip localize "STR_A3A_basetier_no_yard";
+				};
+			};
+			// Construction Yard gate — one per campaign, must be inside HQ build area
+			if (_ability isEqualTo "constructionyard") then {
+				private _hqPos = getMarkerPos "Synd_HQ";
+				private _hqRadius = call A3A_fnc_hqBuildRadius;
+				private _playerAtHQ = (player distance2D _hqPos) <= _hqRadius;
+				private _yardExists = (allMissionObjects "a3a_constructionYard") findIf {
+					(_x getVariable ["A3A_isConstructionYard", false]) || (_x getVariable ["A3A_building", false])
+				} != -1;
+				if (_yardExists) then {
+					_button ctrlEnable false;
+					_button ctrlSetTooltip localize "STR_A3A_constructionyard_duplicate";
+				} else {
+					if (!_playerAtHQ) then {
+						_button ctrlEnable false;
+						_button ctrlSetTooltip format [localize "STR_A3A_constructionyard_not_at_hq", round _hqRadius];
+					};
 				};
 			};
 

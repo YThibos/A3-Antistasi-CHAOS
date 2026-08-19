@@ -61,10 +61,7 @@ if (A3A_hasBAR) then {
     _items pushBack ["RessourceDepot",         3000, "bardepot",          "", ["cmmdr","place","save","noclear","barsupply"]];
 };
 
-// Construction Yard — gates the military (basetier) build catalogue.
-// hqonly: must be placed inside the HQ build radius, one per campaign.
-// no 'move' flag: a yard that can be carried defeats the point.
-_items pushBack ["a3a_constructionYard", 5000, "constructionyard", "", ["cmmdr","hqonly","place","save","noclear"]];
+// Construction Yard is now in the build catalogue (fn_initBuildableObjects), not the garage.
 
 // Apply item name localization
 {

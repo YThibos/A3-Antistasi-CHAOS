@@ -23,6 +23,14 @@ A3A_buildingPriceHM = createHashMapFromArray A3A_buildableObjects; // you can fe
 // Uses vanilla structures available on all maps.
 // Only adds entries not already present in the map's own buildObjects[].
 // The basetier ability gates each entry behind the Construction Yard (see fn_teamLeaderRTSPlacerDialog.sqf).
+
+// Construction Yard — one per campaign, must be built inside the HQ radius.
+// Gates the basetier catalogue. "constructionyard" ability is handled specially
+// in fn_teamLeaderRTSPlacerDialog: disabled when a yard already exists or player is outside HQ.
+if !("a3a_constructionYard" in A3A_buildingPriceHM) then {
+    A3A_buildableObjects pushBack ["a3a_constructionYard", 5000, "constructionyard"];
+    A3A_buildingPriceHM set ["a3a_constructionYard", ["a3a_constructionYard", 5000, "constructionyard"]];
+};
 {
     if !(_x#0 in A3A_buildingPriceHM) then {
         A3A_buildableObjects pushBack _x;

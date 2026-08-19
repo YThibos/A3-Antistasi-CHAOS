@@ -6,6 +6,7 @@ Newest entries at the top. One line per change when possible.
 
 ## 2026-08-19
 
+- Construction Yard moved from garage purchase to the Team Leader build catalogue (5000€, `"constructionyard"` ability); button disabled when outside HQ radius or a yard already exists; `fn_buildingComplete` sets `A3A_isConstructionYard` so HQ relocation still works.
 - Fix: `fn_relocateHQObjects` and `fn_teamLeaderRTSPlacerDialog` used `Land_Shed_Big_F` to find the Construction Yard — the yard never relocated with HQ and the basetier build gate was always locked. Changed to `a3a_constructionYard` in both; also replaced the inline radius formula in the dialog with `call A3A_fnc_hqBuildRadius`.
 - Build boxes: added "Huge construction kit" (`Land_WoodenCrate_01_stack_x3_F`, 2500€) and "Mega construction kit" (`Land_WoodenCrate_01_stack_x5_F`, 5000€).
 - AGENTS.md + antistasi-codebase skill: replaced WORK.md workflow references with `docs/CHANGELOG.md`; clarified WORK.md is project-owner-only.

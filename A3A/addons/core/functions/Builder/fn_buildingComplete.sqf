@@ -34,13 +34,18 @@ _building setPosWorld (_target getVariable "A3A_build_pos");
 _building setVectorDirAndUp (_target getVariable "A3A_build_dir");
 _building setVariable ["A3A_building", true, true];            // Used to identify removable buildings
 
+// Mark Construction Yard so fn_relocateHQObjects can find it by variable (same as utility-item path)
+if (typeOf _building isEqualTo "a3a_constructionYard") then {
+    _building setVariable ["A3A_isConstructionYard", true, true];
+};
+
 // Add to garrison data if it's within one
 private _marker = [getPosATL _building] call A3A_fnc_getMarkerForPos;
 if (sidesX getVariable _marker == teamPlayer) then { [_marker, _building] call A3A_fnc_garrisonServer_addVehicle }
 else {
     // WP5b: If built within the HQ's current build radius, still attribute it to the HQ garrison
     // so it registers for calcBuildingReveal and calcBuildingCosts regardless of marker size.
-    private _hqRadius = 75 + 15 * ((tierWar max 1) - 1);
+    private _hqRadius = call A3A_fnc_hqBuildRadius;
     if ((_building distance2D (getMarkerPos "Synd_HQ")) <= _hqRadius) then {
         ["Synd_HQ", _building] call A3A_fnc_garrisonServer_addVehicle
     } else {
