@@ -32,8 +32,9 @@ private _items = [
     [FactionGet(reb,"vehicleLightSource"), 25, "light", "", ["move"]],           // note: If we do want this saved, need to switch saveLoop to nearObjects
     ["Land_PlasticCase_01_medium_F", 100, "buildboxsmall", "", ["place", "move", "build"]],
     ["Land_PlasticCase_01_large_F", 500, "buildboxmedium", "", ["place", "move", "build"]],
-    ["Land_WoodenCrate_01_F", 1500, "buildboxlarge", "", ["place", "move", "build"]]
-//    ["Land_WoodenCrate_01_stack_x5_F", 5000, "buildboxcolossal", "", ["place", "build", "hugebuild"]],
+    ["Land_WoodenCrate_01_F", 1500, "buildboxlarge", "", ["place", "move", "build"]],
+    ["Land_WoodenCrate_01_stack_x3_F", 2500, "buildboxhuge", "", ["place", "build"]],
+    ["Land_WoodenCrate_01_stack_x5_F", 5000, "buildboxmega", "", ["place", "build"]]
 //    ["Land_Cargo10_cyan_F", 10000, "buildboxenormous", "", ["place", "build", "hugebuild"]]
 
 ];
