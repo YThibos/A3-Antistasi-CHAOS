@@ -892,4 +892,18 @@ class CfgFunctions
             class rotateItem {};
         };
     };
+
+    // Persistency hooks called by BuildAndRessources (BAR mod) when objects are
+    // placed or demolished.  Registering them in CfgFunctions makes them
+    // automatically available as remoteExec targets (no CfgRemoteExec entry needed).
+    class Persistency
+    {
+        tag = "Persistency";
+        class BAR
+        {
+            file = QPATHTOFOLDER(functions\BAR);
+            class saveObject {};     // Persistency_fnc_saveObject  – called on placement
+            class removeObject {};   // Persistency_fnc_removeObject – called on demolition
+        };
+    };
 };

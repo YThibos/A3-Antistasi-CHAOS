@@ -2,22 +2,23 @@
 FIX_LINE_NUMBERS()
 /*
 Maintainer: Antistasi CHAOS
-    Transfer resources from a BAR RessourceDepot to all nearby BAR resource crates.
+    Transfer resources from a BAR RessourceDepot to all nearby BAR crates.
 
-    BAR only builds from crates within 50 m of the player; a depot's resources are
-    otherwise inert until they reach the crates. This server-side function walks the
-    crates within _resupplyRadius of the depot and fills each one up to its maximum,
-    deducting the transferred amount from the depot.
+    Delegates the actual transfer to BuildAndRessources_fnc_transferDepotToCrate
+    (verified from BuildAndRessources.pbo source).  That function handles:
+      - resource-type matching between depot and crate
+      - capacity clamping
+      - atomic depot-deduction + crate-fill with rollback on mismatch
+      - infinite-stock depots (stock == -1)
 
-    Resource variable names used by BAR (Build And Resources / BARH mod):
-        Crate current amount : getVariable ["BARH_ressources",    0]
-        Crate capacity       : getVariable ["BARH_ressourcesMax", 500]
-        Depot concrete stock : getVariable ["BARH_ressources_concrete", 0]
-        Depot metal stock    : getVariable ["BARH_ressources_metal",    0]
-        Depot sand stock     : getVariable ["BARH_ressources_sand",     0]
-        Depot wood stock     : getVariable ["BARH_ressources_wood",     0]
-    These are set on the object and broadcast globally (last arg true).
-    NOTE: verify against the installed BARH mod version before releasing.
+    BAR's transfer function also validates that the depot is within the crate's
+    "nearest depot" radius (default 50 m per BuildAndRessources_depotTransferRadius).
+    We search using that same radius so only reachable crates are attempted.
+
+    This function runs on the SERVER (fn_barResupply is remoteExec'd there by the
+    utility-item purchase handler).  Calling transferDepotToCrate directly (not via
+    remoteExecCall) bypasses its caller-distance check, which is intentional: the
+    server is acting on the depot on the player's behalf.
 
 Arguments:
     0: <OBJECT> The RessourceDepot object
@@ -39,53 +40,26 @@ if (!isServer) exitWith {};
 if (isNull _depot || isNull _player) exitWith {};
 
 private _titleStr = localize "STR_A3A_Utility_Items_Purchase_Title";
-private _resupplyRadius = 100;
 
-// Map each crate class to the depot variable key that holds that resource type.
-private _crateTypeMap = createHashMapFromArray [
-    ["RessourceCrate_Concrete", "concrete"],
-    ["RessourceCrate_Metal",    "metal"],
-    ["RessourceCrate_Sand",     "sand"],
-    ["RessourceCrate_Wood",     "wood"]
-];
+// BAR depot transfer radius (CBA setting, default 50 m).
+private _radius = _depot getVariable ["BuildAndRessources_depotTransferRadius", 50];
 
-private _crateClasses = keys _crateTypeMap;
-
-// Collect live BAR crates within range.
-private _nearbyCrates = (nearestObjects [_depot, _crateClasses, _resupplyRadius])
-    select { alive _x };
+private _crateClasses = ["RessourceCrate_Concrete", "RessourceCrate_Wood",
+                          "RessourceCrate_Sand",     "RessourceCrate_Metal"];
+private _nearbyCrates = (nearestObjects [_depot, _crateClasses, _radius]) select { alive _x };
 
 if (_nearbyCrates isEqualTo []) exitWith {
-    [_titleStr, format [localize "STR_A3A_Utility_Items_BAR_Resupply_None", _resupplyRadius]]
+    [_titleStr, format [localize "STR_A3A_Utility_Items_BAR_Resupply_None", round _radius]]
         remoteExec ["A3A_fnc_customHint", _player];
 };
 
 private _resupplied = 0;
-
 {
-    private _crate = _x;
-    private _type  = _crateTypeMap get (typeOf _crate);
-
-    private _depotKey    = "BARH_ressources_" + _type;
-    private _depotStock  = _depot getVariable [_depotKey, 0];
-    if (_depotStock <= 0) then { continue };
-
-    private _crateAmt = _crate getVariable ["BARH_ressources",    0];
-    private _crateMax = _crate getVariable ["BARH_ressourcesMax", 500];
-    if (_crateAmt >= _crateMax) then { continue };
-
-    private _needed   = _crateMax - _crateAmt;
-    private _transfer = _needed min _depotStock;
-
-    _crate setVariable ["BARH_ressources",       _crateAmt + _transfer, true];
-    _depot setVariable [_depotKey, _depotStock - _transfer,             true];
-
-    _resupplied = _resupplied + 1;
-
-    Debug_3("barResupply: depot %1 filled %2 crate of type %3",
-        _depot, _transfer, _type);
+    private _result = [_depot, _x] call BuildAndRessources_fnc_transferDepotToCrate;
+    // result = [transferred, crateAmount, crateCapacity, depotAmount, depotCapacity]
+    if ((_result#0) > 0) then { _resupplied = _resupplied + 1 };
+    Debug_3("barResupply: crate %1 received %2 (result: %3)", typeOf _x, _result#0, _result);
 } forEach _nearbyCrates;
 
 [_titleStr, format [localize "STR_A3A_Utility_Items_BAR_Resupply_Sent", _resupplied]]
     remoteExec ["A3A_fnc_customHint", _player];
-

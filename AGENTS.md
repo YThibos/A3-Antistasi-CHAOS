@@ -99,3 +99,20 @@ specific version.
   `py Tools/sqfvalidator/sqflint.py <file>` or `-d <dir>`. It does deeper type and scope analysis,
   but it does not expand this codebase's macros, so every `Info_1(…)`/`Debug_2(…)` call yields a
   spurious "can't interpret statement" error. A second opinion, never a gate.
+- 2026-08-19: **BAR (BuildAndRessources) real API** — verified by extracting
+  `BuildAndRessources.pbo` (Python PBO parser in `build/read_pbo.py`).
+  Key facts for integration code:
+  - Crate resource array variable: `BuildAndRessources_ressources` — 4-element array
+    `[Concrete, Wood, Sand, Metal]`, set with `setVariable [..., true]`.
+  - Depot stock variable: `BuildAndRessources_depotStocks` — same 4-element format;
+    -1 = infinite stock.
+  - Resource type order comes from global `BuildAndRessources_names = ["Concrete","Wood","Sand","Metal"]`.
+  - Crate classes: `RessourceCrate_Concrete/Wood/Sand/Metal`. Depot: `RessourceDepot`.
+  - Depot transfer radius: `_depot getVariable ["BuildAndRessources_depotTransferRadius", 50]`.
+  - BAR calls `Persistency_fnc_saveObject` (with `[[obj]]` via `remoteExecCall` to server 2)
+    and `Persistency_fnc_removeObject` (with `[obj]`) if those functions exist. Register them
+    in `CfgFunctions` so they are auto-whitelisted for `remoteExec`. Note: `deleteVehicle` is
+    called **before** `remoteExecCall ["Persistency_fnc_removeObject",2]`, so the object
+    reference arrives as `objNull` on the server — do not rely on it for lookup.
+  - `BuildAndRessources_fnc_transferDepotToCrate [_depot, _crate]` — the canonical server-side
+    transfer call; skips caller-distance check when called directly (not via remoteExec).

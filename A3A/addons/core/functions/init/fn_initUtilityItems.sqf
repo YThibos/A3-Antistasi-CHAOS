@@ -63,7 +63,7 @@ if (A3A_hasBAR) then {
 // Construction Yard — gates the military (basetier) build catalogue.
 // hqonly: must be placed inside the HQ build radius, one per campaign.
 // no 'move' flag: a yard that can be carried defeats the point.
-_items pushBack ["a3a_constructionYard", 5000, "constructionyard", "", ["cmmdr","hqonly","place","rotate","save","noclear"]];
+_items pushBack ["a3a_constructionYard", 5000, "constructionyard", "", ["cmmdr","hqonly","place","save","noclear"]];
 
 // Apply item name localization
 {

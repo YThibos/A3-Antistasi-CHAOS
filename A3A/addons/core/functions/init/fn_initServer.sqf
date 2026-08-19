@@ -203,6 +203,10 @@ if (_startType != "load") then {
 if (A3A_hasBAR) then {
     private _barTool = "ACE_Fortify";
     if !(_barTool in unlockedItems) then { [_barTool] call A3A_fnc_unlockEquipment };
+
+    // Initialise the live-object list for new campaigns.
+    // For loaded games fn_barLoad (called earlier) has already populated it.
+    if (isNil "A3A_barBuiltObjects") then { A3A_barBuiltObjects = [] };
 };
 
 // ********************** Post-load init ****************************************************
