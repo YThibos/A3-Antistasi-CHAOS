@@ -209,6 +209,7 @@ class CfgFunctions
             class translateVariable {};
             class unlockStatic {};
             class unlockVehicle {};
+            class computeInfluenceZones {};
         };
 
         class Builder {
@@ -433,6 +434,7 @@ class CfgFunctions
             class playerMarkers {};
             class prepareMarkerArrays {};
             class resourcecheck {};
+            class initMapOverlay {};
             class tags {};
             class uniqueID {};
         };

@@ -26,6 +26,7 @@ class CfgFunctions {
             class hqDialog {};
             class mainDialog {};
             class mapDrawHcGroupsEH {};
+            class mapDrawInfluenceEH {};
             class mapDrawOutpostsEH {};
             class mapDrawSelectEH {};
             class mapDrawUserMarkersEH {};

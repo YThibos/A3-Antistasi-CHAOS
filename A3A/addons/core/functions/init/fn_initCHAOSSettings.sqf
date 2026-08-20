@@ -10,6 +10,43 @@ Environment: Unscheduled (preInit)
 Public: No
 */
 
+// ---- Map Overlay ----
+[
+    "A3A_CHAOS_influenceOverlayEnabled",
+    "CHECKBOX",
+    [
+        "Show influence zone overlay",
+        "Draw transparent green circles (static-attribution radius) and filled triangles (zone-of-influence clusters) on the vanilla M-map for all friendly capturable positions."
+    ],
+    ["Antistasi CHAOS", "Map Overlay"],
+    true,    // default: enabled
+    0,       // client-side — each player controls their own view
+    {},
+    false
+] call CBA_fnc_addSetting;
+
+[
+    "A3A_CHAOS_influenceTriangleDist",
+    "SLIDER",
+    [
+        "Triangle zone max distance (m)",
+        "Maximum distance between any two friendly zones to be considered connected for the triangle-of-influence algorithm. Applied rounded to the nearest 100 m. Affects both the BFS reachability graph and the per-pair triangle check."
+    ],
+    ["Antistasi CHAOS", "Map Overlay"],
+    [1000, 5000, 2000, 0],    // min, max, default, 0 decimal places
+    0,       // client-side
+    {
+        // If the map is currently open recompute immediately, otherwise mark dirty
+        // so the overlay PFH picks it up on the next map-open.
+        if (visibleMap && { !isNil "markersX" }) then {
+            [] call A3A_fnc_computeInfluenceZones;
+        } else {
+            A3A_influenceZonesDirty = true;
+        };
+    },
+    false
+] call CBA_fnc_addSetting;
+
 // ---- Construction ----
 [
     "A3A_CHAOS_buildTimeMult",

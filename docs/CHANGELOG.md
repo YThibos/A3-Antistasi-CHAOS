@@ -6,6 +6,8 @@ Newest entries at the top. One line per change when possible.
 
 ## 2026-08-20
 
+- **Map overlay fix**: rewrote `fn_initMapOverlay` to attach the vanilla-map Draw EH via `isNil{}` (unscheduled context) once at client init and use a CBA per-frame handler for map-open detection instead of the fragile `spawn`+lifecycle loop that prevented the EH from ever attaching; added nil-guards to `fn_computeInfluenceZones` and `fn_mapDrawInfluenceEH`; changed initClient call from `spawn` to `call`.
+
 - Military (basetier) build catalogue moved out of the general build boxes into a new box type: **Military construction kit** (`Land_Pallet_MilBoxes_F`, 3000€, garage "Other" tab). Only that box lists the military-tier structures; the ordinary kits now show the civilian catalogue only.
 - The kit itself is the gate: it can only be bought once a Construction Yard is built (new `"yardonly"` item flag, checked in `fn_buyItem` and greyed out with a tooltip in the garage tab). The per-item "yard + inside HQ radius" gate in the placer dialog is gone, so military structures can now be built wherever the kit is hauled to, not only at HQ.
 - New `A3A_fnc_hasConstructionYard` (core/Base): single source of truth for the yard test, replacing the two copies in `fn_teamLeaderRTSPlacerDialog`.
@@ -14,6 +16,9 @@ Newest entries at the top. One line per change when possible.
 ---
 
 ## 2026-08-19
+
+- Map influence overlay: added two CBA Addon Options under "Antistasi CHAOS > Map Overlay" — "Show influence zone overlay" toggle (per-client, default on) and "Triangle zone max distance" slider (1 000–5 000 m, default 2 000 m, snapped to nearest 100 m, live-update via onChange). Toggle gates the draw EH per-frame; distance slider drives both the BFS graph and the triangle pair checks in `fn_computeInfluenceZones`.
+- Map influence overlay: client-side transparent green ellipses on the vanilla M-map show the static-attribution radius of every friendly capturable zone (cities, outposts, resources, factories, seaports, airports, roadblocks, watchposts, HQ build radius); filled green triangles mark compact clusters of friendly zones reachable from HQ whose interiors contain no enemy sites. Overlay data is recomputed on each map-open and refreshed automatically when the server's 10-minute resource tick broadcasts `A3A_influenceZonesDirty`. New functions: `A3A_fnc_computeInfluenceZones` (core/Base), `A3A_GUI_fnc_mapDrawInfluenceEH` (gui/GUI), `A3A_fnc_initMapOverlay` (core/init).
 
 - Fix: vanilla `hint`/`hintSilent` boxes from other mods were wiped every ~15 frames — `fn_customHintRender` was calling `hintSilent ""` on every render tick even when the A3A queue had been empty for a long time. Added `A3A_customHint_WasShowing` flag: the hint box is now cleared only on the single frame the queue drains to empty, leaving external hints untouched thereafter.
 - `Tools/pboextract/pboextract.py`: new reusable PBO extractor (CLI + library); replaces `build/extract_bar*.py`; handles sreV-headers, extension filters, `--list` mode; documented in `antistasi-codebase` skill and `AGENTS.md`.
