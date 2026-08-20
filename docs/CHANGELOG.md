@@ -6,7 +6,11 @@ Newest entries at the top. One line per change when possible.
 
 ## 2026-08-20
 
-- **Map overlay fix**: rewrote `fn_initMapOverlay` to attach the vanilla-map Draw EH via `isNil{}` (unscheduled context) once at client init and use a CBA per-frame handler for map-open detection instead of the fragile `spawn`+lifecycle loop that prevented the EH from ever attaching; added nil-guards to `fn_computeInfluenceZones` and `fn_mapDrawInfluenceEH`; changed initClient call from `spawn` to `call`.
+- **Dev tooling**: added `setup_test_env.ps1` (gitignored) — generates `server.cfg`, `start_server.ps1`, `start_client.ps1`, `sync_save.ps1` for a local dedicated-server test loop; updated `.gitignore` to cover all generated files; rewrote `WORK.md` as a concrete reference with resolved paths and full mod list.
+
+## 2026-08-20
+
+- **Map overlay fix v3**: `findDisplay 12 displayCtrl 51` is lazily created — returns `controlNull` when the vanilla map is closed. Fixed by moving `ctrlAddEventHandler` into the CBA 0-delay PFH; it now runs on the first frame `visibleMap` becomes true. Added overlay to Y-menu commander / fast-travel / garrison maps (proven working path, same pattern as existing Draw EHs). Added colour dropdown CBA setting (7 presets). Added `fn_debugMapOverlay` diagnostic function. StreetArtist is a standalone navGrid tool not part of the mod — removed as a reference.
 
 - Military (basetier) build catalogue moved out of the general build boxes into a new box type: **Military construction kit** (`Land_Pallet_MilBoxes_F`, 3000€, garage "Other" tab). Only that box lists the military-tier structures; the ordinary kits now show the civilian catalogue only.
 - The kit itself is the gate: it can only be bought once a Construction Yard is built (new `"yardonly"` item flag, checked in `fn_buyItem` and greyed out with a tooltip in the garage tab). The per-item "yard + inside HQ radius" gate in the placer dialog is gone, so military structures can now be built wherever the kit is hauled to, not only at HQ.

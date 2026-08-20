@@ -47,6 +47,22 @@ Public: No
     false
 ] call CBA_fnc_addSetting;
 
+[
+    "A3A_CHAOS_influenceColour",
+    "LIST",
+    [
+        "Overlay colour",
+        "Colour of the influence zone ellipses and filled triangle polygons drawn on the map."
+    ],
+    ["Antistasi CHAOS", "Map Overlay"],
+    [[0, 1, 2, 3, 4, 5, 6],
+     ["Green (default)", "Cyan", "Yellow", "White", "Blue", "Orange", "Purple"],
+     0],    // default index 0 = Green
+    0,      // client-side
+    {},
+    false
+] call CBA_fnc_addSetting;
+
 // ---- Construction ----
 [
     "A3A_CHAOS_buildTimeMult",

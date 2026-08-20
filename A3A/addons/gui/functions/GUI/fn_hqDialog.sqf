@@ -87,6 +87,8 @@ switch (_mode) do
         _garrisonMap ctrlAddEventHandler ["Draw", "_this call A3A_GUI_fnc_mapDrawSelectEH"];
         // Outposts
         _garrisonMap ctrlAddEventHandler ["Draw","_this call A3A_GUI_fnc_mapDrawOutpostsEH"];
+        // Influence zone overlay (CHAOS)
+        _garrisonMap ctrlAddEventHandler ["Draw","_this call A3A_GUI_fnc_mapDrawInfluenceEH"];
         // User markers
         _garrisonMap ctrlAddEventHandler ["Draw","_this call A3A_GUI_fnc_mapDrawUserMarkersEH"];
         // HC group render
@@ -242,7 +244,7 @@ switch (_mode) do
             _moveHqIcon ctrlSetTextColor ([A3A_COLOR_BUTTON_BACKGROUND_DISABLED] call FUNC(configColorToArray));
             _moveHqIcon ctrlSetTooltip _canMoveHQ # 1;
         };
-        
+
         // Get location data
         private _controlledCities = {sidesX getVariable [_x, sideUnknown] == teamPlayer} count citiesX;
         private _totalCities = count citiesX;
@@ -267,7 +269,7 @@ switch (_mode) do
             _cityData params ["_numCiv", "_supportReb"];
 
             _totalPopulation = _totalPopulation + _numCiv;
-            if (_city in destroyedSites) then { _deadPopulation = _deadPopulation + _numCiv} else 
+            if (_city in destroyedSites) then { _deadPopulation = _deadPopulation + _numCiv} else
             {
                 private _ownerMul = [0.5, 1] select (sidesX getVariable _city == teamPlayer);
                 _rebelPopulation = _rebelPopulation + _ownerMul * _numCiv * _supportReb / 100;
@@ -558,10 +560,10 @@ switch (_mode) do
         _garrisonMap ctrlMapAnimAdd [0.2, ctrlMapScale _garrisonMap, _position];
         ctrlMapAnimCommit _garrisonMap;
     };
-    
+
     case ("updateGarrisonWepNum"):
     { // Scheduled
-        
+
         _autoriflemanAddButton = _display displayCtrl A3A_IDC_AUTORIFLEMANADDBUTTON;
         _grenadierAddButton = _display displayCtrl A3A_IDC_GRENADIERADDBUTTON;
         _marksmanAddButton = _display displayCtrl A3A_IDC_MARKSMANADDBUTTON;
@@ -571,7 +573,7 @@ switch (_mode) do
 
         call A3A_fnc_fetchRebelGear;
         private _noGearText = localize "STR_A3A_garrison_error_no_weapons";
-        
+
         if !([A3A_faction_reb get "unitMG",false] call A3A_fnc_hasWeapons) then {_autoriflemanAddButton ctrlEnable false; _autoriflemanAddButton ctrlSetTooltip _noGearText};
         if !([A3A_faction_reb get "unitGL",false] call A3A_fnc_hasWeapons) then {_grenadierAddButton ctrlEnable false; _grenadierAddButton ctrlSetTooltip _noGearText};
         if !([A3A_faction_reb get "unitSniper",false] call A3A_fnc_hasWeapons) then {_marksmanAddButton ctrlEnable false; _marksmanAddButton ctrlSetTooltip _noGearText};
@@ -784,7 +786,7 @@ switch (_mode) do
         closeDialog 1;
     };
 
-    
+
     case ("buildWatchpost"):
     {
         closeDialog 1;

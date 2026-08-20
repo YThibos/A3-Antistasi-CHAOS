@@ -125,3 +125,12 @@ specific version.
     reference arrives as `objNull` on the server — do not rely on it for lookup.
   - `BuildAndRessources_fnc_transferDepotToCrate [_depot, _crate]` — the canonical server-side
     transfer call; skips caller-distance check when called directly (not via remoteExec).
+- 2026-08-20: **Vanilla M-map Draw EH** — `findDisplay 12 displayCtrl 51` is the correct map
+  control (confirmed by Arma 3 community + codebase IDC 51 usage), BUT the control is lazily
+  created and returns `controlNull` when the vanilla map is closed. Always attach a Draw EH from
+  within code that runs while `visibleMap == true`, not at init time. The CBA 0-delay PFH is the
+  right place: check `!_wasOpen && _isOpen` to catch the first open frame.
+- 2026-08-20: **`Tools/StreetArtist`** is a standalone navGrid-generation mission tool (separate
+  Arma 3 mission, not part of the mod). Its `findDisplay 12 displayCtrl 51` usage is inside an
+  `EachFrame` EH that already guards `!visibleMap`, making it useless as a general reference for
+  map overlay code. Do not cite it to justify display/control access patterns in the mod.
