@@ -6,6 +6,7 @@ Newest entries at the top. One line per change when possible.
 
 ## 2026-08-20
 
+- **Garrison vehicle claim radius**: extracted the hardcoded 30 m watchpost claim radius into new `A3A_fnc_garrisonVehicleRadius` (documents all marker-type rules in one place); `fn_getMarkerForPos` now calls it instead of using a magic number.
 - **Dev tooling**: added `setup_test_env.ps1` (gitignored) — generates `server.cfg`, `start_server.ps1`, `start_client.ps1`, `sync_save.ps1` for a local dedicated-server test loop; updated `.gitignore` to cover all generated files; rewrote `WORK.md` as a concrete reference with resolved paths and full mod list.
 
 ## 2026-08-20

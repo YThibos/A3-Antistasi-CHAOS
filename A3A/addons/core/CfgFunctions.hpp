@@ -150,6 +150,7 @@ class CfgFunctions
             class garbageCleaner {};
             class garbageCleanerTracker {};
             class getAggroLevelString {};
+            class garrisonVehicleRadius {};      // claim-radius rules per marker type — see fn_garrisonVehicleRadius.sqf
             class getMarkerForPos {};
             class getRecentDamage {};
             class getRoleCap {};

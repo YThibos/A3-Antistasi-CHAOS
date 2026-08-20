@@ -4,8 +4,10 @@
 
 params ["_pos"];
 
-// posts always smallest, so check those first
-private _nearPosts = outpostsFIA inAreaArrayIndexes [_pos, 30, 30] apply { outpostsFIA#_x };
+// posts always smallest, so check those first.
+// Claim radius per marker type is documented in A3A_fnc_garrisonVehicleRadius.
+private _wpRadius = if (outpostsFIA isNotEqualTo []) then { [outpostsFIA#0] call A3A_fnc_garrisonVehicleRadius } else { 30 };
+private _nearPosts = outpostsFIA inAreaArrayIndexes [_pos, _wpRadius, _wpRadius] apply { outpostsFIA#_x };
 if (_nearPosts isNotEqualTo []) exitWith { _nearPosts#0 };
 
 private _nearMarkers = markersX inAreaArrayIndexes [_pos, 600, 600] apply { markersX#_x };
