@@ -50,7 +50,14 @@ switch (_mode) do
 		private _moneyCtrl = _display displayCtrl A3A_IDC_TEAMLEADERBUILDERMONEY;
 		_moneyCtrl ctrlSetText format ["%1 €", A3A_building_EHDB # AVAILABLE_MONEY];
 
+		// CHAOS: the military (basetier) catalogue rides on the military construction kit only.
+		// That box is itself gated behind the Construction Yard at purchase time (fn_buyItem),
+		// so no further yard or HQ-proximity check is needed here - owning the box is the licence.
+		private _boxFlags = (A3A_utilityItemHM getOrDefault [typeOf (A3A_building_EHDB # TEAMLEADER_BOX), []]) param [4, []];
 		private _buildableObjects = A3A_buildableObjects;
+		if !("basetier" in _boxFlags) then {
+			_buildableObjects = _buildableObjects select { (_x param [2, ""]) isNotEqualTo "basetier" };
+		};
 
 		private _boxWidth = round ((ctrlPosition _buildControlsGroup # 2) / GRID_W);
 		private _itemsPerRow = floor ((_boxWidth - 6) / 36);			// minimum 32 + 4 grids per tile
@@ -102,29 +109,12 @@ switch (_mode) do
 				_button ctrlEnable false;
 				_button ctrlSetTooltip localize "STR_antistasi_teamleader_placer_cannotBuildHelipad";
 			};
-			// WP4: basetier gate — requires Construction Yard at HQ AND player inside HQ build area
-			if (_ability isEqualTo "basetier") then {
-				private _hqPos = getMarkerPos "Synd_HQ";
-				private _hqRadius = call A3A_fnc_hqBuildRadius;
-				private _playerAtHQ = (player distance2D _hqPos) <= _hqRadius;
-				// Accept either the utility-item variable (legacy) or A3A_building flag (build-system yard)
-				private _yardExists = (nearestObjects [_hqPos, ["a3a_constructionYard"], _hqRadius]) findIf {
-					(_x getVariable ["A3A_isConstructionYard", false]) || (_x getVariable ["A3A_building", false])
-				} != -1;
-				if (!_playerAtHQ || !_yardExists) then {
-					_button ctrlEnable false;
-					_button ctrlSetTooltip localize "STR_A3A_basetier_no_yard";
-				};
-			};
 			// Construction Yard gate — one per campaign, must be inside HQ build area
 			if (_ability isEqualTo "constructionyard") then {
 				private _hqPos = getMarkerPos "Synd_HQ";
 				private _hqRadius = call A3A_fnc_hqBuildRadius;
 				private _playerAtHQ = (player distance2D _hqPos) <= _hqRadius;
-				private _yardExists = (allMissionObjects "a3a_constructionYard") findIf {
-					(_x getVariable ["A3A_isConstructionYard", false]) || (_x getVariable ["A3A_building", false])
-				} != -1;
-				if (_yardExists) then {
+				if (call A3A_fnc_hasConstructionYard) then {
 					_button ctrlEnable false;
 					_button ctrlSetTooltip localize "STR_A3A_constructionyard_duplicate";
 				} else {

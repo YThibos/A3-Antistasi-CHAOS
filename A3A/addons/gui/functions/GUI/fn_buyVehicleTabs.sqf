@@ -364,6 +364,12 @@ if  (_tab in ["other"]) then
         _button setVariable ["className", _className];
         _button setVariable ["model", _model];
         _button ctrlAddEventHandler ["ButtonClick", { closeDialog 2; [player, _this#0 getVariable "className"] call A3A_fnc_buyItem }];
+        // CHAOS: "yardonly" items (military construction kit) need a Construction Yard first.
+        // fn_buyItem re-checks this, the button state is only there to explain why.
+        if ("yardonly" in _flags && {!(call A3A_fnc_hasConstructionYard)}) then {
+            _button ctrlEnable false;
+            _button ctrlSetTooltip localize "STR_A3A_Utility_Items_Yard_Only";
+        };
         _button ctrlCommit 0;
 
         // Object Render

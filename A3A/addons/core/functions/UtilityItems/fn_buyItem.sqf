@@ -81,6 +81,11 @@ if ((_unit == theBoss && server getVariable ["resourcesFIA", 0] < _price) || (_u
     [_titleStr, localize "STR_A3A_Utility_Items_Insufficient_Funds"] call A3A_fnc_customHint;
 };
 
+// yardonly items: purchase requires an existing (or in-progress) Construction Yard.
+if (("yardonly" in _flags) && {!(call A3A_fnc_hasConstructionYard)}) exitWith {
+    [_titleStr, localize "STR_A3A_Utility_Items_Yard_Only"] call A3A_fnc_customHint;
+};
+
 // hqonly items: check for an existing instance NOW — before the garage placer
 // creates its ghost (createVehicleLocal). The ghost appears in allMissionObjects
 // since Arma 1.94, so checking inside _fnc_placed (after the ghost exists) is

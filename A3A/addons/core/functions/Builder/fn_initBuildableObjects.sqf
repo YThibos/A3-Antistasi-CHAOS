@@ -22,10 +22,12 @@ A3A_buildingPriceHM = createHashMapFromArray A3A_buildableObjects; // you can fe
 // WP4b: append global military-tier (basetier) catalogue.
 // Uses vanilla structures available on all maps.
 // Only adds entries not already present in the map's own buildObjects[].
-// The basetier ability gates each entry behind the Construction Yard (see fn_teamLeaderRTSPlacerDialog.sqf).
+// The basetier ability marks the military catalogue: those entries are only listed when the
+// build box in use is the Military construction kit (see fn_teamLeaderRTSPlacerDialog.sqf),
+// and that kit can only be bought once a Construction Yard exists (see fn_buyItem.sqf).
 
-// Construction Yard — one per campaign, must be built inside the HQ radius.
-// Gates the basetier catalogue. "constructionyard" ability is handled specially
+// Construction Yard — one per campaign, must be built inside the HQ radius, and is
+// buildable from any construction kit. "constructionyard" ability is handled specially
 // in fn_teamLeaderRTSPlacerDialog: disabled when a yard already exists or player is outside HQ.
 if !("a3a_constructionYard" in A3A_buildingPriceHM) then {
     A3A_buildableObjects pushBack ["a3a_constructionYard", 5000, "constructionyard"];

@@ -141,9 +141,6 @@
       <Key ID="STR_A3A_constructionyard_not_at_hq">
         <Original>You must be inside the HQ build area (%1 m) to build the Construction Yard.</Original>
       </Key>
-      <Key ID="STR_A3A_basetier_no_yard">
-        <Original>Military-tier structures require a Construction Yard at HQ. You must also be inside the HQ build area.</Original>
-      </Key>
       <Key ID="STR_antistasi_teamleader_placer_e_key">
         <Original>E: Rotate counter-clockwise</Original>
         <German>E: Gegen Uhrzeigersinn rotieren</German>

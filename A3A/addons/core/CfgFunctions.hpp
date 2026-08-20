@@ -157,6 +157,7 @@ class CfgFunctions
             class getVehicleSellPrice {};
             class getVehiclesGroundSupport {};
             class getVehiclesGroundTransport {};
+            class hasConstructionYard {};
             class hasWeapons {};
             class hideCorpses {};
             class hqBuildRadius {};

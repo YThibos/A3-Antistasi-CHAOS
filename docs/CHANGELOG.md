@@ -4,6 +4,15 @@ Newest entries at the top. One line per change when possible.
 
 ---
 
+## 2026-08-20
+
+- Military (basetier) build catalogue moved out of the general build boxes into a new box type: **Military construction kit** (`Land_Pallet_MilBoxes_F`, 3000€, garage "Other" tab). Only that box lists the military-tier structures; the ordinary kits now show the civilian catalogue only.
+- The kit itself is the gate: it can only be bought once a Construction Yard is built (new `"yardonly"` item flag, checked in `fn_buyItem` and greyed out with a tooltip in the garage tab). The per-item "yard + inside HQ radius" gate in the placer dialog is gone, so military structures can now be built wherever the kit is hauled to, not only at HQ.
+- New `A3A_fnc_hasConstructionYard` (core/Base): single source of truth for the yard test, replacing the two copies in `fn_teamLeaderRTSPlacerDialog`.
+- New item flag `"basetier"` on a build box marks it as carrying the military catalogue; the placer dialog filters `A3A_buildableObjects` by the flags of the box in use.
+
+---
+
 ## 2026-08-19
 
 - Fix: vanilla `hint`/`hintSilent` boxes from other mods were wiped every ~15 frames — `fn_customHintRender` was calling `hintSilent ""` on every render tick even when the A3A queue had been empty for a long time. Added `A3A_customHint_WasShowing` flag: the hint box is now cleared only on the single frame the queue drains to empty, leaving external hints untouched thereafter.

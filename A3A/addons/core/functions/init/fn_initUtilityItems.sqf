@@ -34,7 +34,14 @@ private _items = [
     ["Land_PlasticCase_01_large_F", 500, "buildboxmedium", "", ["place", "move", "build"]],
     ["Land_WoodenCrate_01_F", 1500, "buildboxlarge", "", ["place", "move", "build"]],
     ["Land_WoodenCrate_01_stack_x3_F", 2500, "buildboxhuge", "", ["place", "build"]],
-    ["Land_WoodenCrate_01_stack_x5_F", 5000, "buildboxmega", "", ["place", "build"]]
+    ["Land_WoodenCrate_01_stack_x5_F", 5000, "buildboxmega", "", ["place", "build"]],
+    // Military construction kit: the only box that carries the military (basetier) catalogue.
+    // "basetier" is read by the placer dialog to unlock those entries, "yardonly" gates the
+    // purchase behind an existing Construction Yard. No "move": it is freight, like the other
+    // big kits, and has to be driven or flown to where it is needed.
+    // Priced below the mega kit on purpose: the box price is also its build budget, so an
+    // equally-priced military kit would make the mega kit pointless once a yard exists.
+    ["Land_Pallet_MilBoxes_F", 3000, "buildboxmilitary", "", ["place", "build", "basetier", "yardonly"]]
 //    ["Land_Cargo10_cyan_F", 10000, "buildboxenormous", "", ["place", "build", "hugebuild"]]
 
 ];
