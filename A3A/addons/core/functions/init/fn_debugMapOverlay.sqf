@@ -28,7 +28,7 @@ Debug console usage (Escape -> Debug console -> Local Exec):
   [true] call A3A_fnc_refreshInfluenceZones;
 
   // Re-arm the vanilla map attach on the next map open:
-  A3A_influenceMapCtrl = controlNull;
+  uiNamespace setVariable ["A3A_influenceMapCtrl", controlNull];
 
   // Inspect the vanilla map control right now (must be run with the map open):
   private _c = findDisplay 12 displayCtrl 51;
@@ -39,7 +39,7 @@ params [["_forceRecompute", false, [false]]];
 
 if (_forceRecompute) then { [true] call A3A_fnc_refreshInfluenceZones };
 
-private _mapCtrl  = missionNamespace getVariable ["A3A_influenceMapCtrl", controlNull];
+private _mapCtrl  = uiNamespace getVariable ["A3A_influenceMapCtrl", controlNull];
 private _border   = missionNamespace getVariable "A3A_influenceBorder";
 private _shapes   = missionNamespace getVariable "A3A_influenceShapes";
 
@@ -47,7 +47,7 @@ private _lines = [
     "=== INFLUENCE OVERLAY ===",
     format ["Client init done   : %1", !isNil "A3A_influenceOverlayInit"],
     format ["Vanilla map handler: %1", ["not attached", "attached"] select (!isNull _mapCtrl)],
-    format ["Attach retry armed : %1", missionNamespace getVariable ["A3A_influenceAttaching", false]],
+    format ["Attach retry armed : %1", uiNamespace getVariable ["A3A_influenceAttaching", false]],
     format ["Zone data ready    : %1", !isNil "markersX" && {!isNil "sidesX"} && {!isNil "outpostsFIA"}],
     format ["Border segments    : %1", if (isNil "_border") then { "no cache" } else { count _border }],
     format ["Claim areas        : %1", if (isNil "_shapes") then { "no cache" } else { count _shapes }],
