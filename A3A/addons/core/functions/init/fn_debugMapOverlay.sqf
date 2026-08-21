@@ -40,8 +40,24 @@ params [["_forceRecompute", false, [false]]];
 if (_forceRecompute) then { [true] call A3A_fnc_refreshInfluenceZones };
 
 private _mapCtrl  = uiNamespace getVariable ["A3A_influenceMapCtrl", controlNull];
-private _border   = missionNamespace getVariable "A3A_influenceBorder";
+private _sides    = missionNamespace getVariable "A3A_influenceSides";
 private _shapes   = missionNamespace getVariable "A3A_influenceShapes";
+
+private _segTotal = 0;
+private _triTotal = 0;
+private _perSide  = "no cache";
+if (!isNil "_sides") then {
+    private _bits = [];
+    {
+        _x params ["_rgb", "_segments", "_tris"];
+        _segTotal = _segTotal + count _segments;
+        _triTotal = _triTotal + (count _tris) / 3;
+        _bits pushBack format ["[%1,%2,%3] %4 seg / %5 tri",
+            (_rgb # 0) toFixed 2, (_rgb # 1) toFixed 2, (_rgb # 2) toFixed 2,
+            count _segments, (count _tris) / 3];
+    } forEach _sides;
+    _perSide = _bits joinString "  ";
+};
 
 private _lines = [
     "=== INFLUENCE OVERLAY ===",
@@ -49,14 +65,20 @@ private _lines = [
     format ["Vanilla map handler: %1", ["not attached", "attached"] select (!isNull _mapCtrl)],
     format ["Attach retry armed : %1", uiNamespace getVariable ["A3A_influenceAttaching", false]],
     format ["Zone data ready    : %1", !isNil "markersX" && {!isNil "sidesX"} && {!isNil "outpostsFIA"}],
-    format ["Border segments    : %1", if (isNil "_border") then { "no cache" } else { count _border }],
+    format ["Sides drawn        : %1", if (isNil "_sides") then { "no cache" } else { count _sides }],
+    format ["Per side           : %1", _perSide],
+    format ["Border segments    : %1", if (isNil "_sides") then { "no cache" } else { _segTotal }],
+    format ["Fill triangles     : %1", if (isNil "_sides") then { "no cache" } else { _triTotal }],
     format ["Claim areas        : %1", if (isNil "_shapes") then { "no cache" } else { count _shapes }],
     format ["Grid cell size     : %1 m", round (missionNamespace getVariable ["A3A_influenceCellSize", -1])],
     format ["Server revision    : %1", missionNamespace getVariable ["A3A_influenceZonesRev", "not received"]],
     format ["Overlay enabled    : %1", missionNamespace getVariable ["A3A_CHAOS_influenceOverlayEnabled", true]],
     format ["Claim areas shown  : %1", missionNamespace getVariable ["A3A_CHAOS_influenceShowClaimAreas", true]],
-    format ["Colour index       : %1", missionNamespace getVariable ["A3A_CHAOS_influenceColour", 0]],
-    format ["Link distance      : %1 m", missionNamespace getVariable ["A3A_CHAOS_influenceLinkDist", 2000]]
+    format ["Influence range    : %1 m", missionNamespace getVariable ["A3A_CHAOS_influenceRange", 800]],
+    format ["Border thickness   : %1 px", missionNamespace getVariable ["A3A_CHAOS_influenceThickness", 4]],
+    format ["Fill / opacity     : %1 / %2", missionNamespace getVariable ["A3A_CHAOS_influenceFill", false], missionNamespace getVariable ["A3A_CHAOS_influenceFillOpacity", 0.25]],
+    format ["Rebel training     : skillFIA %1 / 20", missionNamespace getVariable ["skillFIA", "unknown"]],
+    format ["War tier / HQ area : %1 / %2 m", missionNamespace getVariable ["tierWar", "unknown"], (markerSize "Synd_HQ") # 0]
 ];
 
 Info_1("%1", _lines joinString " | ");

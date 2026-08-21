@@ -213,6 +213,7 @@ class CfgFunctions
             class unlockStatic {};
             class unlockVehicle {};
             class updateHQMarkerRadius {};
+            class zoneInfluenceRadii {};
         };
 
         class Builder {

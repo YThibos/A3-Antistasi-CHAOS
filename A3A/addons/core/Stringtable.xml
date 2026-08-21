@@ -16850,17 +16850,29 @@
       <Key ID="STR_A3A_CHAOS_mapOverlay_claims_tt">
         <Original>Outline the area around each friendly zone in which a placed static weapon or vehicle is claimed by that zone. Turn off to show only the territory border.</Original>
       </Key>
-      <Key ID="STR_A3A_CHAOS_mapOverlay_linkDist">
-        <Original>Zone link distance (m)</Original>
+      <Key ID="STR_A3A_CHAOS_mapOverlay_range">
+        <Original>Influence range (m)</Original>
       </Key>
-      <Key ID="STR_A3A_CHAOS_mapOverlay_linkDist_tt">
-        <Original>Two friendly zones closer together than this are joined into one area of influence. Larger values produce fewer, wider blobs. Rounded to the nearest 100 m.</Original>
+      <Key ID="STR_A3A_CHAOS_mapOverlay_range_tt">
+        <Original>Reference distance a zone projects its influence, for every side alike. Each zone type scales off it: roadblock 0.75x, watchpost / resource / factory / seaport 1x, outpost 1.25x, town 0.75x-1.5x by size, airfield 1.75x. The rebel HQ uses its build radius instead. Everything is scaled again by rebel AI training, 0.8x at minimum to 1.2x at maximum. Rounded to the nearest 100 m.</Original>
       </Key>
-      <Key ID="STR_A3A_CHAOS_mapOverlay_colour">
-        <Original>Overlay colour</Original>
+      <Key ID="STR_A3A_CHAOS_mapOverlay_thickness">
+        <Original>Border thickness (px)</Original>
       </Key>
-      <Key ID="STR_A3A_CHAOS_mapOverlay_colour_tt">
-        <Original>Colour of the territory border and the zone claim areas.</Original>
+      <Key ID="STR_A3A_CHAOS_mapOverlay_thickness_tt">
+        <Original>Width of the drawn territory border, in screen pixels. 1 is a hairline, which can look dashed when zoomed right in.</Original>
+      </Key>
+      <Key ID="STR_A3A_CHAOS_mapOverlay_fill">
+        <Original>Fill influence zones</Original>
+      </Key>
+      <Key ID="STR_A3A_CHAOS_mapOverlay_fill_tt">
+        <Original>Shade the inside of every side's territory, not just its outline, so the whole front line reads at a glance. Costs some extra work each time the map is recomputed.</Original>
+      </Key>
+      <Key ID="STR_A3A_CHAOS_mapOverlay_fillOpacity">
+        <Original>Fill opacity</Original>
+      </Key>
+      <Key ID="STR_A3A_CHAOS_mapOverlay_fillOpacity_tt">
+        <Original>How solid the territory shading is. Low values keep the terrain readable underneath.</Original>
       </Key>
     </Container>
   </Package>

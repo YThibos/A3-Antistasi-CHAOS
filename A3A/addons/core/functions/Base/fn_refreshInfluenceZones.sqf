@@ -16,7 +16,8 @@ Maintainer: Antistasi CHAOS
 
     The signature is derived from the same public data the overlay is drawn
     from, so it self-heals through anything that has no event of its own -
-    JIP, save/load, a watchpost being demolished, HQ relocation - while the
+    JIP, save/load, a watchpost being demolished, HQ relocation, a rebel AI
+    training upgrade, a war tier change - while the
     server-side revision counter (A3A_influenceZonesRev, bumped from the
     markerChange / RebelControlCreated / HQPlaced events by
     A3A_fnc_initMapOverlay) makes ordinary capture changes show up on the very
@@ -58,7 +59,15 @@ private _sides = [];
 } forEach (markersX + outpostsFIA + _controls);
 
 private _signature = [
-    missionNamespace getVariable ["A3A_CHAOS_influenceLinkDist", 2000],
+    missionNamespace getVariable ["A3A_CHAOS_influenceRange", 800],
+    missionNamespace getVariable ["A3A_CHAOS_influenceFill", false],
+    // Rebel AI training scales every influence radius, and there is no event
+    // for it - fn_FIAskillAdd only publicVariables skillFIA - so the signature
+    // is what catches a training upgrade.
+    missionNamespace getVariable ["skillFIA", 1],
+    // War tier drives A3A_fnc_hqBuildRadius, which is the HQ's influence radius
+    // and, since fn_updateHQMarkerRadius, its claim area too.
+    missionNamespace getVariable ["tierWar", 1],
     missionNamespace getVariable ["A3A_influenceZonesRev", 0],
     getMarkerPos "Synd_HQ",         // HQ is the only marker that moves
     +outpostsFIA,                   // copies: these globals are replaced wholesale on change

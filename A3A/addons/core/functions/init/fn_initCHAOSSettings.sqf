@@ -12,6 +12,9 @@ Public: No
 
 // ---- Map Overlay ----
 // Every setting here is client-side (scope 0): the overlay is a personal view.
+// There is no colour setting: each side is drawn in its own faction colour,
+// read from CfgMarkerColors via colorTeamPlayer / colorOccupants /
+// colorInvaders, so the overlay matches the map's own markers automatically.
 // The onChange callbacks only clear the cache signature, which makes
 // A3A_fnc_refreshInfluenceZones recompute on the next drawn frame. They must
 // not compute anything themselves: CBA fires them during settings init, long
@@ -40,27 +43,52 @@ private _invalidate = { A3A_influenceSignature = nil };
     false
 ] call CBA_fnc_addSetting;
 
+// Reference influence range. Mirrors the upstream "spawn distance" slider
+// idiom (fn_adminTab: 600-1400 in steps of 100) - same step, same top end -
+// because both are "how far does this reach" distances in the same units and
+// players already have a feel for that scale. Per-zone-type multipliers in
+// A3A_fnc_zoneInfluenceRadii scale off this number.
 [
-    "A3A_CHAOS_influenceLinkDist",
+    "A3A_CHAOS_influenceRange",
     "SLIDER",
-    [localize "STR_A3A_CHAOS_mapOverlay_linkDist", localize "STR_A3A_CHAOS_mapOverlay_linkDist_tt"],
+    [localize "STR_A3A_CHAOS_mapOverlay_range", localize "STR_A3A_CHAOS_mapOverlay_range_tt"],
     ["Antistasi CHAOS", "Map Overlay"],
-    [1000, 5000, 2000, 0],    // min, max, default, 0 decimal places
+    [100, 1400, 800, 0],    // min, max, default, 0 decimal places
     0,
     _invalidate,
     false
 ] call CBA_fnc_addSetting;
 
 [
-    "A3A_CHAOS_influenceColour",
-    "LIST",
-    [localize "STR_A3A_CHAOS_mapOverlay_colour", localize "STR_A3A_CHAOS_mapOverlay_colour_tt"],
+    "A3A_CHAOS_influenceThickness",
+    "SLIDER",
+    [localize "STR_A3A_CHAOS_mapOverlay_thickness", localize "STR_A3A_CHAOS_mapOverlay_thickness_tt"],
     ["Antistasi CHAOS", "Map Overlay"],
-    [[0, 1, 2, 3, 4, 5, 6],
-     ["Green", "Cyan", "Yellow", "White", "Blue", "Orange", "Purple"],
-     0],    // default index 0 = Green
+    [1, 8, 4, 0],           // min, max, default, 0 decimal places
     0,
-    {},
+    {},                     // drawn per frame, no recompute needed
+    false
+] call CBA_fnc_addSetting;
+
+[
+    "A3A_CHAOS_influenceFill",
+    "CHECKBOX",
+    [localize "STR_A3A_CHAOS_mapOverlay_fill", localize "STR_A3A_CHAOS_mapOverlay_fill_tt"],
+    ["Antistasi CHAOS", "Map Overlay"],
+    false,   // default: outline only
+    0,
+    _invalidate,            // the fill triangles are only built when this is on
+    false
+] call CBA_fnc_addSetting;
+
+[
+    "A3A_CHAOS_influenceFillOpacity",
+    "SLIDER",
+    [localize "STR_A3A_CHAOS_mapOverlay_fillOpacity", localize "STR_A3A_CHAOS_mapOverlay_fillOpacity_tt"],
+    ["Antistasi CHAOS", "Map Overlay"],
+    [0.02, 0.8, 0.25, 2],   // min, max, default, 2 decimal places
+    0,
+    {},                     // read per frame, no recompute needed
     false
 ] call CBA_fnc_addSetting;
 
