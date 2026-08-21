@@ -2,24 +2,43 @@
 FIX_LINE_NUMBERS()
 /*
 Maintainer: Antistasi CHAOS
-    Computes client-side map overlay data for the influence zone visualiser and
-    stores the results in two globals consumed by A3A_GUI_fnc_mapDrawInfluenceEH:
+    Builds the cached client-side data for the friendly zone-of-influence map
+    overlay ("borders").  Pure computation: it writes two globals and draws
+    nothing.  A3A_GUI_fnc_mapDrawInfluenceEH consumes them.
 
-      A3A_influenceEllipses  – array of [pos, semiA, semiB, angle] for every
-                                teamPlayer-owned capturable zone.
-      A3A_influenceTriangles – array of [[posA, posB, posC], ...] for every
-                                valid compact triangle of friendly zones that is
-                                reachable from HQ through a configurable-distance
-                                proximity graph AND whose interior contains no
-                                enemy marker/city centre.
+      A3A_influenceShapes  - [[pos, semiA, semiB, angle, isRectangle], ...]
+                             The static-attribution ("claim") area of every
+                             teamPlayer-owned capturable zone, in the marker's
+                             own shape so it matches the inArea test used by
+                             A3A_fnc_getMarkerForPos.
+      A3A_influenceBorder  - [[posA, posB], ...] world-space line segments that
+                             together form the outline(s) of friendly territory.
 
-    Triangle validity rules:
-      1. All three nodes are in the BFS-connected component starting at Synd_HQ
-         (edges = pairwise distance ≤ A3A_CHAOS_influenceTriangleDist between
-         teamPlayer zones; snapped to nearest 100 m, default 2 000 m).
-      2. All three pairwise distances ≤ that same threshold (strict all-pairs check).
-      3. No enemy-side capturable marker or city has its centre inside the
-         triangle polygon (checked with inPolygon).
+    ---- How the border is produced ----------------------------------------
+    A scalar influence field is sampled on a regular grid and its zero contour
+    is extracted with marching squares.
+
+      friendly(node) = max over friendly zones of (R - distance)
+      enemy(node)    = max over enemy zones of (Re - distance), clamped at >= 0
+      field(node)    = friendly(node) - enemy(node)
+      border         = the field == 0 contour
+
+    R = (largest marker semi-axis) max (linkDistance * 0.55), so two friendly
+    zones closer together than the configured link distance always merge into
+    one blob, and a lone zone still shows a sensible bubble.  Enemy zones carve
+    the field back, so an enemy town or camp inside friendly territory punches
+    a hole in the border instead of being silently enclosed.
+
+    Marching squares was chosen over a hull or a union-of-discs construction
+    because it needs no geometric predicates: disjoint territory yields several
+    separate outlines, enclosed enemies yield inner outlines, and 0/1/2 zones,
+    collinear zones, duplicated positions and zones on different landmasses all
+    run through the same code path with no special cases.
+
+    Cost is bounded, not capped: the grid cell size grows until both the node
+    count and the rasterisation work fit a fixed budget, so a late-game map with
+    hundreds of owned zones degrades to a coarser outline instead of switching
+    the feature off.
 
 Arguments:
     None
@@ -31,117 +50,251 @@ Scope: Client
 Environment: Unscheduled
 Public: No
 Dependencies:
-    citiesX, airportsX, resourcesX, factories, outposts, seaports, outpostsFIA,
-    sidesX, teamPlayer  (all public globals, available on clients after initZones)
-    A3A_CHAOS_influenceTriangleDist  (CBA setting, default 2000)
+    markersX, outpostsFIA, controlsX, sidesX, teamPlayer   (public globals)
+    A3A_CHAOS_influenceLinkDist                            (CBA setting, default 2000)
+    A3A_fnc_garrisonVehicleRadius
 */
 
-// ── 0. Guard: bail out if the game globals are not yet broadcast ──────────
-// markersX is the last array composed in fn_initZones, so it being non-nil
-// implies airportsX, citiesX, outposts, etc. are all available.
-if (isNil "markersX" || isNil "outpostsFIA" || isNil "sidesX") exitWith {
-    Debug("computeInfluenceZones: zone globals not ready yet — skipping");
-    A3A_influenceEllipses   = [];
-    A3A_influenceTriangles  = [];
+if (isNil "markersX" || {isNil "outpostsFIA"} || {isNil "sidesX"}) exitWith {
+    Debug("computeInfluenceZones: zone globals not ready yet - skipping");
+    A3A_influenceShapes = [];
+    A3A_influenceBorder = [];
 };
 
-// ── 1. Read configurable distance threshold ───────────────────────────────
-// Snap to nearest 100 m; clamp to valid range in case the CBA var is unset
-private _maxDist = (round ((missionNamespace getVariable ["A3A_CHAOS_influenceTriangleDist", 2000]) / 100)) * 100;
-_maxDist = (_maxDist max 1000) min 5000;
+// ---- 0. Tunables --------------------------------------------------------
+private _cellMin     = 60;        // metres, finest grid resolution
+private _gridSpanMax = 180;       // target grid nodes along the longest axis
+private _nodeBudget  = 40000;     // ceiling on total grid nodes
+private _stampBudget = 90000;     // ceiling on node writes during rasterisation
+private _outside     = -1e7;      // field value for nodes no friendly zone reaches
 
-// ── 2. Ellipses: every friendly capturable zone ───────────────────────────
-// markersX = airportsX + resourcesX + factories + outposts + seaports +
-//            ["Synd_HQ"] + citiesX  (sorted by ascending size by initZones)
-// outpostsFIA is separate (watchposts/roadblocks, 30 m fixed radius).
-private _allCapturable = markersX + outpostsFIA;
+// ---- 1. Configured link distance ----------------------------------------
+private _linkDist = missionNamespace getVariable ["A3A_CHAOS_influenceLinkDist", 2000];
+if !(_linkDist isEqualType 0) then { _linkDist = 2000 };
+_linkDist = ((round (_linkDist / 100)) * 100) max 1000 min 5000;
 
-private _ellipses = [];
+// ---- 2. Collect friendly claim shapes, friendly discs and enemy discs ----
+private _controls = missionNamespace getVariable ["controlsX", []];
+private _wpRadius = [] call A3A_fnc_garrisonVehicleRadius;   // fixed watchpost/roadblock claim radius
+private _halo     = _linkDist * 0.55;                        // guarantees overlap at exactly _linkDist
+
+private _allZones = markersX + outpostsFIA + _controls;
+private _postFrom = count markersX;
+private _postTo   = _postFrom + count outpostsFIA;
+
+private _shapes   = [];     // friendly claim areas, drawn as-is
+private _friendly = [];     // [x, y, influenceRadius]
+private _enemy    = [];     // [x, y, pushBackRadius]
+
 {
-    if (sidesX getVariable [_x, sideUnknown] != teamPlayer) then { continue };
-    private _pos = getMarkerPos _x;
-    // Skip markers that don't exist on this client (createMarkerLocal on server only)
+    private _mrk = _x;
+    private _pos = getMarkerPos _mrk;
+    // Markers that were never broadcast to this client report [0,0,0]
     if (_pos isEqualTo [0,0,0]) then { continue };
 
-    private _sA = 0;
-    private _sB = 0;
-    if (_x == "Synd_HQ") then {
-        // Show the HQ build radius (depends on tierWar being broadcast; safe fallback to 75m)
-        _sA = if (!isNil "tierWar") then { call A3A_fnc_hqBuildRadius } else { 75 };
-        _sB = _sA;
-    } else if (_x in outpostsFIA) then {
-        _sA = 30; _sB = 30;    // hardcoded: marker created with createMarkerLocal [30,30]
+    private _side = sidesX getVariable [_mrk, sideUnknown];
+    if (_side isEqualTo sideUnknown) then { continue };
+
+    private _semiA  = 0;
+    private _semiB  = 0;
+    private _isRect = false;
+    if (_forEachIndex >= _postFrom && {_forEachIndex < _postTo}) then {
+        // Watchposts / roadblocks: fixed circular claim radius, marker size is cosmetic
+        _semiA = _wpRadius;
+        _semiB = _wpRadius;
     } else {
-        private _sz = markerSize _x;
-        _sA = _sz # 0;
-        _sB = _sz # 1;
+        private _size = markerSize _mrk;
+        _semiA = _size # 0;
+        _semiB = _size # 1;
+        _isRect = (markerShape _mrk) isEqualTo "RECTANGLE";
     };
-    if (_sA <= 0 or _sB <= 0) then { continue };
+    if (_semiA <= 0 || {_semiB <= 0}) then { continue };
 
-    _ellipses pushBack [_pos, _sA, _sB, markerDir _x];
-} forEach _allCapturable;
+    private _reach = _semiA max _semiB;
+    if (_side isEqualTo teamPlayer) then {
+        _shapes pushBack [_pos, _semiA, _semiB, markerDir _mrk, _isRect];
+        _friendly pushBack [_pos # 0, _pos # 1, _reach max _halo];
+    } else {
+        _enemy pushBack [_pos # 0, _pos # 1, (_reach * 1.5) max 250];
+    };
+} forEach _allZones;
 
-A3A_influenceEllipses = _ellipses;
+A3A_influenceShapes = _shapes;
 
-// ── 3. Triangles: BFS from HQ, then all-pairs triplet search ─────────────
-private _friendlySet = _allCapturable select {
-    sidesX getVariable [_x, sideUnknown] == teamPlayer
-    && { !(getMarkerPos _x isEqualTo [0,0,0]) }
+if (_friendly isEqualTo []) exitWith {
+    A3A_influenceBorder = [];
+    Debug("computeInfluenceZones: no friendly zones - border cleared");
 };
 
-// Safety cap: very marker-dense maps would make O(n³) painful
-if (count _friendlySet > 80) then {
-    Info_1("computeInfluenceZones: %1 friendly zones — triangle pass skipped (cap 80)", count _friendlySet);
-    A3A_influenceTriangles = [];
-} else {
-    if !("Synd_HQ" in _friendlySet) then {
-        // HQ not in friendly set — no connected component to start from
-        A3A_influenceTriangles = [];
-    } else {
-        // BFS from Synd_HQ through ≤ _maxDist edges
-        private _reachable = ["Synd_HQ"];
-        private _processIdx = 0;
-        while { _processIdx < count _reachable } do {
-            private _curPos = getMarkerPos (_reachable # _processIdx);
-            _processIdx = _processIdx + 1;
-            {
-                if (_x in _reachable) then { continue };
-                if (_curPos distance2D (getMarkerPos _x) > _maxDist) then { continue };
-                _reachable pushBack _x;
-            } forEach _friendlySet;
+// ---- 3. Grid geometry ---------------------------------------------------
+private _minX =  1e9;
+private _maxX = -1e9;
+private _minY =  1e9;
+private _maxY = -1e9;
+{
+    _x params ["_px", "_py", "_r"];
+    if (_px - _r < _minX) then { _minX = _px - _r };
+    if (_px + _r > _maxX) then { _maxX = _px + _r };
+    if (_py - _r < _minY) then { _minY = _py - _r };
+    if (_py + _r > _maxY) then { _maxY = _py + _r };
+} forEach _friendly;
+
+private _spanX = _maxX - _minX;
+private _spanY = _maxY - _minY;
+private _cell  = ((_spanX max _spanY) / _gridSpanMax) max _cellMin;
+
+// Grow the cell until both budgets are met. Bounded loop, never infinite.
+private _fits  = false;
+private _tries = 0;
+while { !_fits && {_tries < 20} } do {
+    _tries = _tries + 1;
+    private _nodes  = ((floor (_spanX / _cell)) + 4) * ((floor (_spanY / _cell)) + 4);
+    private _stamps = 0;
+    {
+        private _stampSpan = (2 * ((_x # 2) + 1.5 * _cell) / _cell) + 2;
+        _stamps = _stamps + _stampSpan * _stampSpan;
+    } forEach _friendly;
+    if (_nodes <= _nodeBudget && {_stamps <= _stampBudget}) then { _fits = true } else { _cell = _cell * 1.3 };
+};
+
+private _ox = _minX - _cell;
+private _oy = _minY - _cell;
+private _nx = (floor (_spanX / _cell)) + 4;
+private _ny = (floor (_spanY / _cell)) + 4;
+private _nodeCount = _nx * _ny;
+
+// ---- 4. Rasterise the influence field -----------------------------------
+// Doubling fill: far cheaper than one pushBack per node on a 40k array.
+private _field = [_outside];
+while { count _field < _nodeCount } do { _field append (+_field) };
+_field resize _nodeCount;
+
+private _push = [0];
+while { count _push < _nodeCount } do { _push append (+_push) };
+_push resize _nodeCount;
+private _pushed = [];
+
+// Friendly: stamp (R - distance) out to 1.5 cells past R, so every positive
+// node is surrounded by real (negative) samples and the contour can always
+// interpolate instead of snapping to a node.
+{
+    _x params ["_px", "_py", "_r"];
+    private _cover  = _r + 1.5 * _cell;
+    private _cover2 = _cover * _cover;
+    private _i0 = ((floor ((_px - _cover - _ox) / _cell)) max 0);
+    private _i1 = ((ceil  ((_px + _cover - _ox) / _cell)) min (_nx - 1));
+    private _j0 = ((floor ((_py - _cover - _oy) / _cell)) max 0);
+    private _j1 = ((ceil  ((_py + _cover - _oy) / _cell)) min (_ny - 1));
+    for "_j" from _j0 to _j1 do {
+        private _dy   = (_oy + _j * _cell) - _py;
+        private _base = _j * _nx;
+        for "_i" from _i0 to _i1 do {
+            private _dx = (_ox + _i * _cell) - _px;
+            private _d2 = _dx * _dx + _dy * _dy;
+            if (_d2 <= _cover2) then {
+                private _idx = _base + _i;
+                private _val = _r - sqrt _d2;
+                if (_val > (_field select _idx)) then { _field set [_idx, _val] };
+            };
+        };
+    };
+} forEach _friendly;
+
+// Enemy: stamp (Re - distance) where positive, tracking touched nodes so the
+// subtraction below is applied exactly once per node.
+{
+    _x params ["_px", "_py", "_r"];
+    private _r2 = _r * _r;
+    private _i0 = ((floor ((_px - _r - _ox) / _cell)) max 0);
+    private _i1 = ((ceil  ((_px + _r - _ox) / _cell)) min (_nx - 1));
+    private _j0 = ((floor ((_py - _r - _oy) / _cell)) max 0);
+    private _j1 = ((ceil  ((_py + _r - _oy) / _cell)) min (_ny - 1));
+    for "_j" from _j0 to _j1 do {
+        private _dy   = (_oy + _j * _cell) - _py;
+        private _base = _j * _nx;
+        for "_i" from _i0 to _i1 do {
+            private _dx = (_ox + _i * _cell) - _px;
+            private _d2 = _dx * _dx + _dy * _dy;
+            if (_d2 < _r2) then {
+                private _idx = _base + _i;
+                private _val = _r - sqrt _d2;
+                private _old = _push select _idx;
+                if (_old <= 0) then { _pushed pushBack _idx };
+                if (_val > _old) then { _push set [_idx, _val] };
+            };
+        };
+    };
+} forEach _enemy;
+
+{ _field set [_x, (_field select _x) - (_push select _x)] } forEach _pushed;
+
+// ---- 5. Marching squares over the zero contour --------------------------
+// Corner layout per cell: 00 = bottom-left, 10 = bottom-right,
+// 11 = top-right, 01 = top-left. Edges are bottom, right, top, left.
+private _segments = [];
+private _iLast = _nx - 2;
+private _jLast = _ny - 2;
+
+for "_j" from 0 to _jLast do {
+    private _b0 = _j * _nx;
+    private _b1 = _b0 + _nx;
+    private _y0 = _oy + _j * _cell;
+    private _y1 = _y0 + _cell;
+    for "_i" from 0 to _iLast do {
+        private _v00 = _field select (_b0 + _i);
+        private _v10 = _field select (_b0 + _i + 1);
+        private _v11 = _field select (_b1 + _i + 1);
+        private _v01 = _field select (_b1 + _i);
+        private _s00 = _v00 > 0;
+        private _s10 = _v10 > 0;
+        private _s11 = _v11 > 0;
+        private _s01 = _v01 > 0;
+        // Whole cell on one side of the contour: nothing to draw here.
+        if (_s00 isEqualTo _s10 && {_s00 isEqualTo _s11} && {_s00 isEqualTo _s01}) then { continue };
+
+        private _x0 = _ox + _i * _cell;
+        private _x1 = _x0 + _cell;
+        private _crossings = [];
+        private _edgeB = [];
+        private _edgeR = [];
+        private _edgeT = [];
+        private _edgeL = [];
+
+        if !(_s00 isEqualTo _s10) then {
+            _edgeB = [_x0 + _cell * (_v00 / (_v00 - _v10)), _y0, 0];
+            _crossings pushBack _edgeB;
+        };
+        if !(_s10 isEqualTo _s11) then {
+            _edgeR = [_x1, _y0 + _cell * (_v10 / (_v10 - _v11)), 0];
+            _crossings pushBack _edgeR;
+        };
+        if !(_s01 isEqualTo _s11) then {
+            _edgeT = [_x0 + _cell * (_v01 / (_v01 - _v11)), _y1, 0];
+            _crossings pushBack _edgeT;
+        };
+        if !(_s00 isEqualTo _s01) then {
+            _edgeL = [_x0, _y0 + _cell * (_v00 / (_v00 - _v01)), 0];
+            _crossings pushBack _edgeL;
         };
 
-        // Pre-cache positions to avoid repeated getMarkerPos calls in the triple loop
-        private _posList = _reachable apply { getMarkerPos _x };
-        private _n = count _reachable;
-
-        // Enemy positions for interior check: all capturable non-player zones
-        // Use markersX which already includes cities, airports, resources, etc.
-        private _enemyPosArr = markersX
-            select { sidesX getVariable [_x, sideUnknown] != teamPlayer }
-            apply  { getMarkerPos _x }
-            select { !(_x isEqualTo [0,0,0]) };   // skip markers absent on this client
-
-        private _triangles = [];
-
-        for "_i" from 0 to (_n - 1) do {
-            private _pA = _posList # _i;
-            for "_j" from (_i + 1) to (_n - 1) do {
-                private _pB = _posList # _j;
-                if (_pA distance2D _pB > _maxDist) then { continue };
-                for "_k" from (_j + 1) to (_n - 1) do {
-                    private _pC = _posList # _k;
-                    if (_pA distance2D _pC > _maxDist) then { continue };
-                    if (_pB distance2D _pC > _maxDist) then { continue };
-                    // All 3 pairs within threshold — check interior for enemy content
-                    private _poly = [_pA, _pB, _pC];
-                    if (_enemyPosArr findIf { _x inPolygon _poly } != -1) then { continue };
-                    _triangles pushBack _poly;
+        if (count _crossings == 2) then {
+            _segments pushBack [_crossings # 0, _crossings # 1];
+        } else {
+            if (count _crossings == 4) then {
+                // Saddle. Resolve with the cell average so the majority side stays connected.
+                private _avg = (_v00 + _v10 + _v11 + _v01) / 4;
+                if (_s00 isEqualTo (_avg > 0)) then {
+                    _segments pushBack [_edgeB, _edgeR];
+                    _segments pushBack [_edgeT, _edgeL];
+                } else {
+                    _segments pushBack [_edgeL, _edgeB];
+                    _segments pushBack [_edgeR, _edgeT];
                 };
             };
         };
-
-        A3A_influenceTriangles = _triangles;
-        Debug_3("computeInfluenceZones: dist=%1 m, %2 reachable nodes, %3 valid triangles", _maxDist, _n, count _triangles);
     };
 };
+
+A3A_influenceBorder = _segments;
+A3A_influenceCellSize = _cell;
+Debug_5("computeInfluenceZones: link=%1m cell=%2m grid=%3x%4 segments=%5", _linkDist, round _cell, _nx, _ny, count _segments);

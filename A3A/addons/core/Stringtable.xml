@@ -16837,5 +16837,31 @@
         <Original>No resource crates within %1 m of this depot.</Original>
       </Key>
     </Container>
+    <Container name="A3A_CHAOS_mapOverlay">
+      <Key ID="STR_A3A_CHAOS_mapOverlay_enable">
+        <Original>Show zone of influence overlay</Original>
+      </Key>
+      <Key ID="STR_A3A_CHAOS_mapOverlay_enable_tt">
+        <Original>Draw the border of friendly-held territory on the map, plus the claim area of each owned zone.</Original>
+      </Key>
+      <Key ID="STR_A3A_CHAOS_mapOverlay_claims">
+        <Original>Show zone claim areas</Original>
+      </Key>
+      <Key ID="STR_A3A_CHAOS_mapOverlay_claims_tt">
+        <Original>Outline the area around each friendly zone in which a placed static weapon or vehicle is claimed by that zone. Turn off to show only the territory border.</Original>
+      </Key>
+      <Key ID="STR_A3A_CHAOS_mapOverlay_linkDist">
+        <Original>Zone link distance (m)</Original>
+      </Key>
+      <Key ID="STR_A3A_CHAOS_mapOverlay_linkDist_tt">
+        <Original>Two friendly zones closer together than this are joined into one area of influence. Larger values produce fewer, wider blobs. Rounded to the nearest 100 m.</Original>
+      </Key>
+      <Key ID="STR_A3A_CHAOS_mapOverlay_colour">
+        <Original>Overlay colour</Original>
+      </Key>
+      <Key ID="STR_A3A_CHAOS_mapOverlay_colour_tt">
+        <Original>Colour of the territory border and the zone claim areas.</Original>
+      </Key>
+    </Container>
   </Package>
 </Project>

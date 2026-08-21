@@ -2,32 +2,33 @@
 FIX_LINE_NUMBERS()
 /*
 Maintainer: Antistasi CHAOS
-    One-shot initialiser for the vanilla M-map influence zone overlay.
-    Called (not spawned) from fn_initClient on every interface client.
+    Initialiser for the friendly zone-of-influence map overlay ("borders").
+    Safe to call more than once and safe to call on any machine: each half
+    guards itself, so the dedicated server runs only the server half, a client
+    runs only the client half, and a hosted host runs both.
 
-    IMPORTANT: findDisplay 12 displayCtrl 51 returns controlNull when the
-    vanilla map is closed — the map control is lazily created on first open.
-    Therefore ctrlAddEventHandler is deferred into the CBA PFH and runs on the
-    first frame that visibleMap transitions false→true.  The Y-menu dialog maps
-    (commander, fast-travel, garrison) are also wired in fn_mainDialog /
-    fn_hqDialog so the overlay works there regardless of vanilla map status.
+    Server half - live refresh signal.
+    Registers listeners on the existing markerChange, RebelControlCreated and
+    HQPlaced events (all of which are triggered server-side) and bumps a public
+    revision counter, A3A_influenceZonesRev.  Clients notice the new value on
+    their next staleness check and redraw.  There is deliberately no event for
+    watchpost/roadblock deletion because the codebase does not fire one;
+    A3A_fnc_refreshInfluenceZones catches that case through its signature.
 
-    Flow:
-      1. Registers a publicVariableEventHandler so the server resource-tick
-         broadcast (A3A_influenceZonesDirty = true) triggers a data refresh.
-      2. Installs a 0-delay CBA per-frame handler.
-         Each frame:
-           a. If map just opened: attach the Draw EH on display 12 ctrl 51
-              (valid now that the control exists) and compute zone data.
-           b. If map open and dirty flag set: recompute zone data.
-         No sleep / waitUntil — the EH callback is unscheduled.
+    Client half - attaching the Draw event handler to the vanilla M-map.
+    findDisplay 12 displayCtrl 51 is the vanilla map control, and it is created
+    lazily: it is controlNull while the map is closed, so the handler cannot be
+    attached at init time.  A "Map" mission event handler fires on open/close;
+    on open we arm a short-lived CBA per-frame handler that retries the attach
+    until the control exists, then removes itself.  Nothing per-frame survives
+    once the handler is attached.
 
-    Debug console commands (paste into Escape → Debug console):
-      [] call A3A_fnc_debugMapOverlay;              // full diagnostic report
-      [true] call A3A_fnc_debugMapOverlay;          // + force recompute
-      A3A_influenceZonesDirty = true;               // force refresh on next frame
-      A3A_influenceDrawEH = nil; A3A_influenceOverlayPFH = nil;
-          [] call A3A_fnc_initMapOverlay;            // full reinit
+    The stored control (A3A_influenceMapCtrl) is the attach guard rather than an
+    event-handler id, so if display 12 is ever destroyed and recreated the
+    control goes null and the overlay re-attaches itself on the next map open.
+
+    The Y-menu commander / fast-travel / garrison maps attach the same Draw
+    event handler from fn_mainDialog / fn_hqDialog and need nothing from here.
 
 Arguments:
     None
@@ -35,62 +36,63 @@ Arguments:
 Return Value:
     None
 
-Scope: Client (interface only)
-Environment: Unscheduled (PFH callback is also unscheduled)
+Scope: Server and client (call from both fn_initServer and fn_initClient)
+Environment: Unscheduled
 Public: No
 Dependencies:
-    A3A_fnc_computeInfluenceZones (core)
-    A3A_GUI_fnc_mapDrawInfluenceEH (gui)
-    A3A_influenceZonesDirty (global, written by server resource tick)
+    A3A_GUI_fnc_mapDrawInfluenceEH
+    A3A_Events_fnc_addEventListener
 */
 
-// Guard: safe to call multiple times (e.g., debug reinit)
-if (!isNil "A3A_influenceOverlayPFH") exitWith {};
+// ---- Server half: publish a revision counter on territory changes -------
+if (isServer && {isNil "A3A_influenceZonesRev"}) then {
+    A3A_influenceZonesRev = 0;
+    publicVariable "A3A_influenceZonesRev";
 
-// ── 1. Server dirty-flag PVEH ─────────────────────────────────────────────
-"A3A_influenceZonesDirty" addPublicVariableEventHandler {
-    A3A_influenceZonesDirty = true;
+    private _bump = {
+        A3A_influenceZonesRev = A3A_influenceZonesRev + 1;
+        publicVariable "A3A_influenceZonesRev";
+    };
+    ["markerChange", "A3A_influenceOverlay", _bump] call EFUNC(Events,addEventListener);
+    ["RebelControlCreated", "A3A_influenceOverlay", _bump] call EFUNC(Events,addEventListener);
+    ["HQPlaced", "A3A_influenceOverlay", _bump] call EFUNC(Events,addEventListener);
 };
 
-// ── 2. CBA per-frame handler (0-delay = every frame) ─────────────────────
-// When the map is closed the only cost is two boolean reads per frame.
-// _args = [wasMapOpen]
-A3A_influenceOverlayPFH = [
-    {
-        params ["_args"];
-        private _isOpen = visibleMap;
-        private _wasOpen = _args # 0;
-        _args set [0, _isOpen];
+// ---- Client half --------------------------------------------------------
+if (!hasInterface) exitWith {};
+if (!isNil "A3A_influenceOverlayInit") exitWith {};
+A3A_influenceOverlayInit = true;
 
-        if (!_isOpen) exitWith {};    // map closed — nothing to do this frame
+private _onMapToggle = {
+    params ["_mapIsOpened"];
+    if (!_mapIsOpened) exitWith {};
+    // Already attached to a live control, or an attach attempt is already armed.
+    if !(isNull (missionNamespace getVariable ["A3A_influenceMapCtrl", controlNull])) exitWith {};
+    if (missionNamespace getVariable ["A3A_influenceAttaching", false]) exitWith {};
 
-        // ── Map is open ───────────────────────────────────────────────────
-        if (!_wasOpen) then {
-            // First frame after map opened.
-            // The vanilla map control (display 12, ctrl 51) is now valid;
-            // attach the Draw EH exactly once for the session.
-            if (isNil "A3A_influenceDrawEH") then {
-                private _mapCtrl = findDisplay 12 displayCtrl 51;
-                if (isNull _mapCtrl) then {
-                    Error("initMapOverlay: visibleMap=true but displayCtrl 51 is null — check for mod conflicts");
-                } else {
-                    A3A_influenceDrawEH = _mapCtrl ctrlAddEventHandler
-                        ["Draw", "_this call A3A_GUI_fnc_mapDrawInfluenceEH"];
-                    Info_1("initMapOverlay: vanilla map Draw EH attached (id=%1)", A3A_influenceDrawEH);
-                };
+    // Set the guard before arming, so the handler is correct even if CBA were
+    // to run it immediately.
+    A3A_influenceAttaching = true;
+    [
+        {
+            params ["", "_handle"];
+            private _mapCtrl = findDisplay 12 displayCtrl 51;
+            if (!isNull _mapCtrl) then {
+                _mapCtrl ctrlAddEventHandler ["Draw", "_this call A3A_GUI_fnc_mapDrawInfluenceEH"];
+                A3A_influenceMapCtrl = _mapCtrl;
+                Info("initMapOverlay: influence overlay attached to the vanilla map");
             };
-            // Compute fresh data on every map-open
-            A3A_influenceZonesDirty = false;
-            [] call A3A_fnc_computeInfluenceZones;
-        } else {
-            // Map was already open — only recompute if resource tick flagged stale data
-            if (missionNamespace getVariable ["A3A_influenceZonesDirty", false]) then {
-                A3A_influenceZonesDirty = false;
-                [] call A3A_fnc_computeInfluenceZones;
+            // Stop retrying once attached, or once the player closed the map again.
+            if (!isNull _mapCtrl || {!visibleMap}) then {
+                A3A_influenceAttaching = false;
+                [_handle] call CBA_fnc_removePerFrameHandler;
             };
-        };
-    },
-    0,          // 0-delay: every frame (cost = 2 bool reads when map is closed)
-    [[false]]   // args: [wasMapOpen]
-] call CBA_fnc_addPerFrameHandler;
+        },
+        0
+    ] call CBA_fnc_addPerFrameHandler;
+};
 
+addMissionEventHandler ["Map", _onMapToggle];
+
+// Cover the case where the map is already open when this runs.
+if (visibleMap) then { [true] call _onMapToggle };

@@ -133,6 +133,7 @@ class CfgFunctions
             class citySideChange {};
             class citySupportChange {};
             class commsMP {};
+            class computeInfluenceZones {};
             class considerCounterattack {};
             class createBreachChargeText {};
             class createOutpostsFIA {};
@@ -149,8 +150,8 @@ class CfgFunctions
             class fogCheck {};
             class garbageCleaner {};
             class garbageCleanerTracker {};
+            class garrisonVehicleRadius {};
             class getAggroLevelString {};
-            class garrisonVehicleRadius {};      // claim-radius rules per marker type — see fn_garrisonVehicleRadius.sqf
             class getMarkerForPos {};
             class getRecentDamage {};
             class getRoleCap {};
@@ -190,6 +191,7 @@ class CfgFunctions
             class rebuildAssets {};
             class rebuildRadioTower {};
             class relocateHQObjects {};
+            class refreshInfluenceZones {};
             class repairRuinedBuilding {};
             class resourceCheckSkipTime {};
             class resourcesFIA {};
@@ -210,7 +212,6 @@ class CfgFunctions
             class translateVariable {};
             class unlockStatic {};
             class unlockVehicle {};
-            class computeInfluenceZones {};
         };
 
         class Builder {
@@ -409,6 +410,7 @@ class CfgFunctions
             class checkCampaignEnd {};
             class clientIdleChecker {};
             class credits {};
+            class debugMapOverlay {};
             class getMarkerPrefix {};
             class initACE {};
             class initACEUnconsciousHandler {};
@@ -416,6 +418,7 @@ class CfgFunctions
             class initCivSpawnPlaces {};
             class initCivSpawnPlaceStats {};
             class initGarrisons {};
+            class initMapOverlay {};
             class initMarkerTypes {};
             class initPoliceStations {};
             class initCHAOSSettings {};                   // CHAOS CBA Addon Options — called via Extended_PreInit_EventHandlers in config.cpp
@@ -435,7 +438,6 @@ class CfgFunctions
             class playerMarkers {};
             class prepareMarkerArrays {};
             class resourcecheck {};
-            class initMapOverlay {};
             class tags {};
             class uniqueID {};
         };

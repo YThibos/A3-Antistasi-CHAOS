@@ -11,54 +11,55 @@ Public: No
 */
 
 // ---- Map Overlay ----
+// Every setting here is client-side (scope 0): the overlay is a personal view.
+// The onChange callbacks only clear the cache signature, which makes
+// A3A_fnc_refreshInfluenceZones recompute on the next drawn frame. They must
+// not compute anything themselves: CBA fires them during settings init, long
+// before the zone globals exist.
+private _invalidate = { A3A_influenceSignature = nil };
+
 [
     "A3A_CHAOS_influenceOverlayEnabled",
     "CHECKBOX",
-    [
-        "Show influence zone overlay",
-        "Draw transparent green circles (static-attribution radius) and filled triangles (zone-of-influence clusters) on the vanilla M-map for all friendly capturable positions."
-    ],
+    [localize "STR_A3A_CHAOS_mapOverlay_enable", localize "STR_A3A_CHAOS_mapOverlay_enable_tt"],
     ["Antistasi CHAOS", "Map Overlay"],
     true,    // default: enabled
-    0,       // client-side — each player controls their own view
+    0,
     {},
     false
 ] call CBA_fnc_addSetting;
 
 [
-    "A3A_CHAOS_influenceTriangleDist",
+    "A3A_CHAOS_influenceShowClaimAreas",
+    "CHECKBOX",
+    [localize "STR_A3A_CHAOS_mapOverlay_claims", localize "STR_A3A_CHAOS_mapOverlay_claims_tt"],
+    ["Antistasi CHAOS", "Map Overlay"],
+    true,    // default: enabled
+    0,
+    {},
+    false
+] call CBA_fnc_addSetting;
+
+[
+    "A3A_CHAOS_influenceLinkDist",
     "SLIDER",
-    [
-        "Triangle zone max distance (m)",
-        "Maximum distance between any two friendly zones to be considered connected for the triangle-of-influence algorithm. Applied rounded to the nearest 100 m. Affects both the BFS reachability graph and the per-pair triangle check."
-    ],
+    [localize "STR_A3A_CHAOS_mapOverlay_linkDist", localize "STR_A3A_CHAOS_mapOverlay_linkDist_tt"],
     ["Antistasi CHAOS", "Map Overlay"],
     [1000, 5000, 2000, 0],    // min, max, default, 0 decimal places
-    0,       // client-side
-    {
-        // If the map is currently open recompute immediately, otherwise mark dirty
-        // so the overlay PFH picks it up on the next map-open.
-        if (visibleMap && { !isNil "markersX" }) then {
-            [] call A3A_fnc_computeInfluenceZones;
-        } else {
-            A3A_influenceZonesDirty = true;
-        };
-    },
+    0,
+    _invalidate,
     false
 ] call CBA_fnc_addSetting;
 
 [
     "A3A_CHAOS_influenceColour",
     "LIST",
-    [
-        "Overlay colour",
-        "Colour of the influence zone ellipses and filled triangle polygons drawn on the map."
-    ],
+    [localize "STR_A3A_CHAOS_mapOverlay_colour", localize "STR_A3A_CHAOS_mapOverlay_colour_tt"],
     ["Antistasi CHAOS", "Map Overlay"],
     [[0, 1, 2, 3, 4, 5, 6],
-     ["Green (default)", "Cyan", "Yellow", "White", "Blue", "Orange", "Purple"],
+     ["Green", "Cyan", "Yellow", "White", "Blue", "Orange", "Purple"],
      0],    // default index 0 = Green
-    0,      // client-side
+    0,
     {},
     false
 ] call CBA_fnc_addSetting;

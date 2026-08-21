@@ -98,7 +98,7 @@ while {true} do
 	private _missionChance = 5 * A3A_activePlayerCount;
 	if ((!bigAttackInProgress) and (random 100 < _missionChance)) then {["ANY"] spawn A3A_Tasks_fnc_requestTask};
 
-	// Enemies forget about vehicle threat eventually
+	// Enemies forget about vehicle threat eventually 
 	{
 		private _killThreat = _x getVariable "A3A_killThreat";
 		if (_killThreat < 20) then { _x setVariable ["A3A_killThreat", nil]; continue };
@@ -152,8 +152,4 @@ while {true} do
 	};
 
 	sleep 4;
-
-	// Signal clients to refresh the map influence zone overlay
-	A3A_influenceZonesDirty = true;
-	publicVariable "A3A_influenceZonesDirty";
 };

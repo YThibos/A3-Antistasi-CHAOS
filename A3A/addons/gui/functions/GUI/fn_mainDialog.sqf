@@ -109,9 +109,9 @@ switch (_mode) do
         // Outposts
         private _commanderOutpostsEH = _commanderMap ctrlAddEventHandler ["Draw","_this call A3A_GUI_fnc_mapDrawOutpostsEH"];
         Debug_1("Adding outposts Draw EH to commander map: %1", _commanderOutpostsEH);
-        // Influence zone overlay (CHAOS)
+        // Zone of influence overlay (CHAOS)
         private _commanderInfluenceEH = _commanderMap ctrlAddEventHandler ["Draw","_this call A3A_GUI_fnc_mapDrawInfluenceEH"];
-        Debug_1("Adding influence zone overlay Draw EH to commander map: %1", _commanderInfluenceEH);
+        Debug_1("Adding influence overlay Draw EH to commander map: %1", _commanderInfluenceEH);
         // User Markers
         private _commanderUserMarkersEH = _commanderMap ctrlAddEventHandler ["Draw","_this call A3A_GUI_fnc_mapDrawUserMarkersEH"];
         Debug_1("Adding user markers Draw EH to commander map: %1", _commanderUserMarkersEH);
@@ -124,9 +124,9 @@ switch (_mode) do
         // Outposts
         private _fastTravelOutpostsEH = _fastTravelMap ctrlAddEventHandler ["Draw","_this call A3A_GUI_fnc_mapDrawOutpostsEH"];
         Debug_1("Adding outposts Draw EH to Fast Travel map: %1", _fastTravelOutpostsEH);
-        // Influence zone overlay (CHAOS)
+        // Zone of influence overlay (CHAOS)
         private _fastTravelInfluenceEH = _fastTravelMap ctrlAddEventHandler ["Draw","_this call A3A_GUI_fnc_mapDrawInfluenceEH"];
-        Debug_1("Adding influence zone overlay Draw EH to Fast Travel map: %1", _fastTravelInfluenceEH);
+        Debug_1("Adding influence overlay Draw EH to Fast Travel map: %1", _fastTravelInfluenceEH);
         // User Markers
         private _commanderUserMarkersEH = _fastTravelMap ctrlAddEventHandler ["Draw","_this call A3A_GUI_fnc_mapDrawUserMarkersEH"];
         Debug_1("Adding user markers Draw EH to Fast Travel map: %1", _commanderUserMarkersEH);
@@ -304,9 +304,9 @@ switch (_mode) do
             case ("admin"):
             {
                 ["update"] call FUNC(adminTab);
-                private _updateAdminTab = [] spawn
+                private _updateAdminTab = [] spawn 
                 {
-                    while {true} do
+                    while {true} do 
                     {
                         ["updateStatPanel"] call FUNC(adminTab);
                         sleep 1;

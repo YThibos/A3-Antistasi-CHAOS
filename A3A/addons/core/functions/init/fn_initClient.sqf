@@ -151,8 +151,7 @@ if (isMultiplayer && {playerMarkersEnabled}) then {
     [] spawn A3A_fnc_playerMarkers;
 };
 
-// Vanilla M-map influence zone overlay (green ellipses + triangles)
-// call (not spawn) — the function registers a CBA PFH and returns immediately
+// Zone of influence map overlay (CHAOS). Registers a Map mission EH and returns.
 [] call A3A_fnc_initMapOverlay;
 
 [player] spawn A3A_fnc_initRevive;		// with ACE medical, only used for helmet popping & TK checks

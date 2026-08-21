@@ -1,68 +1,58 @@
 #include "..\..\script_component.hpp"
 FIX_LINE_NUMBERS()
 /*
-Maintainer: John Jordan
+Maintainer: Antistasi CHAOS
     Single source of truth for the radius within which a manually placed vehicle
     or static weapon is "claimed" by a garrison marker.
 
-    ── Background ──────────────────────────────────────────────────────────────
+    ---- Background ------------------------------------------------------------
     When a player places a static weapon (or uses "Add to garrison" in the context
     menu), fn_getMarkerForPos decides which garrison owns the vehicle based on its
-    position.  The rules differ by marker type:
+    position. The rules differ by marker type:
 
-    ┌──────────────────────────────────────────────────────────────────────────┐
-    │ Marker type            │ Claim rule          │ Radius                   │
-    ├────────────────────────┼─────────────────────┼──────────────────────────┤
-    │ Watchpost / Roadblock  │ Fixed square        │ 30 m from marker centre  │
-    │ (outpostsFIA)          │ (both axes = 30 m)  │ in each direction        │
-    ├────────────────────────┼─────────────────────┼──────────────────────────┤
-    │ All other markers      │ Marker ellipse      │ Varies — typically       │
-    │ (outposts, airports,   │ (inArea check)      │ 50–600 m depending on    │
-    │ factories, seaports,   │                     │ how the marker is drawn  │
-    │ rebel HQ, cities)      │                     │ for the mission/map      │
-    └──────────────────────────────────────────────────────────────────────────┘
+      Watchpost / roadblock (outpostsFIA)
+          Fixed 30 m circle around the marker centre. fn_getMarkerForPos uses
+          outpostsFIA inAreaArrayIndexes [_pos, 30, 30], and inAreaArrayIndexes
+          treats the area as an ellipse unless its isRectangle argument is set,
+          which it is not. That matches the marker itself, created as an ELLIPSE
+          of size [30, 30] in fn_createRebelControl.
 
-    Watchpost markers are always created with markerSize [30, 30] (see
-    fn_createRebelControl), so the 30 m claim square exactly matches the
-    marker's visual footprint.
-
-    For all other markers there is no fixed cap: place the static anywhere inside
-    the marker ellipse and it will be claimed.  The return value for non-watchpost
-    markers is the marker's maximum semi-axis (the largest single-direction
-    distance from the centre at which you can still be inside the ellipse along
-    that axis); think of it as "the marker's radius" for quick sanity-checking.
-
-    ── Usage in fn_getMarkerForPos ─────────────────────────────────────────────
-    The watchpost constant is used as:
-        outpostsFIA inAreaArrayIndexes [_pos, _wpRadius, _wpRadius]
-    Change it here and it takes effect everywhere.
+      Everything else (outposts, airports, factories, resources, seaports,
+      rebel HQ, cities)
+          No fixed radius at all: the real test is _pos inArea _marker, which
+          honours the marker's own shape and rotation. Most Antistasi zone
+          markers are RECTANGLE, so no single number describes them. The value
+          returned here for those markers is the largest semi-axis, useful only
+          as a coarse "how big is this zone" figure for range checks and
+          overlays - never as a substitute for inArea.
 
 Arguments:
-    <STRING>  Marker name.  Pass any outpostsFIA marker (they all share the same
-              fixed radius) or any other garrison marker name.
+    0: <STRING> Marker name. Omit (or pass "") to ask for the watchpost/roadblock
+       constant without naming a specific post. (optional, default "")
 
 Return Value:
-    <NUMBER>  Claim radius in metres.
-              Watchpost/roadblock : always 30.
-              Other markers       : max(markerSize#0, markerSize#1)
-                                    — the marker's own maximum semi-axis.
+    <NUMBER> Claim radius in metres.
+             Watchpost / roadblock, or no marker given : always 30.
+             Any other marker                          : max(markerSize#0, markerSize#1)
 
-Scope: Server / Any
+Scope: Anywhere
 Environment: Unscheduled
 Public: No
+
+Example:
+    private _wpRadius = [] call A3A_fnc_garrisonVehicleRadius;
+    private _zoneReach = ["Synd_HQ"] call A3A_fnc_garrisonVehicleRadius;
 */
 
 params [["_marker", "", [""]]];
 
-// ── Watchpost / roadblock (outpostsFIA) ──────────────────────────────────────
-// Fixed 30 m square regardless of what the marker visually looks like.
-// This constant is also the exact size set when the marker is created
-// (fn_createRebelControl: _marker setMarkerSizeLocal [30,30]).
-if (_marker in outpostsFIA) exitWith { 30 };
+// ---- Watchpost / roadblock (outpostsFIA) -----------------------------------
+// Fixed 30 m circle. This constant is also the exact size the marker is created
+// with (fn_createRebelControl: _marker setMarkerSizeLocal [30,30]).
+if (_marker isEqualTo "") exitWith { 30 };
+if (!isNil "outpostsFIA" && {_marker in outpostsFIA}) exitWith { 30 };
 
-// ── All other garrison markers ────────────────────────────────────────────────
-// No hard cap: the vehicle must simply be inside the marker's own ellipse.
-// Return the maximum semi-axis as a usable "radius" for callers that need a number.
-private _sz = markerSize _marker;
-(_sz select 0) max (_sz select 1)
-
+// ---- All other garrison markers --------------------------------------------
+// Coarse extent only - the authoritative test for these is inArea.
+private _size = markerSize _marker;
+(_size # 0) max (_size # 1)

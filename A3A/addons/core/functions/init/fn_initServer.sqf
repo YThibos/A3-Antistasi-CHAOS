@@ -428,4 +428,7 @@ A3A_garrisonOps = [];
     };
 };
 
+// Zone of influence map overlay (CHAOS): server half publishes the refresh signal
+[] call A3A_fnc_initMapOverlay;
+
 Info("initServer completed");
