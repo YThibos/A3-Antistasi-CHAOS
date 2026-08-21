@@ -4,6 +4,10 @@ Newest entries at the top. One line per change when possible.
 
 ---
 
+## 2026-08-21
+
+- **Dev tooling**: added `docs/token-usage-2026-W34.md` — measured breakdown of this week's agent token spend (cost anatomy, session-start floor, rate-limit stalls) with ranked suggestions for cutting it. Documentation only; no game code touched.
+
 ## 2026-08-20
 
 - **Garrison vehicle claim radius**: extracted the hardcoded 30 m watchpost claim radius into new `A3A_fnc_garrisonVehicleRadius` (documents all marker-type rules in one place); `fn_getMarkerForPos` now calls it instead of using a magic number.
