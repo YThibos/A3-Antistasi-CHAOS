@@ -47,22 +47,20 @@ Maintainer: Antistasi CHAOS
     area and the "Synd_HQ" claim ring (fn_updateHQMarkerRadius), both of which
     still grow with the war tier. Only the influence field's radius changed.
 
-    Training scaling: every radius is multiplied by the caller's scale factor,
-    which fn_computeInfluenceZones derives from skillFIA (rebel AI training,
-    raised in HQ Management): 0.8x at skillFIA 1 rising to 1.2x at skillFIA 20.
-    It is applied to every side, not only the rebels, so the per-type symmetry
-    above is preserved - better-trained rebels widen the whole picture rather
-    than getting a private bonus. (Captain decision: making it rebel-only is a
-    one-line change here.)
+    Training scaling is NOT applied here. This table is a pure per-type lookup
+    and knows nothing about ownership; fn_computeInfluenceZones knows each
+    zone's side and multiplies the Guerilla side's radii - and only those - by
+    the training factor it derives from skillFIA. That is deliberate: skillFIA
+    is the player faction's own training level, so scaling every side by it let
+    the player's own investment inflate enemy reach as well.
 
 Arguments:
     0: <NUMBER> Reference range in metres (the "Influence range" setting).
-    1: <NUMBER> Overall scale factor, e.g. the training factor. (optional, default 1)
 
 Return Value:
     <HASHMAP> marker name -> influence radius in metres. Markers that are not
               in any known type list are absent; callers must supply the
-              default themselves (reference range x scale).
+              default themselves (the reference range, i.e. a 1.00x multiplier).
 
 Scope: Client
 Environment: Unscheduled
@@ -72,14 +70,14 @@ Dependencies:
     outpostsFIA, controlsX  (public globals)
 */
 
-params [["_refRange", 800, [0]], ["_scale", 1, [0]]];
+params [["_refRange", 800, [0]]];
 
 private _radii = createHashMap;
 
 // One helper, so the table below reads as a table.
 private _fnc_set = {
     params ["_markers", "_mult"];
-    private _r = _refRange * _mult * _scale;
+    private _r = _refRange * _mult;
     { _radii set [_x, _r] } forEach _markers;
 };
 
@@ -102,7 +100,7 @@ private _citySlope = (_cityMultMax - _cityMultMin) / (_citySizeMax - _citySizeMi
     private _semi = (_size # 0) max (_size # 1);
     private _mult = _cityMultMin + (_semi - _citySizeMin) * _citySlope;
     _mult = (_mult max _cityMultMin) min _cityMultMax;
-    _radii set [_x, _refRange * _mult * _scale];
+    _radii set [_x, _refRange * _mult];
 } forEach (missionNamespace getVariable ["citiesX", []]);
 
 // Rebel watchposts / roadblocks and enemy camps / roadblocks. Neither list
@@ -111,7 +109,7 @@ private _citySlope = (_cityMultMax - _cityMultMin) / (_citySizeMax - _citySizeMi
 {
     private _pos = getMarkerPos _x;
     private _mult = [1.00, 0.75] select (isOnRoad _pos);
-    _radii set [_x, _refRange * _mult * _scale];
+    _radii set [_x, _refRange * _mult];
 } forEach ((missionNamespace getVariable ["outpostsFIA", []]) + (missionNamespace getVariable ["controlsX", []]));
 
 // Rebel HQ: pushes like an outpost. Its build/claim radius is a different

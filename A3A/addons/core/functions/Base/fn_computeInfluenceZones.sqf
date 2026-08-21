@@ -34,8 +34,17 @@ Maintainer: Antistasi CHAOS
 
     R comes from A3A_fnc_zoneInfluenceRadii, which scales the configured
     reference range ("Influence range") by a per-TYPE multiplier - identical
-    for every side, so an enemy outpost pushes exactly as hard as a rebel one -
-    and by a training factor derived from skillFIA.
+    for every side, so an enemy outpost pushes exactly as hard as a rebel one.
+
+    On top of that, and ONLY for the Guerilla side (teamPlayer), the radius is
+    multiplied by a training factor derived from skillFIA: 0.8x at skillFIA 1
+    rising to 1.2x at skillFIA 20. skillFIA is the player faction's own
+    training level, so it is the player faction's radii it scales; it used to
+    be applied to all three sides, which meant investing in rebel training
+    silently widened the Occupants' and Invaders' reach too. There is no
+    equivalent enemy variable wired in here - enemy AI skill does scale with
+    tierWar (fn_NATOinit), but that is unit skill, not territorial reach, and
+    hooking it up is a separate balance decision.
 
     A side's influence at a point is the SUM of its zones' contributions, with
     a ceiling:
@@ -122,13 +131,14 @@ private _doFill = missionNamespace getVariable ["A3A_CHAOS_influenceFill", false
 if !(_doFill isEqualType false) then { _doFill = false };
 
 // Rebel AI training, raised in HQ Management. fn_FIAskillAdd starts it at 1 and
-// refuses past 20, and the HQ dialog shows it as "n / 20".
+// refuses past 20, and the HQ dialog shows it as "n / 20". Applied to the
+// Guerilla side's zones only, in the collection loop below.
 private _skill = missionNamespace getVariable ["skillFIA", 1];
 if !(_skill isEqualType 0) then { _skill = 1 };
 private _trainScale = 0.8 + 0.4 * (((_skill max 1) min 20) - 1) / 19;
 
-private _radii = [_refRange, _trainScale] call A3A_fnc_zoneInfluenceRadii;
-private _defaultRadius = _refRange * _trainScale;
+private _radii = [_refRange] call A3A_fnc_zoneInfluenceRadii;
+private _defaultRadius = _refRange;
 
 // ---- 2. Collect zones per side and friendly claim shapes ----------------
 private _controls = missionNamespace getVariable ["controlsX", []];
@@ -152,6 +162,8 @@ private _sideZones = [];     // parallel: [[x, y, radius], ...] per side
     if (_side isEqualTo sideUnknown) then { continue };
 
     private _radius = _radii getOrDefault [_mrk, _defaultRadius];
+    // Rebel training widens the Guerilla side's reach and nobody else's.
+    if (_side isEqualTo teamPlayer) then { _radius = _radius * _trainScale };
     if (_radius <= 0) then { continue };
 
     private _idx = _sideList find _side;
