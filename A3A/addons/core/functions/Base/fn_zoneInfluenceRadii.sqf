@@ -17,7 +17,7 @@ Maintainer: Antistasi CHAOS
     ==    Outpost                  1.25     1000 m                            ==
     ==    City / town              0.75-1.50 by marker size, see below        ==
     ==    Airfield                 1.75     1400 m                            ==
-    ==    Rebel HQ                 not a multiplier - see below               ==
+    ==    Rebel HQ                 1.25     1000 m (an outpost's reach)        ==
     ==    Anything not listed      1.00      800 m                            ==
     ==                                                                        ==
     ============================================================================
@@ -37,12 +37,15 @@ Maintainer: Antistasi CHAOS
     airfield. Using the marker rather than a population number keeps it
     map-agnostic: any world's towns are sized by the same code.
 
-    The rebel HQ uses A3A_fnc_hqBuildRadius directly rather than a multiplier,
-    so its reach is exactly the area it can build and garrison, and grows with
-    the war tier (75 m -> 210 m). NOTE: that is far smaller than any other
-    zone's reach and smaller than one grid cell on a large map, so
-    fn_computeInfluenceZones floors every radius at 1.5 grid cells to stop the
-    HQ disappearing entirely on an early-campaign map. See the report.
+    The rebel HQ takes an outpost's 1.25x, exactly like any other zone type.
+    It used to read A3A_fnc_hqBuildRadius instead, so that its influence was
+    precisely the area it can build and garrison - but that is 75 m at war tier
+    1 and 210 m at war tier 10, well under one grid cell on an Altis-sized map.
+    Measured, it produced zero contour segments early game: the 1.5-cell radius
+    floor in fn_computeInfluenceZones, not this table, was setting the HQ's
+    reach. A3A_fnc_hqBuildRadius is untouched and still drives the HQ BUILD
+    area and the "Synd_HQ" claim ring (fn_updateHQMarkerRadius), both of which
+    still grow with the war tier. Only the influence field's radius changed.
 
     Training scaling: every radius is multiplied by the caller's scale factor,
     which fn_computeInfluenceZones derives from skillFIA (rebel AI training,
@@ -67,7 +70,6 @@ Public: No
 Dependencies:
     airportsX, citiesX, outposts, seaports, resourcesX, factories,
     outpostsFIA, controlsX  (public globals)
-    A3A_fnc_hqBuildRadius
 */
 
 params [["_refRange", 800, [0]], ["_scale", 1, [0]]];
@@ -112,9 +114,8 @@ private _citySlope = (_cityMultMax - _cityMultMin) / (_citySizeMax - _citySizeMi
     _radii set [_x, _refRange * _mult * _scale];
 } forEach ((missionNamespace getVariable ["outpostsFIA", []]) + (missionNamespace getVariable ["controlsX", []]));
 
-// Rebel HQ: the area it can build and garrison, which grows with the war tier.
-if (!isNil "tierWar") then {
-    _radii set ["Synd_HQ", (call A3A_fnc_hqBuildRadius) * _scale];
-};
+// Rebel HQ: pushes like an outpost. Its build/claim radius is a different
+// number for a different job (see A3A_fnc_hqBuildRadius) and is not used here.
+[["Synd_HQ"], 1.25] call _fnc_set;
 
 _radii

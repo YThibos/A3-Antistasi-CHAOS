@@ -65,8 +65,9 @@ private _signature = [
     // for it - fn_FIAskillAdd only publicVariables skillFIA - so the signature
     // is what catches a training upgrade.
     missionNamespace getVariable ["skillFIA", 1],
-    // War tier drives A3A_fnc_hqBuildRadius, which is the HQ's influence radius
-    // and, since fn_updateHQMarkerRadius, its claim area too.
+    // War tier drives A3A_fnc_hqBuildRadius and therefore the size of the
+    // "Synd_HQ" marker (fn_updateHQMarkerRadius), which is the HQ's drawn claim
+    // area. It no longer sets the HQ's influence radius - that is a flat 1.25x.
     missionNamespace getVariable ["tierWar", 1],
     missionNamespace getVariable ["A3A_influenceZonesRev", 0],
     getMarkerPos "Synd_HQ",         // HQ is the only marker that moves
