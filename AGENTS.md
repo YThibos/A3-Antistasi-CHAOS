@@ -125,11 +125,24 @@ specific version.
     reference arrives as `objNull` on the server — do not rely on it for lookup.
   - `BuildAndRessources_fnc_transferDepotToCrate [_depot, _crate]` — the canonical server-side
     transfer call; skips caller-distance check when called directly (not via remoteExec).
-- 2026-08-20: **Vanilla M-map Draw EH** — `findDisplay 12 displayCtrl 51` is the correct map
-  control (confirmed by Arma 3 community + codebase IDC 51 usage), BUT the control is lazily
-  created and returns `controlNull` when the vanilla map is closed. Always attach a Draw EH from
-  within code that runs while `visibleMap == true`, not at init time. The CBA 0-delay PFH is the
-  right place: check `!_wasOpen && _isOpen` to catch the first open frame.
+- 2026-08-20: **Vanilla M-map Draw EH** — `findDisplay 12 displayCtrl 51` is the vanilla map
+  control. This is general Arma 3 knowledge, not something this codebase corroborates: the only
+  `idc = 51` in the repo is `A3A/addons/gui/dialogues/controls.hpp`, which is A3A's *own* dialog
+  map class and says nothing about display 12. The control is created lazily and returns
+  `controlNull` while the map is closed, so a Draw EH cannot be attached at init time. Use the
+  `"Map"` mission event handler to learn when the map opens, and retry the attach from a
+  short-lived CBA per-frame handler that removes itself once the control resolves — that avoids
+  leaving a permanent every-frame handler on every client. Store the *control* rather than the
+  event-handler id as the attach guard, so a destroyed and recreated display re-attaches itself.
+- 2026-08-21: **`visibleMap` is only true for the vanilla map.** A Draw EH shared between the
+  vanilla map and the Y-menu dialog map controls must not guard on `visibleMap`, or it silently
+  draws nothing in every dialog. No other Draw EH in this repo checks it. A Draw EH only fires
+  while its control renders, so the guard buys nothing anyway.
+- 2026-08-21: **CBA per-frame handler args are passed whole.** `[{...}, 0, _args] call
+  CBA_fnc_addPerFrameHandler` invokes the callback with `_this = [_args, _handle]`, so
+  `params ["_args"]` yields exactly what was passed. Passing `[[false]]` and then reading
+  `_args # 0` yields the inner array, not the boolean — a type error that only shows up on the
+  frames where the value is actually read.
 - 2026-08-20: **`Tools/StreetArtist`** is a standalone navGrid-generation mission tool (separate
   Arma 3 mission, not part of the mod). Its `findDisplay 12 displayCtrl 51` usage is inside an
   `EachFrame` EH that already guards `!visibleMap`, making it useless as a general reference for

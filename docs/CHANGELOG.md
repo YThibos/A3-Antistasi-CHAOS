@@ -4,14 +4,25 @@ Newest entries at the top. One line per change when possible.
 
 ---
 
+## 2026-08-21
+
+- **Zone of influence overlay reworked into an actual border.** The overlay no longer draws one translucent triangle per triple of nearby friendly zones. `fn_computeInfluenceZones` now samples a friendly-minus-enemy influence field on an adaptive grid and extracts its zero contour with marching squares, so the map shows a drawn outline of friendly territory: several separate outlines for disjoint territory, inner outlines around enemy holdings enclosed by friendly ground, and no special-casing for 0/1/2 zones, collinear or duplicated positions, or separate landmasses. The grid cell size grows until the work fits a fixed budget, which replaces the old 80-zone cut-off that silently switched the feature off exactly when the player owned the most ground.
+- Zone claim areas are now drawn in the marker's own shape (`drawRectangle` for RECTANGLE markers, `drawEllipse` for ELLIPSE), so what is drawn matches the `inArea` test `fn_getMarkerForPos` actually uses. HQ uses its marker size rather than the build radius, for the same reason. New per-client toggle for this layer.
+- Enemy roadblocks and camps (`controlsX`) now push the border back, instead of only enemy `markersX` centres being tested for containment.
+- Overlay refresh is event-driven: `fn_initMapOverlay` listens to the existing `markerChange`, `RebelControlCreated` and `HQPlaced` events on the server and publishes a revision counter. Clients recheck at most twice a second and only recompute when a cheap signature of the zone data changed, which also covers the cases with no event of their own (watchpost demolition, save/load, JIP). The 10-minute resource-tick broadcast in `fn_resourcecheck` is gone, restoring that file to upstream.
+- Fixes: `fn_debugMapOverlay` was never registered in `CfgFunctions` and did not exist at runtime; the per-frame handler's args were double-wrapped so the map-open branch that attaches the Draw EH could be skipped; the Draw EH bailed on `!visibleMap`, which is only ever true for the vanilla map and therefore disabled all three Y-menu maps; the Y-menu maps could also never have data because only the vanilla-map path computed any. The permanent every-frame handler is replaced by a `"Map"` mission event handler plus a self-removing attach retry, and the attach guard is the stored control, so a destroyed and recreated map display re-attaches.
+- CBA settings: renamed `A3A_CHAOS_influenceTriangleDist` to `A3A_CHAOS_influenceLinkDist`, added `A3A_CHAOS_influenceShowClaimAreas`, and moved all Map Overlay setting titles and tooltips into `Stringtable.xml`.
+- `fn_garrisonVehicleRadius`: documentation said the watchpost claim area is a 30 m square; `inAreaArrayIndexes` defaults to an ellipse, so it is a 30 m circle. The marker argument is now optional, and `fn_getMarkerForPos` asks for the constant directly instead of reading the radius of watchpost #0 and applying it to every post.
+- Housekeeping: reverted trailing-whitespace churn in `fn_hqDialog`, `fn_mainDialog`, `fn_resourcecheck` and `fn_initSpawnPlaceStats`; untracked the generated `docs/current_modlist.html`.
+
+---
+
 ## 2026-08-20
 
 - **Garrison vehicle claim radius**: extracted the hardcoded 30 m watchpost claim radius into new `A3A_fnc_garrisonVehicleRadius` (documents all marker-type rules in one place); `fn_getMarkerForPos` now calls it instead of using a magic number.
 - **Dev tooling**: added `setup_test_env.ps1` (gitignored) — generates `server.cfg`, `start_server.ps1`, `start_client.ps1`, `sync_save.ps1` for a local dedicated-server test loop; updated `.gitignore` to cover all generated files; rewrote `WORK.md` as a concrete reference with resolved paths and full mod list.
 
-## 2026-08-20
-
-- **Map overlay fix v3**: `findDisplay 12 displayCtrl 51` is lazily created — returns `controlNull` when the vanilla map is closed. Fixed by moving `ctrlAddEventHandler` into the CBA 0-delay PFH; it now runs on the first frame `visibleMap` becomes true. Added overlay to Y-menu commander / fast-travel / garrison maps (proven working path, same pattern as existing Draw EHs). Added colour dropdown CBA setting (7 presets). Added `fn_debugMapOverlay` diagnostic function. StreetArtist is a standalone navGrid tool not part of the mod — removed as a reference.
+- **Map overlay, second attempt**: moved the vanilla-map Draw EH attach into a CBA per-frame handler because `findDisplay 12 displayCtrl 51` is `controlNull` while the map is closed; attached the same Draw EH to the Y-menu commander / fast-travel / garrison maps; added a colour dropdown setting and `fn_debugMapOverlay`. Superseded by the 2026-08-21 rework.
 
 - Military (basetier) build catalogue moved out of the general build boxes into a new box type: **Military construction kit** (`Land_Pallet_MilBoxes_F`, 3000€, garage "Other" tab). Only that box lists the military-tier structures; the ordinary kits now show the civilian catalogue only.
 - The kit itself is the gate: it can only be bought once a Construction Yard is built (new `"yardonly"` item flag, checked in `fn_buyItem` and greyed out with a tooltip in the garage tab). The per-item "yard + inside HQ radius" gate in the placer dialog is gone, so military structures can now be built wherever the kit is hauled to, not only at HQ.

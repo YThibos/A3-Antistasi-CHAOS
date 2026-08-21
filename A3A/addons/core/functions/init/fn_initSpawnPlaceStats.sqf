@@ -31,7 +31,7 @@ A3A_spawnPlaceStats = createHashMap;
     {
         private _placeType = _x;
         private _indexes = [];
-        { if (_x#0 == _placeType) then { _indexes pushBack _forEachIndex } } forEach _spawnPlaces;
+        { if (_x#0 == _placeType) then { _indexes pushBack _forEachIndex } } forEach _spawnPlaces; 
         if (count _indexes == 0) then { continue };         // don't create empty entries
 
         private _maxPlaces = count _indexes;
