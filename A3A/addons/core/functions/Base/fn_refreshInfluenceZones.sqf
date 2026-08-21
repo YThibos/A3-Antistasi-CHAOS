@@ -17,7 +17,8 @@ Maintainer: Antistasi CHAOS
     The signature is derived from the same public data the overlay is drawn
     from, so it self-heals through anything that has no event of its own -
     JIP, save/load, a watchpost being demolished, HQ relocation, a rebel AI
-    training upgrade, a war tier change - while the
+    training upgrade, a war tier change, a debug-console tweak of the overlap
+    ceiling (A3A_influenceCap / A3A_influenceCapTail) - while the
     server-side revision counter (A3A_influenceZonesRev, bumped from the
     markerChange / RebelControlCreated / HQPlaced events by
     A3A_fnc_initMapOverlay) makes ordinary capture changes show up on the very
@@ -34,6 +35,7 @@ Environment: Unscheduled
 Public: No
 Dependencies:
     markersX, outpostsFIA, controlsX, sidesX, teamPlayer   (public globals)
+    A3A_influenceCap, A3A_influenceCapTail  (optional tuning overrides)
     A3A_fnc_computeInfluenceZones
 */
 
@@ -70,6 +72,13 @@ private _signature = [
     // area. It no longer sets the HQ's influence radius - that is a flat 1.25x.
     missionNamespace getVariable ["tierWar", 1],
     missionNamespace getVariable ["A3A_influenceZonesRev", 0],
+    // Debug/tuning overrides for the overlap ceiling (see
+    // A3A_fnc_computeInfluenceZones). Nothing else would notice them changing,
+    // so without these two entries setting them from the debug console would
+    // appear to do nothing until territory happened to shift. Raw values, not
+    // the sanitised ones: the compute clamps, this only has to detect a change.
+    missionNamespace getVariable ["A3A_influenceCap", 1],
+    missionNamespace getVariable ["A3A_influenceCapTail", 0.05],
     getMarkerPos "Synd_HQ",         // HQ is the only marker that moves
     +outpostsFIA,                   // copies: these globals are replaced wholesale on change
     +_controls,

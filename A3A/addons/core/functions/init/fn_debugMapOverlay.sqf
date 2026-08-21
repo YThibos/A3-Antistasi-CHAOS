@@ -27,6 +27,12 @@ Debug console usage (Escape -> Debug console -> Local Exec):
   // Force a recompute on its own:
   [true] call A3A_fnc_refreshInfluenceZones;
 
+  // Tune the influence overlap ceiling live (defaults 1 and 0.05; sane ranges
+  // 0.05..100 and 0..1). Both are in the staleness signature, so the overlay
+  // picks a change up within 2 seconds of a map being drawn - no force needed.
+  A3A_influenceCap = 0.6; A3A_influenceCapTail = 0.15;
+  A3A_influenceCap = nil; A3A_influenceCapTail = nil;   // back to the defaults
+
   // Re-arm the vanilla map attach on the next map open:
   uiNamespace setVariable ["A3A_influenceMapCtrl", controlNull];
 
@@ -77,7 +83,8 @@ private _lines = [
     format ["Influence range    : %1 m", missionNamespace getVariable ["A3A_CHAOS_influenceRange", 800]],
     format ["Border thickness   : %1 px", missionNamespace getVariable ["A3A_CHAOS_influenceThickness", 4]],
     format ["Fill / opacity     : %1 / %2", missionNamespace getVariable ["A3A_CHAOS_influenceFill", false], missionNamespace getVariable ["A3A_CHAOS_influenceFillOpacity", 0.25]],
-    format ["Rebel training     : skillFIA %1 / 20", missionNamespace getVariable ["skillFIA", "unknown"]],
+    format ["Rebel training     : skillFIA %1 / 20 (scales Guerilla radii only)", missionNamespace getVariable ["skillFIA", "unknown"]],
+    format ["Overlap cap / tail : %1 / %2", missionNamespace getVariable ["A3A_influenceCap", "1 (default)"], missionNamespace getVariable ["A3A_influenceCapTail", "0.05 (default)"]],
     format ["War tier / HQ area : %1 / %2 m", missionNamespace getVariable ["tierWar", "unknown"], (markerSize "Synd_HQ") # 0]
 ];
 

@@ -61,6 +61,37 @@ Maintainer: Antistasi CHAOS
     produces degenerate zero-length contour segments. With the tail the
     ordering stays strict everywhere.
 
+    ---- Tuning the ceiling at runtime --------------------------------------
+    The ceiling and its tail are the two numbers worth sweeping when the border
+    looks wrong around clustered zones, and sweeping them by rebuilding the
+    mission is painful, so both read an optional override off missionNamespace.
+    They are deliberately NOT CBA settings: "influence ceiling 1.0" means
+    nothing to a player and would only clutter the options UI.
+
+        A3A_influenceCap      default 1     sane range 0.05 .. 100
+        A3A_influenceCapTail  default 0.05  sane range 0    .. 1
+
+    From the debug console (Escape -> Debug console -> Local Exec), client side,
+    since the overlay is computed per client:
+
+        A3A_influenceCap = 0.6; A3A_influenceCapTail = 0.15;
+        A3A_influenceCap = nil; A3A_influenceCapTail = nil;   // back to defaults
+
+    Both are folded into the staleness signature in A3A_fnc_refreshInfluenceZones,
+    so a change is picked up on the next staleness check - within 2 seconds of a
+    map being drawn - with no need to force a recompute. (A map has to be open:
+    the refresh is driven from the map Draw EH and nothing runs while every map
+    is closed.)
+
+    Lowering the cap makes a cluster of small zones matter less relative to one
+    big zone; raising it lets stacking count for more. Raising the tail widens
+    the strict-ordering margin above the cap, which is what stops two saturated
+    sides tying over a whole region; a tail of exactly 0 is a hard clamp and
+    brings that degeneracy back, so borders can go missing where two sides
+    saturate identically. Anything outside the ranges above - or a non-number,
+    or NaN - is rejected and the default used, because a cap at or below zero
+    would divide by zero in the saturation below.
+
     A node belongs to the side with the strictly highest influence there. Each
     side's border is the contour of
 
@@ -100,6 +131,8 @@ Dependencies:
     markersX, outpostsFIA, controlsX, sidesX, teamPlayer, Occupants, Invaders,
     colorTeamPlayer, colorOccupants, colorInvaders, skillFIA  (public globals)
     A3A_CHAOS_influenceRange, A3A_CHAOS_influenceFill         (CBA settings)
+    A3A_influenceCap, A3A_influenceCapTail                    (optional tuning
+                                                               overrides, see above)
     A3A_fnc_zoneInfluenceRadii, A3A_fnc_garrisonVehicleRadius
 */
 
@@ -118,9 +151,9 @@ private _empty       = -1e-4;      // advantage at nodes no side reaches. Small 
                                    // negative rather than zero so a contour can
                                    // never land exactly on a node, which would
                                    // collapse two crossings into one point.
-private _cap         = 1;          // influence ceiling
-private _capTail     = 0.05;       // residual slope above the ceiling
 private _fillBudget  = 12000;      // max fill triangles per side
+// The influence ceiling and its residual tail used to live here. They are
+// runtime-tunable now and are read, with their defaults, in section 1.
 
 // ---- 1. Settings and scaling --------------------------------------------
 private _refRange = missionNamespace getVariable ["A3A_CHAOS_influenceRange", 800];
@@ -139,6 +172,15 @@ private _trainScale = 0.8 + 0.4 * (((_skill max 1) min 20) - 1) / 19;
 
 private _radii = [_refRange] call A3A_fnc_zoneInfluenceRadii;
 private _defaultRadius = _refRange;
+
+// Overlap ceiling and its residual slope. Debug/tuning overrides rather than
+// settings - see the header. Written in the affirmative so that a non-number,
+// an out-of-range value and NaN all fall through to the default: a cap of 0 or
+// less would divide by zero in the saturation in section 6.
+private _cap = missionNamespace getVariable ["A3A_influenceCap", 1];
+if !(_cap isEqualType 0 && {_cap >= 0.05} && {_cap <= 100}) then { _cap = 1 };
+private _capTail = missionNamespace getVariable ["A3A_influenceCapTail", 0.05];
+if !(_capTail isEqualType 0 && {_capTail >= 0} && {_capTail <= 1}) then { _capTail = 0.05 };
 
 // ---- 2. Collect zones per side and friendly claim shapes ----------------
 private _controls = missionNamespace getVariable ["controlsX", []];
@@ -529,5 +571,5 @@ for "_s" from 0 to _sLast do {
 A3A_influenceSides = _out;
 A3A_influenceCellSize = _cell;
 
-Debug_5("computeInfluenceZones: range=%1m train=%2 cell=%3m grid=%4x%5 sides=%6",
-    _refRange, _trainScale, round _cell, _nx, _ny, _sideCount);
+Debug_8("computeInfluenceZones: range=%1m train=%2 cap=%3/%4 cell=%5m grid=%6x%7 sides=%8",
+    _refRange, _trainScale, _cap, _capTail, round _cell, _nx, _ny, _sideCount);
