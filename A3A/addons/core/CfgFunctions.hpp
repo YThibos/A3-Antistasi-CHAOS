@@ -212,6 +212,7 @@ class CfgFunctions
             class translateVariable {};
             class unlockStatic {};
             class unlockVehicle {};
+            class updateHQMarkerRadius {};
         };
 
         class Builder {

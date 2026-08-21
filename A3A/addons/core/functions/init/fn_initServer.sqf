@@ -37,6 +37,8 @@ switch (toLower worldname) do {
 };
 
 "Synd_HQ" setMarkerShape "ELLIPSE";
+// Bootstrap size only - tierWar does not exist yet. A3A_fnc_updateHQMarkerRadius
+// sets the authoritative size further down, once the save data is loaded.
 "Synd_HQ" setMarkerSize [75,75];
 
 enableSaving [false,false];
@@ -210,6 +212,10 @@ if (A3A_hasBAR) then {
 };
 
 // ********************** Post-load init ****************************************************
+
+// HQ area marker tracks the HQ build radius, which grows with war tier. Must run
+// after the save data (and therefore tierWar) has been loaded.
+call A3A_fnc_updateHQMarkerRadius;
 
 if (isClass (configFile >> "AntistasiServerMembers")) then
 {

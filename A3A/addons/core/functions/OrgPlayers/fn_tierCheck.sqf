@@ -25,4 +25,7 @@ if (_tierWar != tierWar) then
     if (!_silent) then { [petros,"tier",""] remoteExec ["A3A_fnc_commsMP",[teamPlayer,civilian]] };
     // WP5e: recompute HQ detection radius when war tier changes
     call A3A_fnc_calcBuildingReveal;
+    // The HQ build radius grows with the war tier, and the HQ area marker is the
+    // single source of truth for every "is this inside the HQ" test, so resize it.
+    call A3A_fnc_updateHQMarkerRadius;
 };
