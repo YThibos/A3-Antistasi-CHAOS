@@ -12,6 +12,17 @@
 - A `#define` continues on the next line only with a trailing `\`; a stray trailing `\` swallows
   the next line. Preprocessor directives must start at the beginning of a line.
 - After any `#include`, Antistasi files call `FIX_LINE_NUMBERS()` so `.rpt` line numbers stay real.
+- **Never pass an array or code literal inline to a log macro.** `Info_N`/`Debug_N`/`Error_N` are
+  preprocessor macros, and the preprocessor splits arguments on every comma that is not inside
+  parentheses — it does not understand `[]` or `{}`. `Debug_2("g=%1 n=%2", [_nx, _ny], _count)` is
+  counted as four arguments, so the macro is dropped from the output ("too many macro arguments")
+  and the leftover `_ny], _count);` fragment fails the **whole file** to compile, taking every
+  other function in it down with it. Build the array into a local and pass the local. Commas
+  inside a quoted format string are safe; the preprocessor does respect string literals. Also
+  match the arity exactly — `Debug_2` wants a format string plus two values, and passing one
+  ("too few parameters") drops the macro just as fatally. `Tools/sqfcheck` cannot see any of this,
+  because it does not run the preprocessor: only a build or the game's `.rpt` will.
+  (2026-08-22: one such call in `fn_computeInfluenceZones.sqf` cost a full test session.)
 
 ## Types and values
 

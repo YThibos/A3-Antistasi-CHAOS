@@ -204,6 +204,27 @@ Maintainer: Antistasi CHAOS
     close to none early on (157 m at start, 265 m late), which is the trade if
     a coarse outline is the more offensive of the two.
 
+    ---- Logging macros: never pass an array literal inline -----------------
+    The logging macros (Debug_N, Info_N, ...) are C-style preprocessor macros,
+    and the preprocessor splits their arguments on EVERY comma that is not
+    inside parentheses. It does not understand square brackets or braces, so
+
+        Debug_2("grid=%1 n=%2", [_nx, _ny], _count);        // WRONG
+
+    is counted as FOUR arguments, not two. The macro is then dropped from the
+    output entirely and its half-consumed call site is left behind as a syntax
+    error, which fails the WHOLE FILE to compile - every function in it, not
+    just the log line. Build the array into a local and pass the local:
+
+        private _dbgGrid = [_nx, _ny];
+        Debug_2("grid=%1 n=%2", _dbgGrid, _count);          // right
+
+    Commas inside a quoted format string are fine - the preprocessor does
+    respect string literals - but braces (a code-block argument) are not.
+    Tools/sqfcheck cannot catch this, because it does not run the preprocessor:
+    only a real build, or the game's RPT, will show it. This exact mistake cost
+    a full test session on 2026-08-22.
+
 Arguments:
     None
 
@@ -389,18 +410,31 @@ private _sideFallback = {
 // Resolves one color[] element to a channel in 0..1, or -1 when it cannot.
 // try/catch covers an expression that throws; a malformed one yields nil or a
 // non-number instead, which the checks below reject just the same.
+//
+// The result leaves the try block in a one-element ARRAY rather than by
+// assigning an outer local. try/catch does stack on the enclosing scope, so a
+// plain assignment would probably reach an outer declaration - but the outer
+// declaration would have had to be written `private _value = nil;`, and
+// assigning nil is how SQF CLEARS a variable, so whether that leaves a private
+// binding here for the inner write to find is exactly the kind of thing that is
+// not worth being probably right about. Mutating an array through a reference
+// needs no such binding and reads the same under every interpretation. The
+// value is pushed only when it is non-nil, so an empty carrier means "did not
+// resolve" without needing a second flag.
 private _channelValue = {
     params ["_raw"];
     if (_raw isEqualType 0) exitWith { (_raw max 0) min 1 };
     if !(_raw isEqualType "") exitWith { -1 };
     if (_raw isEqualTo "") exitWith { -1 };
-    private _value = nil;
+    private _carrier = [];
     try {
-        _value = call (compile _raw);
+        private _evaluated = call (compile _raw);
+        if (!isNil "_evaluated") then { _carrier pushBack _evaluated; };
     } catch {
-        _value = nil;
+        // Nothing to do: an empty carrier already means "did not resolve".
     };
-    if (isNil "_value") exitWith { -1 };
+    if (_carrier isEqualTo []) exitWith { -1 };
+    private _value = _carrier # 0;
     if !(_value isEqualType 0) exitWith { -1 };
     if !(finite _value) exitWith { -1 };
     (_value max 0) min 1
@@ -782,6 +816,8 @@ A3A_influenceSides = _out;
 A3A_influenceCellSize = _cell;
 
 // Debug_8 is the widest logging macro there is, so the grid and the side count
-// travel as one array rather than losing a field.
+// travel as one array rather than losing a field. That array MUST be built into
+// a local first: see the macro-argument warning in the header.
+private _dbgGrid = [_nx, _ny, _sideCount];
 Debug_8("computeInfluenceZones: range=%1m reach=%2x/%3 train=%4 cap=%5/%6 cell=%7m [nx,ny,sides]=%8",
-    _refRange, _reach, _tailW, _trainScale, _cap, _capTail, round _cell, [_nx, _ny, _sideCount]);
+    _refRange, _reach, _tailW, _trainScale, _cap, _capTail, round _cell, _dbgGrid);
