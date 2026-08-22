@@ -4,6 +4,10 @@ Newest entries at the top. One line per change when possible.
 
 ---
 
+## 2026-08-22
+
+- **Fix: every side's influence border was drawn in the same neutral grey.** The overlay read each side's colour with `getArray (configFile >> "CfgMarkerColors" >> ... >> "color")` and only accepted the channels when they were numbers. They never are: A3's own side entries (`ColorWEST` / `ColorEAST` / `ColorGUER` and the `colorBLUFOR` / `colorOPFOR` / `colorGUER` aliases the mission uses) store each channel as a *string* holding an expression such as `"(profilenamespace getvariable ['Map_BLUFOR_R',0])"`, so the player's own map colour preferences apply. Every read therefore failed and all three sides took the single grey fallback. `fn_computeInfluenceZones` now takes a numeric channel as-is, evaluates a string channel and accepts it only when it resolves to a finite number, clamps every channel to 0-1, and falls back **per side** (Guerilla green, Occupants blue, Invaders red) rather than to one shared grey - a resolved colour whose three channels are all equal counts as a failed read for the same reason. A fallback logs the class name and the colour used at debug level.
+
 ## 2026-08-21
 
 - **The influence overlap ceiling is tunable at runtime for testing.** `A3A_influenceCap` (default 1, sane range 0.05-100) and `A3A_influenceCapTail` (default 0.05, sane range 0-1) can be set from the debug console mid-session; both are folded into the overlay's staleness signature, so a change is picked up within 2 seconds of a map being drawn instead of waiting for territory to shift. Deliberately not CBA settings - the numbers are internal model constants and mean nothing in a settings UI. Values that are not numbers, out of range, or NaN fall back to the default, which is what keeps a cap of zero or less from dividing by zero in the saturation. `fn_debugMapOverlay` reports both.

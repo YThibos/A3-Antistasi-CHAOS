@@ -254,6 +254,46 @@ if (_playerIdx >= 0 && {_playerIdx != (count _sideList) - 1}) then {
 // colorTeamPlayer / colorOccupants / colorInvaders hold CfgMarkerColors class
 // names ("colorGUER", "colorBLUFOR", "colorOPFOR" by default), so the overlay
 // matches whatever the faction actually uses on this map and in this config.
+//
+// Those side classes do NOT store plain numbers. Verified against A3's own
+// ui_f config: ColorWEST / ColorEAST / ColorGUER / ColorCIV / ColorUNKNOWN -
+// and the colorBLUFOR / colorOPFOR / colorGUER aliases that inherit them -
+// store each channel as a STRING holding an expression, so that the player's
+// personal map colour preferences apply:
+//     color[] = {"(profilenamespace getvariable ['Map_BLUFOR_R',0])", ... };
+// Only the plain palette entries (ColorRed, ColorGreen, ...) hold numbers.
+// So a channel is taken as-is when it is a number and evaluated when it is a
+// string, and anything that does not resolve to a finite number falls back to
+// the side's own hue - never to a single shared grey, because a grey border
+// tells the player nothing, which is the whole point of the overlay.
+private _sideFallback = {
+    params ["_fbSide"];
+    if (_fbSide isEqualTo teamPlayer) exitWith { [0, 0.5, 0] };
+    if (!isNil "Occupants" && {_fbSide isEqualTo Occupants}) exitWith { [0, 0.3, 0.6] };
+    if (!isNil "Invaders" && {_fbSide isEqualTo Invaders}) exitWith { [0.5, 0, 0] };
+    [0.45, 0.45, 0.45]
+};
+
+// Resolves one color[] element to a channel in 0..1, or -1 when it cannot.
+// try/catch covers an expression that throws; a malformed one yields nil or a
+// non-number instead, which the checks below reject just the same.
+private _channelValue = {
+    params ["_raw"];
+    if (_raw isEqualType 0) exitWith { (_raw max 0) min 1 };
+    if !(_raw isEqualType "") exitWith { -1 };
+    if (_raw isEqualTo "") exitWith { -1 };
+    private _value = nil;
+    try {
+        _value = call (compile _raw);
+    } catch {
+        _value = nil;
+    };
+    if (isNil "_value") exitWith { -1 };
+    if !(_value isEqualType 0) exitWith { -1 };
+    if !(finite _value) exitWith { -1 };
+    (_value max 0) min 1
+};
+
 private _sideColours = [];
 {
     private _side = _x;
@@ -263,19 +303,27 @@ private _sideColours = [];
         if (!isNil "Invaders" && {_side isEqualTo Invaders}) exitWith { missionNamespace getVariable ["colorInvaders", "colorOPFOR"] };
         "colorUNKNOWN"
     };
-    private _rgb = [0.45, 0.45, 0.45];
+    private _rgb = [_side] call _sideFallback;
     private _cfg = getArray (configFile >> "CfgMarkerColors" >> _colourName >> "color");
-    if (count _cfg >= 3
-        && {(_cfg # 0) isEqualType 0}
-        && {(_cfg # 1) isEqualType 0}
-        && {(_cfg # 2) isEqualType 0}) then {
-        _rgb = [_cfg # 0, _cfg # 1, _cfg # 2];
+    if (count _cfg >= 3) then {
+        private _r = [_cfg # 0] call _channelValue;
+        private _g = [_cfg # 1] call _channelValue;
+        private _b = [_cfg # 2] call _channelValue;
+        // An all-equal triple is a grey, whether it came from the config or
+        // from a half-resolved expression. Treat it as a failed read.
+        if (_r >= 0 && {_g >= 0} && {_b >= 0} && {!(_r isEqualTo _g) || {!(_g isEqualTo _b)}}) then {
+            _rgb = [_r, _g, _b];
+        } else {
+            Debug_2("computeInfluenceZones: %1 gave no usable colour - using side fallback %2", _colourName, _rgb);
+        };
+    } else {
+        Debug_2("computeInfluenceZones: %1 has no color[] - using side fallback %2", _colourName, _rgb);
     };
     _sideColours pushBack _rgb;
 } forEach _sideList;
 
 private _playerColourIdx = _sideList find teamPlayer;
-A3A_influencePlayerColour = if (_playerColourIdx < 0) then { [0, 0.5, 0] } else { _sideColours select _playerColourIdx };
+A3A_influencePlayerColour = if (_playerColourIdx < 0) then { [teamPlayer] call _sideFallback } else { _sideColours select _playerColourIdx };
 
 // ---- 4. Grid geometry ---------------------------------------------------
 private _minX =  1e9;
