@@ -18,7 +18,8 @@ Maintainer: Antistasi CHAOS
     from, so it self-heals through anything that has no event of its own -
     JIP, save/load, a watchpost being demolished, HQ relocation, a rebel AI
     training upgrade, a war tier change, a debug-console tweak of the overlap
-    ceiling (A3A_influenceCap / A3A_influenceCapTail) - while the
+    ceiling or of the faint long cone's weight (A3A_influenceCap /
+    A3A_influenceCapTail / A3A_influenceTailWeight) - while the
     server-side revision counter (A3A_influenceZonesRev, bumped from the
     markerChange / RebelControlCreated / HQPlaced events by
     A3A_fnc_initMapOverlay) makes ordinary capture changes show up on the very
@@ -35,7 +36,8 @@ Environment: Unscheduled
 Public: No
 Dependencies:
     markersX, outpostsFIA, controlsX, sidesX, teamPlayer   (public globals)
-    A3A_influenceCap, A3A_influenceCapTail  (optional tuning overrides)
+    A3A_influenceCap, A3A_influenceCapTail, A3A_influenceTailWeight
+                                            (optional tuning overrides)
     A3A_fnc_computeInfluenceZones
 */
 
@@ -63,6 +65,9 @@ private _sides = [];
 private _signature = [
     missionNamespace getVariable ["A3A_CHAOS_influenceRange", 800],
     missionNamespace getVariable ["A3A_CHAOS_influenceFill", false],
+    // How far territory reaches into empty ground: a multiplier on every
+    // radius, so it moves every border on the map.
+    missionNamespace getVariable ["A3A_CHAOS_influenceReach", 2.5],
     // Rebel AI training scales every influence radius, and there is no event
     // for it - fn_FIAskillAdd only publicVariables skillFIA - so the signature
     // is what catches a training upgrade.
@@ -79,6 +84,7 @@ private _signature = [
     // the sanitised ones: the compute clamps, this only has to detect a change.
     missionNamespace getVariable ["A3A_influenceCap", 1],
     missionNamespace getVariable ["A3A_influenceCapTail", 0.05],
+    missionNamespace getVariable ["A3A_influenceTailWeight", 0.05],
     getMarkerPos "Synd_HQ",         // HQ is the only marker that moves
     +outpostsFIA,                   // copies: these globals are replaced wholesale on change
     +_controls,

@@ -33,6 +33,13 @@ Debug console usage (Escape -> Debug console -> Local Exec):
   A3A_influenceCap = 0.6; A3A_influenceCapTail = 0.15;
   A3A_influenceCap = nil; A3A_influenceCapTail = nil;   // back to the defaults
 
+  // Tune the weight of the faint long cone that closes gaps between distant
+  // holdings (default 0.05, sane range 0..0.5; 0 switches it off). Its REACH is
+  // the "Territory reach into empty ground" setting, not this. Also in the
+  // staleness signature.
+  A3A_influenceTailWeight = 0.02;
+  A3A_influenceTailWeight = nil;                        // back to the default
+
   // Re-arm the vanilla map attach on the next map open:
   uiNamespace setVariable ["A3A_influenceMapCtrl", controlNull];
 
@@ -81,6 +88,7 @@ private _lines = [
     format ["Overlay enabled    : %1", missionNamespace getVariable ["A3A_CHAOS_influenceOverlayEnabled", true]],
     format ["Claim areas shown  : %1", missionNamespace getVariable ["A3A_CHAOS_influenceShowClaimAreas", true]],
     format ["Influence range    : %1 m", missionNamespace getVariable ["A3A_CHAOS_influenceRange", 800]],
+    format ["Reach / weight     : %1 x range / %2", missionNamespace getVariable ["A3A_CHAOS_influenceReach", "2.5 (default)"], missionNamespace getVariable ["A3A_influenceTailWeight", "0.05 (default)"]],
     format ["Border thickness   : %1 px", missionNamespace getVariable ["A3A_CHAOS_influenceThickness", 4]],
     format ["Fill / opacity     : %1 / %2", missionNamespace getVariable ["A3A_CHAOS_influenceFill", false], missionNamespace getVariable ["A3A_CHAOS_influenceFillOpacity", 0.25]],
     format ["Rebel training     : skillFIA %1 / 20 (scales Guerilla radii only)", missionNamespace getVariable ["skillFIA", "unknown"]],

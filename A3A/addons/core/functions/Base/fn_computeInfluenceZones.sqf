@@ -61,23 +61,88 @@ Maintainer: Antistasi CHAOS
     produces degenerate zero-length contour segments. With the tail the
     ordering stays strict everywhere.
 
-    ---- Tuning the ceiling at runtime --------------------------------------
+    ---- Weak long reach: closing the gaps between distant holdings ---------
+    One range cannot do two jobs. R decides both how hard a position pushes and
+    how far its territory has to stretch to look contiguous, so on a map whose
+    objectives are far apart - Altis' northwest - the range has to be cranked up
+    until the gaps close, which then hands a roadblock a 1.4 km bubble in the
+    dense half of the same map.
+
+    So every zone lays a SECOND cone, much longer and very faint, on top of the
+    first:
+
+        contribution(zone, p) = max(0, 1 - d / R)
+                              + W * max(0, 1 - d / (M * R))
+
+    M is the "Territory reach" setting (A3A_CHAOS_influenceReach, 0 .. 3 in
+    steps of 0.5, default 2.5) and W is a fixed weight (A3A_influenceTailWeight,
+    default 0.05, see below). R is still exactly what A3A_fnc_zoneInfluenceRadii
+    returned for that zone: the long cone is a MULTIPLE of that radius, never a
+    second radius table, so the per-type balance and the Guerilla training
+    factor carry through it unchanged. It applies to every side identically -
+    same table, same M, same W - and both cones go into the same sum, so the
+    ceiling above applies to the total.
+
+    What the long cone buys, and what it costs:
+
+      - In genuinely empty ground, where every side's real cone is 0, the faint
+        cones are the only thing present, so the two nearest holdings meet on a
+        line between them and the gap closes. Where that line falls does not
+        depend on W at all - it cancels out of the comparison - so W tunes
+        fidelity only and never moves a gap-filling border.
+      - Ground more than M*R from every zone is reached by nothing and stays
+        no-man's-land, which is the point: remote wilderness belongs to nobody.
+      - A holding with no neighbour therefore draws its outline at M*R rather
+        than R: 2 km around a watchpost at the defaults instead of 800 m. This
+        setting is also what decides how big a lone holding looks.
+      - On a rim where a real cone is fading out and a neighbour's faint cone is
+        arriving, the neighbour takes the ground from the point where the real
+        cone has dropped below the faint one. One neighbour's faint cone is at
+        most W, and a real cone loses 1/R per metre, so such a rim is pulled
+        inward by at most W*R - 40 m at the 800 m default, well under one grid
+        cell. A border that two real presences contest does not move
+        perceptibly: the same W*R bound applies to it, and there both sides
+        bring faint cones that largely cancel.
+      - Faint cones ADD like real ones, being in the same sum, so a cluster of
+        zones stacks them. Measured over a full Altis census (295 zones, all of
+        them one side, R = 800, M = 2.5, W = 0.05, sampled on a 200 m lattice)
+        the largest combined faint field anywhere on the map is 0.46, at a point
+        with 25 zones in range; the map-wide median is 0.12. 0.46 is what a real
+        cone is worth 430 m out from an 800 m zone's centre, so the worst stack
+        Altis can build erodes a rival's outer rim from 800 m to about 430 m and
+        cannot touch the inner 55% of any zone. Reaching 1.0 - a zone centre -
+        would take some 2.2x the densest cluster on the map, and the ceiling
+        above caps the total either way, so stacked faint cones can never beat a
+        saturated interior. The stack scales linearly with W, and lowering W
+        does not move the gap-filling lines, so A3A_influenceTailWeight is the
+        knob if an eroded rim ever shows up in play.
+
+    M = 0 switches the long cone off completely and restores exactly the model
+    above it, hard gaps and all. That is a real choice rather than a degenerate
+    one, so it is also free: the faint radius is 0, the rasterised area falls
+    back to R, no bounds or budget grow, and one comparison per stamped node is
+    all that is left of the feature.
+
+    ---- Tuning the ceiling and the faint cone at runtime -------------------
     The ceiling and its tail are the two numbers worth sweeping when the border
     looks wrong around clustered zones, and sweeping them by rebuilding the
     mission is painful, so both read an optional override off missionNamespace.
     They are deliberately NOT CBA settings: "influence ceiling 1.0" means
     nothing to a player and would only clutter the options UI.
 
-        A3A_influenceCap      default 1     sane range 0.05 .. 100
-        A3A_influenceCapTail  default 0.05  sane range 0    .. 1
+        A3A_influenceCap        default 1     sane range 0.05 .. 100
+        A3A_influenceCapTail    default 0.05  sane range 0    .. 1
+        A3A_influenceTailWeight default 0.05  sane range 0    .. 0.5
 
     From the debug console (Escape -> Debug console -> Local Exec), client side,
     since the overlay is computed per client:
 
         A3A_influenceCap = 0.6; A3A_influenceCapTail = 0.15;
+        A3A_influenceTailWeight = 0.02;
         A3A_influenceCap = nil; A3A_influenceCapTail = nil;   // back to defaults
+        A3A_influenceTailWeight = nil;
 
-    Both are folded into the staleness signature in A3A_fnc_refreshInfluenceZones,
+    All three are folded into the staleness signature in A3A_fnc_refreshInfluenceZones,
     so a change is picked up on the next staleness check - within 2 seconds of a
     map being drawn - with no need to force a recompute. (A map has to be open:
     the refresh is driven from the map Draw EH and nothing runs while every map
@@ -91,6 +156,13 @@ Maintainer: Antistasi CHAOS
     saturate identically. Anything outside the ranges above - or a non-number,
     or NaN - is rejected and the default used, because a cap at or below zero
     would divide by zero in the saturation below.
+
+    W is a model constant for the same reason: "faint cone weight 0.05" means
+    nothing in a settings UI, while the reach it multiplies - how far territory
+    stretches into empty ground - is exactly the kind of thing a player wants to
+    move, which is why that one, and only that one, is a CBA setting. W = 0 is
+    accepted and is a second way to switch the long cone off, this time while
+    keeping its cost.
 
     A node belongs to the side with the strictly highest influence there. Each
     side's border is the contour of
@@ -118,6 +190,20 @@ Maintainer: Antistasi CHAOS
     Altis-sized census, the three-side pass costs 0.86x-1.08x the old two-side
     one at the same resolution.
 
+    The long cone is paid for in resolution, not in time. Its support is M*R, so
+    it widens the bounds and multiplies each zone's rasterised area by M^2, and
+    the budgets below - deliberately left exactly as they were - answer that by
+    growing the cell. Simulating section 4's own loop over the Altis census at
+    R = 800 and M = 2.5: at campaign start (84 sites plus ~60 towns) the cell
+    goes from 151 m to 288 m, and on a fully built-out late-game map (~295
+    zones) from 151 m to 373 m, in each case with the node count FALLING (28k to
+    11k, 28k to 7k) because the grid coarsens faster than the bounds widen. So
+    the outline gets blockier - a 373 m cell on Altis is a fifth of a grid
+    square - while the work per recompute stays inside the same budget. M = 2.0
+    costs about one growth step less (211 m at start, 357 m late) and M = 1.5
+    close to none early on (157 m at start, 265 m late), which is the trade if
+    a coarse outline is the more offensive of the two.
+
 Arguments:
     None
 
@@ -130,8 +216,10 @@ Public: No
 Dependencies:
     markersX, outpostsFIA, controlsX, sidesX, teamPlayer, Occupants, Invaders,
     colorTeamPlayer, colorOccupants, colorInvaders, skillFIA  (public globals)
-    A3A_CHAOS_influenceRange, A3A_CHAOS_influenceFill         (CBA settings)
-    A3A_influenceCap, A3A_influenceCapTail                    (optional tuning
+    A3A_CHAOS_influenceRange, A3A_CHAOS_influenceFill,
+    A3A_CHAOS_influenceReach                                  (CBA settings)
+    A3A_influenceCap, A3A_influenceCapTail,
+    A3A_influenceTailWeight                                   (optional tuning
                                                                overrides, see above)
     A3A_fnc_zoneInfluenceRadii, A3A_fnc_garrisonVehicleRadius
 */
@@ -152,8 +240,9 @@ private _empty       = -1e-4;      // advantage at nodes no side reaches. Small 
                                    // never land exactly on a node, which would
                                    // collapse two crossings into one point.
 private _fillBudget  = 12000;      // max fill triangles per side
-// The influence ceiling and its residual tail used to live here. They are
-// runtime-tunable now and are read, with their defaults, in section 1.
+// The influence ceiling, its residual tail and the faint long cone's weight
+// used to live here. They are runtime-tunable now and are read, with their
+// defaults, in section 1.
 
 // ---- 1. Settings and scaling --------------------------------------------
 private _refRange = missionNamespace getVariable ["A3A_CHAOS_influenceRange", 800];
@@ -162,6 +251,16 @@ _refRange = ((round (_refRange / 100)) * 100) max 100 min 1400;
 
 private _doFill = missionNamespace getVariable ["A3A_CHAOS_influenceFill", false];
 if !(_doFill isEqualType false) then { _doFill = false };
+
+// How far territory reaches into empty ground, as a multiple of the influence
+// range: the radius of the faint second cone documented in the header. 0 is a
+// real setting and means no second cone at all, so it is tested for explicitly
+// rather than falling out of the arithmetic.
+// CBA sliders have no step, so - exactly as the influence range above does with
+// its 100 m step - the half step lives here.
+private _reach = missionNamespace getVariable ["A3A_CHAOS_influenceReach", 2.5];
+if !(_reach isEqualType 0) then { _reach = 2.5 };
+_reach = ((round (_reach / 0.5)) * 0.5) max 0 min 3;
 
 // Rebel AI training, raised in HQ Management. fn_FIAskillAdd starts it at 1 and
 // refuses past 20, and the HQ dialog shows it as "n / 20". Applied to the
@@ -181,6 +280,19 @@ private _cap = missionNamespace getVariable ["A3A_influenceCap", 1];
 if !(_cap isEqualType 0 && {_cap >= 0.05} && {_cap <= 100}) then { _cap = 1 };
 private _capTail = missionNamespace getVariable ["A3A_influenceCapTail", 0.05];
 if !(_capTail isEqualType 0 && {_capTail >= 0} && {_capTail <= 1}) then { _capTail = 0.05 };
+
+// Weight of the faint long cone. A model constant, not a setting - see the
+// header for why, and for what it does to a rim where a real cone is fading out
+// while a neighbour's faint one arrives.
+private _tailW = missionNamespace getVariable ["A3A_influenceTailWeight", 0.05];
+if !(_tailW isEqualType 0 && {_tailW >= 0} && {_tailW <= 0.5}) then { _tailW = 0.05 };
+
+// Everything downstream asks two questions of the long cone: how far out does a
+// zone still write anything (the radius multiplier, never below 1x, since the
+// real cone is always stamped), and what does the faint term itself scale by.
+// Zeroing the second is what makes "reach 0" cost nothing.
+if (_reach <= 0 || {_tailW <= 0}) then { _reach = 0; _tailW = 0 };
+private _reachMult = 1 max _reach;
 
 // ---- 2. Collect zones per side and friendly claim shapes ----------------
 private _controls = missionNamespace getVariable ["controlsX", []];
@@ -358,9 +470,14 @@ private _minX =  1e9;
 private _maxX = -1e9;
 private _minY =  1e9;
 private _maxY = -1e9;
+// Bounds are taken from the OUTER cone: the faint one reaches M*R, and ground
+// it reaches is ground that can be claimed, so it has to be on the grid.
+// _reachMult is 1 when the long cone is off, which leaves this exactly as it
+// was.
 {
     {
-        _x params ["_px", "_py", "_r"];
+        _x params ["_px", "_py", "_r0"];
+        private _r = _r0 * _reachMult;
         if (_px - _r < _minX) then { _minX = _px - _r };
         if (_px + _r > _maxX) then { _maxX = _px + _r };
         if (_py - _r < _minY) then { _minY = _py - _r };
@@ -372,28 +489,36 @@ private _spanX = _maxX - _minX;
 private _spanY = _maxY - _minY;
 private _cell  = ((_spanX max _spanY) / _gridSpanMax) max _cellMin;
 
+// Margin, in cells, on every side of the measured bounds. The resolution floor
+// in section 5 can grow a zone to 1.5 cells, and the long cone then takes that
+// out to 1.5 * M cells, which is past the bounds above whenever a zone was
+// small enough to be floored. Half a cell of slack on top, and 2 as the floor
+// so that the long cone being off reproduces the old flat two cells exactly.
+private _marginCells = 2 max (ceil (1.5 * _reachMult + 0.5));
+private _marginNodes = 2 * _marginCells + 2;
+
 // Grow the cell until both budgets are met. Bounded loop, never infinite.
 private _fits  = false;
 private _tries = 0;
 while { !_fits && {_tries < 20} } do {
     _tries = _tries + 1;
-    private _nodes  = ((floor (_spanX / _cell)) + 6) * ((floor (_spanY / _cell)) + 6);
+    private _nodes  = ((floor (_spanX / _cell)) + _marginNodes) * ((floor (_spanY / _cell)) + _marginNodes);
     private _stamps = 0;
     {
         {
-            private _stampSpan = (2 * (((_x # 2) max (1.5 * _cell)) + 1.5 * _cell) / _cell) + 2;
+            // Same estimate as ever, measured on the outer cone: that is the box
+            // section 5 actually walks.
+            private _stampSpan = (2 * ((((_x # 2) max (1.5 * _cell)) * _reachMult) + 1.5 * _cell) / _cell) + 2;
             _stamps = _stamps + _stampSpan * _stampSpan;
         } forEach _x;
     } forEach _sideZones;
     if (_nodes <= _nodeBudget && {_stamps <= _stampBudget}) then { _fits = true } else { _cell = _cell * 1.3 };
 };
 
-// Two cells of margin: the resolution floor below can grow a zone by up to
-// 1.5 cells past the bounds these were measured from.
-private _ox = _minX - 2 * _cell;
-private _oy = _minY - 2 * _cell;
-private _nx = (floor (_spanX / _cell)) + 6;
-private _ny = (floor (_spanY / _cell)) + 6;
+private _ox = _minX - _marginCells * _cell;
+private _oy = _minY - _marginCells * _cell;
+private _nx = (floor (_spanX / _cell)) + _marginNodes;
+private _ny = (floor (_spanY / _cell)) + _marginNodes;
 private _nodeCount = _nx * _ny;
 private _radiusFloor = 1.5 * _cell;      // a zone smaller than the grid would vanish
 
@@ -409,20 +534,29 @@ private _fields = [];
     {
         _x params ["_px", "_py", "_r0"];
         private _r  = _r0 max _radiusFloor;
-        private _r2 = _r * _r;
-        private _i0 = ((floor ((_px - _r - _ox) / _cell)) max 0);
-        private _i1 = ((ceil  ((_px + _r - _ox) / _cell)) min (_nx - 1));
-        private _j0 = ((floor ((_py - _r - _oy) / _cell)) max 0);
-        private _j1 = ((ceil  ((_py + _r - _oy) / _cell)) min (_ny - 1));
+        // The faint long cone, and the box that covers both cones. With the long
+        // cone off _rt is 0, so its test below is never true and _ro is _r: the
+        // walked box, and the arithmetic inside it, are what they always were.
+        private _rt = _r * _reach;
+        private _ro = _r max _rt;
+        private _ro2 = _ro * _ro;
+        private _i0 = ((floor ((_px - _ro - _ox) / _cell)) max 0);
+        private _i1 = ((ceil  ((_px + _ro - _ox) / _cell)) min (_nx - 1));
+        private _j0 = ((floor ((_py - _ro - _oy) / _cell)) max 0);
+        private _j1 = ((ceil  ((_py + _ro - _oy) / _cell)) min (_ny - 1));
         for "_j" from _j0 to _j1 do {
             private _dy   = (_oy + _j * _cell) - _py;
             private _base = _j * _nx;
             for "_i" from _i0 to _i1 do {
                 private _dx = (_ox + _i * _cell) - _px;
                 private _d2 = _dx * _dx + _dy * _dy;
-                if (_d2 < _r2) then {
+                if (_d2 < _ro2) then {
+                    private _d = sqrt _d2;
+                    private _v = 0;
+                    if (_d < _r)  then { _v = 1 - _d / _r };
+                    if (_d < _rt) then { _v = _v + _tailW * (1 - _d / _rt) };
                     private _idx = _base + _i;
-                    _field set [_idx, (_field select _idx) + 1 - (sqrt _d2) / _r];
+                    _field set [_idx, (_field select _idx) + _v];
                 };
             };
         };
@@ -647,5 +781,7 @@ for "_s" from 0 to _sLast do {
 A3A_influenceSides = _out;
 A3A_influenceCellSize = _cell;
 
-Debug_8("computeInfluenceZones: range=%1m train=%2 cap=%3/%4 cell=%5m grid=%6x%7 sides=%8",
-    _refRange, _trainScale, _cap, _capTail, round _cell, _nx, _ny, _sideCount);
+// Debug_8 is the widest logging macro there is, so the grid and the side count
+// travel as one array rather than losing a field.
+Debug_8("computeInfluenceZones: range=%1m reach=%2x/%3 train=%4 cap=%5/%6 cell=%7m [nx,ny,sides]=%8",
+    _refRange, _reach, _tailW, _trainScale, _cap, _capTail, round _cell, [_nx, _ny, _sideCount]);

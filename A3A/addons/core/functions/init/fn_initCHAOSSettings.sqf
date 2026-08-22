@@ -59,6 +59,23 @@ private _invalidate = { A3A_influenceSignature = nil };
     false
 ] call CBA_fnc_addSetting;
 
+// How far territory stretches into empty ground, as a multiple of the
+// influence range above. The range decides how hard a position pushes; this
+// decides how far its territory reaches to meet a neighbour across ground
+// neither of them actually holds, so the two jobs stop fighting each other.
+// 0..3 in half steps: 0 is off (hard gaps), and 2.5 covers the worst gap
+// between two Altis objectives at the 800 m default range.
+[
+    "A3A_CHAOS_influenceReach",
+    "SLIDER",
+    [localize "STR_A3A_CHAOS_mapOverlay_reach", localize "STR_A3A_CHAOS_mapOverlay_reach_tt"],
+    ["Antistasi CHAOS", "Map Overlay"],
+    [0, 3.0, 2.5, 1],       // min, max, default, 1 decimal place
+    0,
+    _invalidate,
+    false
+] call CBA_fnc_addSetting;
+
 [
     "A3A_CHAOS_influenceThickness",
     "SLIDER",
