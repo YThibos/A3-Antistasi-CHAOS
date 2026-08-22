@@ -63,14 +63,15 @@ private _invalidate = { A3A_influenceSignature = nil };
 // influence range above. The range decides how hard a position pushes; this
 // decides how far its territory reaches to meet a neighbour across ground
 // neither of them actually holds, so the two jobs stop fighting each other.
-// 0..3 in half steps: 0 is off (hard gaps), and 2.5 covers the worst gap
-// between two Altis objectives at the 800 m default range.
+// 0..3 in half steps: 0 is off (hard gaps), and 2.0 covers about the p90 of
+// Altis objective spacing at the 800 m default range, leaving only the worst
+// few gaps as no-man's-land in exchange for a crisper contour.
 [
     "A3A_CHAOS_influenceReach",
     "SLIDER",
     [localize "STR_A3A_CHAOS_mapOverlay_reach", localize "STR_A3A_CHAOS_mapOverlay_reach_tt"],
     ["Antistasi CHAOS", "Map Overlay"],
-    [0, 3.0, 2.5, 1],       // min, max, default, 1 decimal place
+    [0, 3.0, 2.0, 1],       // min, max, default, 1 decimal place
     0,
     _invalidate,
     false

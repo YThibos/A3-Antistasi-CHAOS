@@ -88,7 +88,7 @@ private _lines = [
     format ["Overlay enabled    : %1", missionNamespace getVariable ["A3A_CHAOS_influenceOverlayEnabled", true]],
     format ["Claim areas shown  : %1", missionNamespace getVariable ["A3A_CHAOS_influenceShowClaimAreas", true]],
     format ["Influence range    : %1 m", missionNamespace getVariable ["A3A_CHAOS_influenceRange", 800]],
-    format ["Reach / weight     : %1 x range / %2", missionNamespace getVariable ["A3A_CHAOS_influenceReach", "2.5 (default)"], missionNamespace getVariable ["A3A_influenceTailWeight", "0.05 (default)"]],
+    format ["Reach / weight     : %1 x range / %2", missionNamespace getVariable ["A3A_CHAOS_influenceReach", "2.0 (default)"], missionNamespace getVariable ["A3A_influenceTailWeight", "0.05 (default)"]],
     format ["Border thickness   : %1 px", missionNamespace getVariable ["A3A_CHAOS_influenceThickness", 4]],
     format ["Fill / opacity     : %1 / %2", missionNamespace getVariable ["A3A_CHAOS_influenceFill", false], missionNamespace getVariable ["A3A_CHAOS_influenceFillOpacity", 0.25]],
     format ["Rebel training     : skillFIA %1 / 20 (scales Guerilla radii only)", missionNamespace getVariable ["skillFIA", "unknown"]],

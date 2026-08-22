@@ -75,7 +75,7 @@ Maintainer: Antistasi CHAOS
                               + W * max(0, 1 - d / (M * R))
 
     M is the "Territory reach" setting (A3A_CHAOS_influenceReach, 0 .. 3 in
-    steps of 0.5, default 2.5) and W is a fixed weight (A3A_influenceTailWeight,
+    steps of 0.5, default 2.0) and W is a fixed weight (A3A_influenceTailWeight,
     default 0.05, see below). R is still exactly what A3A_fnc_zoneInfluenceRadii
     returned for that zone: the long cone is a MULTIPLE of that radius, never a
     second radius table, so the per-type balance and the Guerilla training
@@ -93,7 +93,7 @@ Maintainer: Antistasi CHAOS
       - Ground more than M*R from every zone is reached by nothing and stays
         no-man's-land, which is the point: remote wilderness belongs to nobody.
       - A holding with no neighbour therefore draws its outline at M*R rather
-        than R: 2 km around a watchpost at the defaults instead of 800 m. This
+        than R: 1.6 km around a watchpost at the defaults instead of 800 m. This
         setting is also what decides how big a lone holding looks.
       - On a rim where a real cone is fading out and a neighbour's faint cone is
         arriving, the neighbour takes the ground from the point where the real
@@ -258,8 +258,8 @@ if !(_doFill isEqualType false) then { _doFill = false };
 // rather than falling out of the arithmetic.
 // CBA sliders have no step, so - exactly as the influence range above does with
 // its 100 m step - the half step lives here.
-private _reach = missionNamespace getVariable ["A3A_CHAOS_influenceReach", 2.5];
-if !(_reach isEqualType 0) then { _reach = 2.5 };
+private _reach = missionNamespace getVariable ["A3A_CHAOS_influenceReach", 2.0];
+if !(_reach isEqualType 0) then { _reach = 2.0 };
 _reach = ((round (_reach / 0.5)) * 0.5) max 0 min 3;
 
 // Rebel AI training, raised in HQ Management. fn_FIAskillAdd starts it at 1 and

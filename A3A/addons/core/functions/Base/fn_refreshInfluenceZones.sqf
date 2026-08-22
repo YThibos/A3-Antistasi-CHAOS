@@ -67,7 +67,7 @@ private _signature = [
     missionNamespace getVariable ["A3A_CHAOS_influenceFill", false],
     // How far territory reaches into empty ground: a multiplier on every
     // radius, so it moves every border on the map.
-    missionNamespace getVariable ["A3A_CHAOS_influenceReach", 2.5],
+    missionNamespace getVariable ["A3A_CHAOS_influenceReach", 2.0],
     // Rebel AI training scales every influence radius, and there is no event
     // for it - fn_FIAskillAdd only publicVariables skillFIA - so the signature
     // is what catches a training upgrade.
