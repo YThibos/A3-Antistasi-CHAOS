@@ -322,6 +322,34 @@ private _sideColours = [];
     _sideColours pushBack _rgb;
 } forEach _sideList;
 
+// The per-side rules above can only judge one side at a time, and the property
+// that actually matters is that the sides are told APART. There is a real way
+// to fail that with three perfectly valid reads: every side class resolves its
+// channels off profileNamespace, and the config defaults behind those reads are
+// [0,1,1] for BLUFOR, OPFOR and Independent alike, so a profile that never set
+// its map colours hands back the same cyan three times. Two borders that close
+// are as useless as two identical ones, hence a tolerance rather than an exact
+// match. On any collision every side drops back to its own fallback: replacing
+// only one of the pair would just trade this collision for the next one.
+private _colourEps = 0.05;
+private _collision = false;
+private _colourCount = count _sideColours;
+for "_i" from 0 to (_colourCount - 2) do {
+    for "_j" from (_i + 1) to (_colourCount - 1) do {
+        (_sideColours # _i) params ["_ir", "_ig", "_ib"];
+        (_sideColours # _j) params ["_jr", "_jg", "_jb"];
+        if (abs (_ir - _jr) <= _colourEps
+            && {abs (_ig - _jg) <= _colourEps}
+            && {abs (_ib - _jb) <= _colourEps}) then {
+            _collision = true;
+            Debug_3("computeInfluenceZones: %1 and %2 both resolved to %3 - using side fallbacks for every side", _sideList # _i, _sideList # _j, _sideColours # _i);
+        };
+    };
+};
+if (_collision) then {
+    _sideColours = _sideList apply { [_x] call _sideFallback };
+};
+
 private _playerColourIdx = _sideList find teamPlayer;
 A3A_influencePlayerColour = if (_playerColourIdx < 0) then { [teamPlayer] call _sideFallback } else { _sideColours select _playerColourIdx };
 
