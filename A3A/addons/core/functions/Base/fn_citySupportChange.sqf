@@ -36,8 +36,18 @@ if (_change > 0) then {
 		private _antSide = sidesX getVariable (A3A_antennaMap get netId _antenna);
 		_change = _change * ([1, 2] select (_antSide == teamPlayer));
 	};
-	private _stationPos = A3A_garrison get _site getOrDefault ["policeStation", false];
-	if (_stationPos isEqualTo []) then { _change = _change * 1.5 };
+	private _stationPos = (A3A_garrison get _city) getOrDefault ["policeStation", false];
+	if !(_stationPos isEqualType []) then { _change = _change * 1.5 };
+
+	// Roadblock multiplier: +25% support boost per friendly roadblock inside the city
+	private _friendlyRoadblocks = (missionNamespace getVariable ["outpostsFIA", []]) select {
+		(sidesX getVariable [_x, sideUnknown] == teamPlayer) &&
+		{ isOnRoad (markerPos _x) } &&
+		{ (markerPos _x) inArea _city }
+	};
+	if (_friendlyRoadblocks isNotEqualTo []) then {
+		_change = _change * (1 + 0.25 * count _friendlyRoadblocks);
+	};
 };
 
 Trace_2("City %1 change %2", _city, _change);
