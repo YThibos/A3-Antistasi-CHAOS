@@ -1,12 +1,17 @@
 /**
 	Handler for when the 'Arsenal' action is taken.
-	
+
 	Usage:
 		_thing addAction ["Action", JN_fnc_arsenal_handleAction];
-	
+
 	Params:
 		Same as any 'addAction' handler
 **/
+
+// If ACE Arsenal is active in settings, route directly to A3A_fnc_openArsenal
+if (missionNamespace getVariable ["chaos_arsenal_useAce", false] && {missionNamespace getVariable ["A3A_hasACE", false]} && {!isNil "ace_arsenal_fnc_openBox"}) exitWith {
+	_this call A3A_fnc_openArsenal;
+};
 
 if (!arsenalInit) exitWith {};
 //start loading screen

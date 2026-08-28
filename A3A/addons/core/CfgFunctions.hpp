@@ -110,6 +110,22 @@ class CfgFunctions
             class vehicleSort {};
         };
 
+        class Arsenal {
+            file = QPATHTOFOLDER(functions\Arsenal);
+            class aceArsenalClose {};
+            class aceArsenalDiffLoadout {};
+            class aceArsenalGetAvailable {};
+            class aceArsenalGetLoadoutItems {};
+            class aceArsenalInit {};
+            class aceArsenalOpen {};
+            class aceArsenalOpenClient {};
+            class aceArsenalOpenDirect {};
+            class aceArsenalRemovePlayerItems {};
+            class aceArsenalRequestOpen {};
+            class initArsenal {};
+            class openArsenal {};
+        };
+
         class Base {
             file = QPATHTOFOLDER(functions\Base);
             class actionGarrisonVehicle {};

@@ -103,7 +103,7 @@ if (!isServer) then {
     //};
     //[clientOwner, "A3A_destroyedBuildings"] remoteExecCall ["publicVariableClient", 2];
 
-    boxX call jn_fnc_arsenal_init;
+    [boxX] call A3A_fnc_initArsenal;
     if (A3A_hasACEMedical) then { call A3A_fnc_initACEUnconsciousHandler };
 };
 
@@ -264,7 +264,7 @@ _flagLight setLightAttenuation [7, 0, 0.5, 0.5];
 
 vehicleBox allowDamage false;
 vehicleBox addAction [localize "STR_A3A_actions_restore_units", A3A_fnc_vehicleBoxRestore,nil,0,false,true,"","(isPlayer _this) and (_this == _this getVariable ['owner',objNull]) and (side (group _this) == teamPlayer) and !A3A_removeRestore", 4];
-vehicleBox addAction [localize "STR_A3A_fn_init_initclient_addact_arsenal", JN_fnc_arsenal_handleAction, [], 0, true, false, "", "alive _target && vehicle _this != _this && _this == _this getVariable ['owner',objNull]", 10];
+vehicleBox addAction [localize "STR_A3A_fn_init_initclient_addact_arsenal", A3A_fnc_openArsenal, [], 0, true, false, "", "alive _target && vehicle _this != _this && _this == _this getVariable ['owner',objNull]", 10];
 [vehicleBox] call HR_GRG_fnc_initGarage;
 
 vehicleBox addAction [localize "STR_A3A_fn_init_initclient_addact_buyveh", {

@@ -117,7 +117,7 @@ call A3A_fnc_initCivSpawnPlaceStats;
 if (A3A_hasACEMedical) then { call A3A_fnc_initACEUnconsciousHandler };
 
 // Need to run this before game load or initial unlocks. Params dependency.
-boxX call jn_fnc_arsenal_init;
+[boxX] call A3A_fnc_initArsenal;
 
 // This does the actual template loading in the middle somewhere
 [A3A_saveData] call A3A_fnc_initVarServer;

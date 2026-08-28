@@ -128,3 +128,45 @@ private _invalidate = { A3A_influenceSignature = nil };
     true                   // server can force this value on clients
 ] call CBA_fnc_addSetting;
 
+// ---- Arsenal ----
+[
+    "chaos_arsenal_useAce",
+    "CHECKBOX",
+    [
+        "Use ACE Arsenal",
+        "When enabled, uses ACE Arsenal instead of Jeroen's Arsenal with full stock enforcement and guest membership limits."
+    ],
+    ["Antistasi CHAOS", "Arsenal"],
+    false,                 // default: false (Legacy JNA)
+    2,                     // isGlobal: server setting synced to clients
+    {},
+    true                   // server forces setting on clients
+] call CBA_fnc_addSetting;
+
+[
+    "chaos_arsenal_enforceGuestLimits",
+    "CHECKBOX",
+    [
+        "Enforce Guest Limits in ACE Arsenal",
+        "Apply non-member guest item restrictions to ACE Arsenal item availability."
+    ],
+    ["Antistasi CHAOS", "Arsenal"],
+    true,                  // default: true
+    2,
+    {},
+    true
+] call CBA_fnc_addSetting;
+
+[
+    "chaos_arsenal_allowDefaultLoadouts",
+    "CHECKBOX",
+    [
+        "Allow Default Loadouts in ACE Arsenal",
+        "Allow loading default faction/role loadouts in ACE Arsenal."
+    ],
+    ["Antistasi CHAOS", "Arsenal"],
+    true,                  // default: true
+    2,
+    {},
+    true
+] call CBA_fnc_addSetting;

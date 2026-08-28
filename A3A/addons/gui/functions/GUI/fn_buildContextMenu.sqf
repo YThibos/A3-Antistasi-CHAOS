@@ -233,7 +233,7 @@ switch (true) do {
         if ((_veh == player) || {player != (driver _veh)}) exitWith {
             _vehArsenalButton ctrlSetTooltip localize "STR_antistasi_dialogs_main_context_HQ_beDriver";
         };
-        _vehArsenalButton ctrlAddEventHandler ["ButtonClick", {closeDialog 0; call JN_fnc_arsenal_handleAction}];
+        _vehArsenalButton ctrlAddEventHandler ["ButtonClick", {closeDialog 0; [objectParent player, player] call A3A_fnc_openArsenal}];
         _vehArsenalButton ctrlEnable true;
     };
     default {
