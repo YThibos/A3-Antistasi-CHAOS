@@ -50,13 +50,16 @@ switch (_mode) do
 		private _moneyCtrl = _display displayCtrl A3A_IDC_TEAMLEADERBUILDERMONEY;
 		_moneyCtrl ctrlSetText format ["%1 €", A3A_building_EHDB # AVAILABLE_MONEY];
 
-		// CHAOS: the military (basetier) catalogue rides on the military construction kit only.
-		// That box is itself gated behind the Construction Yard at purchase time (fn_buyItem),
-		// so no further yard or HQ-proximity check is needed here - owning the box is the licence.
+		// CHAOS: the military (basetier) and airport (airtier) catalogues ride on their respective kits only.
+		// Those boxes are themselves gated at purchase time (fn_buyItem),
+		// so no further box-tier check is needed here - owning the box is the licence.
 		private _boxFlags = (A3A_utilityItemHM getOrDefault [typeOf (A3A_building_EHDB # TEAMLEADER_BOX), []]) param [4, []];
 		private _buildableObjects = A3A_buildableObjects;
 		if !("basetier" in _boxFlags) then {
 			_buildableObjects = _buildableObjects select { (_x param [2, ""]) isNotEqualTo "basetier" };
+		};
+		if !("airtier" in _boxFlags) then {
+			_buildableObjects = _buildableObjects select { (_x param [2, ""]) isNotEqualTo "airtier" };
 		};
 
 		private _boxWidth = round ((ctrlPosition _buildControlsGroup # 2) / GRID_W);
@@ -121,6 +124,26 @@ switch (_mode) do
 					if (!_playerAtHQ) then {
 						_button ctrlEnable false;
 						_button ctrlSetTooltip format [localize "STR_A3A_constructionyard_not_at_hq", round _hqRadius];
+					};
+				};
+			};
+			// Air Control Center gate — one per campaign, requires Construction Yard, must be inside HQ build area
+			if (_ability isEqualTo "aircontrolcenter") then {
+				private _hqPos = getMarkerPos "Synd_HQ";
+				private _hqRadius = call A3A_fnc_hqBuildRadius;
+				private _playerAtHQ = (player distance2D _hqPos) <= _hqRadius;
+				if (call A3A_fnc_hasAirControlCenter) then {
+					_button ctrlEnable false;
+					_button ctrlSetTooltip localize "STR_A3A_aircontrolcenter_duplicate";
+				} else {
+					if !(call A3A_fnc_hasConstructionYard) then {
+						_button ctrlEnable false;
+						_button ctrlSetTooltip localize "STR_A3A_aircontrolcenter_need_yard";
+					} else {
+						if (!_playerAtHQ) then {
+							_button ctrlEnable false;
+							_button ctrlSetTooltip format [localize "STR_A3A_aircontrolcenter_not_at_hq", round _hqRadius];
+						};
 					};
 				};
 			};

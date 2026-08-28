@@ -19,36 +19,58 @@ A3A_buildableObjects = getArray (_mapInfo/"buildObjects");
 
 A3A_buildingPriceHM = createHashMapFromArray A3A_buildableObjects; // you can feed 3-element arrays to createHashMapFromArray, it will ignore anything after the first two for each entry
 
-// WP4b: append global military-tier (basetier) catalogue.
+// WP4b: append global military-tier (basetier) and airport-tier (airtier) catalogues.
 // Uses vanilla structures available on all maps.
 // Only adds entries not already present in the map's own buildObjects[].
-// The basetier ability marks the military catalogue: those entries are only listed when the
-// build box in use is the Military construction kit (see fn_teamLeaderRTSPlacerDialog.sqf),
-// and that kit can only be bought once a Construction Yard exists (see fn_buyItem.sqf).
 
 // Construction Yard — one per campaign, must be built inside the HQ radius, and is
-// buildable from any construction kit. "constructionyard" ability is handled specially
+// buildable from any standard construction kit. "constructionyard" ability is handled specially
 // in fn_teamLeaderRTSPlacerDialog: disabled when a yard already exists or player is outside HQ.
 if !("a3a_constructionYard" in A3A_buildingPriceHM) then {
     A3A_buildableObjects pushBack ["a3a_constructionYard", 5000, "constructionyard"];
     A3A_buildingPriceHM set ["a3a_constructionYard", ["a3a_constructionYard", 5000, "constructionyard"]];
 };
+
+// Air Control Center — one per campaign, must be built inside the HQ radius, requires Construction Yard,
+// and is buildable from standard construction kits. "aircontrolcenter" ability is handled specially
+// in fn_teamLeaderRTSPlacerDialog: disabled when ACC exists, Yard missing, or outside HQ.
+if !("a3a_airControlCenter" in A3A_buildingPriceHM) then {
+    A3A_buildableObjects pushBack ["a3a_airControlCenter", 8000, "aircontrolcenter"];
+    A3A_buildingPriceHM set ["a3a_airControlCenter", ["a3a_airControlCenter", 8000, "aircontrolcenter"]];
+};
+
 {
     if !(_x#0 in A3A_buildingPriceHM) then {
         A3A_buildableObjects pushBack _x;
         A3A_buildingPriceHM set [_x#0, _x];
     };
 } forEach [
-    ["Land_Cargo_Tower_V1_F",      3000, "basetier"],
-    ["Land_Cargo_Patrol_V1_F",     1200, "basetier"],
-    ["Land_Cargo_House_V1_F",       900, "basetier"],
-    ["Land_HBarrierTower_F",        800, "basetier"],
-    ["Land_HBarrierBig_F",          250, "basetier"],
-    ["Land_HBarrier_5_F",           120, "basetier"],
-    ["Land_CncWall4_F",             150, "basetier"],
-    ["Land_CncBarrierMedium4_F",    100, "basetier"],
-    ["Land_Razorwire_F",             60, "basetier"],
-    ["Land_Net_Fence_4m_F",          40, "basetier"]
+    // Military base tier (Military Construction Kit)
+    ["Land_Cargo_Tower_V1_F",        3000, "basetier"],
+    ["Land_Cargo_Patrol_V1_F",       1200, "basetier"],
+    ["Land_Cargo_House_V1_F",         900, "basetier"],
+    ["Land_HBarrierTower_F",          800, "basetier"],
+    ["Land_HBarrierBig_F",            250, "basetier"],
+    ["Land_HBarrier_5_F",             120, "basetier"],
+    ["Land_CncWall4_F",               150, "basetier"],
+    ["Land_CncBarrierMedium4_F",      100, "basetier"],
+    ["Land_Razorwire_F",               60, "basetier"],
+    ["Land_Net_Fence_4m_F",            40, "basetier"],
+
+    // Airport tier (Airport Construction Kit)
+    ["Land_Hangar_F",                 5000, "airtier"],
+    ["Land_TentHangar_V1_F",          4000, "airtier"],
+    ["Land_Airport_01_hangar_F",      3500, "airtier"],
+    ["Land_LandMark_F",                500, "airtier"],
+    ["Land_Windsock_01_F",             150, "airtier"],
+    ["Land_HelipadRescue_F",          1500, "airtier"],
+    ["Land_HelipadCivil_F",           1500, "airtier"],
+    ["Land_ConcretePlates_01_F",       100, "airtier"],
+    ["Land_runway_edgelight",           50, "airtier"],
+    ["Land_runway_edgelight_blue_F",    50, "airtier"],
+    ["Land_Flush_Light_green_F",        50, "airtier"],
+    ["Land_Flush_Light_yellow_F",       50, "airtier"],
+    ["Land_Flush_Light_red_F",          50, "airtier"]
 ];
 
 A3A_buildableObjects

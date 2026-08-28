@@ -33,7 +33,7 @@ params[["_tab","_vehicles"], ["_params",[]]];
 
 private _display = findDisplay A3A_IDD_BUYVEHICLEDIALOG;
 
-if (_tab isEqualTo "vehicles") then 
+if (_tab isEqualTo "vehicles") then
 {
     _params params ["_tab", "_selectedTab", "_arrayOfClasses"];
     Debug("BuyVehicleTab starting...");
@@ -370,6 +370,11 @@ if  (_tab in ["other"]) then
             _button ctrlEnable false;
             _button ctrlSetTooltip localize "STR_A3A_Utility_Items_Yard_Only";
         };
+        // CHAOS: "acconly" items (airport construction kit) need an Air Control Center first.
+        if ("acconly" in _flags && {!(call A3A_fnc_hasAirControlCenter)}) then {
+            _button ctrlEnable false;
+            _button ctrlSetTooltip localize "STR_A3A_Utility_Items_ACC_Only";
+        };
         _button ctrlCommit 0;
 
         // Object Render
@@ -434,7 +439,7 @@ if  (_tab in ["other"]) then
         private _iconPath = switch (_iconType) do {
             case "gear": { A3A_Icon_Gear };
             case "heal": { A3A_Icon_Heal };
-            case "refuel": { A3A_Icon_Refuel }; 
+            case "refuel": { A3A_Icon_Refuel };
             case "repair": { A3A_Icon_Repair };
             case "rearm": { A3A_Icon_Rearm };
             default { "" };

@@ -11,11 +11,10 @@ Maintainer: Antistasi CHAOS
     position. The rules differ by marker type:
 
       Watchpost / roadblock (outpostsFIA)
-          Fixed 30 m circle around the marker centre. fn_getMarkerForPos uses
-          outpostsFIA inAreaArrayIndexes [_pos, 30, 30], and inAreaArrayIndexes
-          treats the area as an ellipse unless its isRectangle argument is set,
-          which it is not. That matches the marker itself, created as an ELLIPSE
-          of size [30, 30] in fn_createRebelControl.
+          Circular area around the marker centre, scaling with war tier (30 m at
+          war tier 1 growing to 300 m at war tier 10). fn_getMarkerForPos uses
+          outpostsFIA inAreaArrayIndexes [_pos, _wpRadius, _wpRadius], which
+          treats the area as an ellipse / circle.
 
       Everything else (outposts, airports, factories, resources, seaports,
       rebel HQ, cities)
@@ -32,7 +31,7 @@ Arguments:
 
 Return Value:
     <NUMBER> Claim radius in metres.
-             Watchpost / roadblock, or no marker given : always 30.
+             Watchpost / roadblock, or no marker given : 30 m (tier 1) to 300 m (tier 10).
              Any other marker                          : max(markerSize#0, markerSize#1)
 
 Scope: Anywhere
@@ -47,10 +46,11 @@ Example:
 params [["_marker", "", [""]]];
 
 // ---- Watchpost / roadblock (outpostsFIA) -----------------------------------
-// Fixed 30 m circle. This constant is also the exact size the marker is created
-// with (fn_createRebelControl: _marker setMarkerSizeLocal [30,30]).
-if (_marker isEqualTo "") exitWith { 30 };
-if (!isNil "outpostsFIA" && {_marker in outpostsFIA}) exitWith { 30 };
+// Circular claim radius scaling with war tier: 30 m at tier 1 to 300 m at tier 10.
+if (_marker isEqualTo "" || {!isNil "outpostsFIA" && {_marker in outpostsFIA}}) exitWith {
+    private _tier = (missionNamespace getVariable ["tierWar", 1]) max 1 min 10;
+    30 * _tier
+};
 
 // ---- All other garrison markers --------------------------------------------
 // Coarse extent only - the authoritative test for these is inArea.

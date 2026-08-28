@@ -12,7 +12,7 @@ private _alignNormals = {
 	_thing setVectorUp surfaceNormal getPos _thing;
 };
 
-// WP4: capture old HQ centre before any objects are moved, for Construction Yard search
+// WP4: capture old HQ centre before any objects are moved, for Construction Yard / ACC search
 private _oldHQPos = getPos fireX;
 
 private _firePos = [_newPos, 3, getDir petros] call BIS_Fnc_relPos;
@@ -45,6 +45,16 @@ if (_yards isNotEqualTo []) then {
     private _yardPos = [_newPos, 20, (getDir petros + 200) % 360] call BIS_Fnc_relPos;
     (_yards#0) setPos _yardPos;
     (_yards#0) call _alignNormals;
+};
+
+// Move Air Control Center with HQ if present
+private _accs = (nearestObjects [_oldHQPos, ["a3a_airControlCenter"], 400]) select {
+    _x getVariable ["A3A_isAirControlCenter", false]
+};
+if (_accs isNotEqualTo []) then {
+    private _accPos = [_newPos, 25, (getDir petros + 250) % 360] call BIS_Fnc_relPos;
+    (_accs#0) setPos _accPos;
+    (_accs#0) call _alignNormals;
 };
 
 boxX hideObjectGlobal false;

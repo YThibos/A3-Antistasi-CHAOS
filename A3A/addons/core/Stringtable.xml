@@ -16475,6 +16475,9 @@
       <Key ID="STR_A3A_Utility_Items_Name_buildboxmega">
         <Original>Mega construction kit</Original>
       </Key>
+      <Key ID="STR_A3A_Utility_Items_Name_buildboxairport">
+        <Original>Airport construction kit</Original>
+      </Key>
       <Key ID="STR_A3A_Utility_Items_Name_buildboxmilitary">
         <Original>Military construction kit</Original>
       </Key>
@@ -16821,6 +16824,9 @@
       </Key>
       <Key ID="STR_A3A_Utility_Items_HQ_Duplicate">
         <Original>Only one Construction Yard is allowed per campaign.</Original>
+      </Key>
+      <Key ID="STR_A3A_Utility_Items_ACC_Only">
+        <Original>Requires an Air Control Center. Build one at HQ from a construction kit first.</Original>
       </Key>
       <Key ID="STR_A3A_Utility_Items_Yard_Only">
         <Original>Requires a Construction Yard. Build one at HQ from any construction kit first.</Original>

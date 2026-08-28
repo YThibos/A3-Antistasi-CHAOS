@@ -40,8 +40,11 @@ if (!isNull attachedTo _vehicle) exitWith {["STR_HR_GRG_Feedback_addVehicle_Atta
     //Valid area
 private _friendlyMarkers = (["Synd_HQ"] +outposts + seaports + airportsX + factories + resourcesX) select {sidesX getVariable [_x,sideUnknown] == teamPlayer}; //rebel locations with a flag
 private _inArea = _friendlyMarkers findIf { count ([_player, _vehicle] inAreaArray _x) > 1 };
-private _nearHelipads = nearestObjects [_vehicle, ["a3a_helipad"], 30, true];
+private _nearHelipads = nearestObjects [_vehicle, ["a3a_helipad", "Helipad_Base_F"], 30, true];
 private _isNearHelipad = (count _nearHelipads > 0) && (_vehicle isKindOf "Helicopter");
+private _hqRadius = call A3A_fnc_hqBuildRadius;
+private _isAtHQ = (_player inArea "Synd_HQ") || { (_player distance2D (getMarkerPos "Synd_HQ")) <= _hqRadius };
+private _isAccPlane = (_vehicle isKindOf "Plane") && _isAtHQ && (call A3A_fnc_hasAirControlCenter);
 if (_inArea == -1 && {!_isNearHelipad}) exitWith {["STR_HR_GRG_Feedback_addVehicle_badLocation",[FactionGet(reb,"name")]] remoteExec ["HR_GRG_fnc_Hint", _client]; false };
 
     //No hostiles near
@@ -122,9 +125,10 @@ if ((call HR_GRG_VehCap - _capacity) < (_countStatics + 1)) exitWith { ["STR_HR_
 
 //Block air garage outside of airbase
 if (
-    ((_class isKindOf "Air")
-    && {count (airportsX select {(sidesX getVariable [_x,sideUnknown] == teamPlayer) and (_player inArea _x)}) < 1 //no airports
-    }) && {!_isNearHelipad} // near helipad
+    (_class isKindOf "Air")
+    && {count (airportsX select {(sidesX getVariable [_x,sideUnknown] == teamPlayer) and (_player inArea _x)}) < 1} //no airports
+    && {!_isNearHelipad} // near helipad
+    && {!_isAccPlane} // plane at HQ with Air Control Center
 ) exitWith {["STR_HR_GRG_Feedback_addVehicle_airBlocked", [FactionGet(reb,"name")]] remoteExec ["HR_GRG_fnc_Hint", _client]; false };
 
 private _remTime = _vehicle getVariable ["A3A_lastFiredTime", -3600];
@@ -230,17 +234,17 @@ private _refreshCode = {
     FIX_LINE_NUMBERS()
     private _disp = findDisplay HR_GRG_IDD_Garage;
     private _cats = _this apply { HR_GRG_Cats#_x };
-    {
-        if (ctrlEnabled _x) then {
-            [_x, _this#_forEachIndex] call HR_GRG_fnc_reloadCategory;
-        };
-    } forEach _cats;
-    call HR_GRG_fnc_updateVehicleCount;
-};
+    {\
+        if (ctrlEnabled _x) then {\
+            [_x, _this#_forEachIndex] call HR_GRG_fnc_reloadCategory;\
+        };\
+    } forEach _cats;\
+    call HR_GRG_fnc_updateVehicleCount;\
+};\
 
-if !(HR_GRG_Users isEqualTo []) then {
-    [ _catsRequiringUpdate, _refreshCode ] remoteExecCall ["call", HR_GRG_Users];
-};
+if !(HR_GRG_Users isEqualTo []) then {\
+    [ _catsRequiringUpdate, _refreshCode ] remoteExecCall ["call", HR_GRG_Users];\
+};\
 
 ["STR_HR_GRG_Feedback_addVehicle_Success", [cfgDispName(_class)] ] remoteExec ["HR_GRG_fnc_Hint", _client];
 true;

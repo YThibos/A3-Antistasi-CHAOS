@@ -135,6 +135,15 @@
         <Spanish>Solo puedes construir helipuertos en marcadores aliados capturados o en el cuartel general.</Spanish>
       </Key>
       <!-- WP4: military-tier build gate -->
+      <Key ID="STR_A3A_aircontrolcenter_duplicate">
+        <Original>An Air Control Center is already built at this HQ.</Original>
+      </Key>
+      <Key ID="STR_A3A_aircontrolcenter_need_yard">
+        <Original>Requires a Construction Yard to be built at HQ first.</Original>
+      </Key>
+      <Key ID="STR_A3A_aircontrolcenter_not_at_hq">
+        <Original>You must be inside the HQ build area (%1 m) to build the Air Control Center.</Original>
+      </Key>
       <Key ID="STR_A3A_constructionyard_duplicate">
         <Original>A Construction Yard is already built at this HQ.</Original>
       </Key>

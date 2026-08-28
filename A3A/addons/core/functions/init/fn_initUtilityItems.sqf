@@ -41,7 +41,11 @@ private _items = [
     // big kits, and has to be driven or flown to where it is needed.
     // Priced below the mega kit on purpose: the box price is also its build budget, so an
     // equally-priced military kit would make the mega kit pointless once a yard exists.
-    ["Land_Pallet_MilBoxes_F", 3000, "buildboxmilitary", "", ["place", "build", "basetier", "yardonly"]]
+    ["Land_Pallet_MilBoxes_F", 3000, "buildboxmilitary", "", ["place", "build", "basetier", "yardonly"]],
+    // Airport construction kit: carries the airport (airtier) infrastructure catalogue.
+    // "airtier" is read by the placer dialog, "acconly" gates the purchase behind an
+    // existing Air Control Center at HQ.
+    ["CargoNet_01_box_F", 4000, "buildboxairport", "", ["place", "build", "airtier", "acconly"]]
 //    ["Land_Cargo10_cyan_F", 10000, "buildboxenormous", "", ["place", "build", "hugebuild"]]
 
 ];
@@ -51,7 +55,7 @@ if (LootToCrateRadius == 0) then { _items deleteAt 0 };
 if(A3A_hasACE) then {
     _items pushBack [_medCrate#0, _medCrate#1, "medicalbox", "heal", ["noclear", "move"]];
     _items pushBack ["ACE_Wheel", 5, "", "", []];
-    _items pushBack ["ACE_Track", 5, "", "", []];       // check names
+    _items pushBack ["ACE_Track", 5, "", ""];       // check names
 };
 
 // BAR (BuildAndRessources) resource crates and depot.

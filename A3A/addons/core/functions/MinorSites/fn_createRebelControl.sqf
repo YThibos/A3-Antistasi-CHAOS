@@ -17,9 +17,10 @@ if (markerShape _marker != "") then {
     _marker setMarkerPos _pos;
 } else {
     // Create underlying shape marker
+    private _radius = [] call A3A_fnc_garrisonVehicleRadius;
     createMarkerLocal [_marker, _pos];
     _marker setMarkerShapeLocal "ELLIPSE";
-    _marker setMarkerSizeLocal [30,30];
+    _marker setMarkerSizeLocal [_radius, _radius];
     _marker setMarkerAlpha 0;
 };
 

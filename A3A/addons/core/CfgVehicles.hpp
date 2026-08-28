@@ -17,7 +17,7 @@ class CfgVehicles
     };
 
     // Rebel AI unit types
-    
+
     //don't need to change this one?
     class I_G_Survivor_F : I_G_Soldier_base_F{};
     class a3a_unit_reb_unarmed : I_G_Survivor_F {};
@@ -167,5 +167,14 @@ class CfgVehicles
         scope = 2;
         scopeCurator = 2;
         displayName = $STR_A3A_Utility_Items_Name_constructionyard;
+    };
+
+    // Air Control Center - unlocks airport infrastructure and HQ plane ungaraging.
+    // Gated behind the Construction Yard and limited to 1 per campaign inside HQ radius.
+    class Land_Airport_Tower_F;
+    class a3a_airControlCenter : Land_Airport_Tower_F {
+        scope = 2;
+        scopeCurator = 2;
+        displayName = $STR_A3A_Utility_Items_Name_aircontrolcenter;
     };
 };

@@ -39,6 +39,11 @@ if (typeOf _building isEqualTo "a3a_constructionYard") then {
     _building setVariable ["A3A_isConstructionYard", true, true];
 };
 
+// Mark Air Control Center so fn_relocateHQObjects can find it by variable
+if (typeOf _building isEqualTo "a3a_airControlCenter") then {
+    _building setVariable ["A3A_isAirControlCenter", true, true];
+};
+
 // Add to garrison data if it's within one
 private _marker = [getPosATL _building] call A3A_fnc_getMarkerForPos;
 if (sidesX getVariable _marker == teamPlayer) then { [_marker, _building] call A3A_fnc_garrisonServer_addVehicle }

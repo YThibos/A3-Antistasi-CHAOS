@@ -78,7 +78,7 @@ switch (true) do {
         _vehicleNameLabel ctrlEnable false;
 
         _vehiclePicture ctrlSetText _editorPreview;
-        
+
         private _garageContextOptions = switch (true) do {
             case (_vehType in [3,4]): {
                 _containerTitle = localize "STR_antistasi_dialogs_main_context_title_aircraft";
@@ -112,8 +112,11 @@ switch (true) do {
                     private _inArea = true;
                     if (_vehType in HR_GRG_BLOCKAIRINDEX) then {
                         private _friendlyMarkers = (airportsX) select {sidesX getVariable [_x,sideUnknown] == teamPlayer};
-                        private _nearestHelipads = (nearestObjects [_vehicle, ["a3a_helipad"], 30, true]);
-                        _inArea = ((_friendlyMarkers findIf { _vehicle inArea _x} != -1) || (count _nearestHelipads > 0 && (_vehicle isKindOf "Helicopter")));              
+                        private _nearestHelipads = (nearestObjects [_vehicle, ["a3a_helipad", "Helipad_Base_F"], 30, true]);
+                        private _hqRadius = call A3A_fnc_hqBuildRadius;
+                        private _isAtHQ = (player inArea "Synd_HQ") || { (player distance2D (getMarkerPos "Synd_HQ")) <= _hqRadius };
+                        private _isAccPlane = (_vehType == 4) && _isAtHQ && (call A3A_fnc_hasAirControlCenter);
+                        _inArea = ((_friendlyMarkers findIf { _vehicle inArea _x} != -1) || (count _nearestHelipads > 0 && (_vehicle isKindOf "Helicopter")) || _isAccPlane);
                     };
                     if !(_inArea) exitWith {
                         _button ctrlEnable false;
@@ -145,7 +148,7 @@ switch (true) do {
                     //Valid area to convert to air support
                     private _friendlyMarkers = (["Synd_HQ"] + airportsX) select {sidesX getVariable [_x,sideUnknown] == teamPlayer}; //rebel locations with a flag
                     private _inArea = _friendlyMarkers findIf { count ([player, _vehicle] inAreaArray _x) > 1 };
-                    if (!(_inArea > -1) && (_vehicle isKindOf "Air")) exitWith { 
+                    if (!(_inArea > -1) && (_vehicle isKindOf "Air")) exitWith {
                         _button ctrlSetTooltip localize "STR_antistasi_dialogs_main_context_addBombRun_nearValid";
                     };
                     _button setVariable ["vehicle", _vehicle];
