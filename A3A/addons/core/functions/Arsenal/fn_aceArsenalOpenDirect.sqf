@@ -1,4 +1,5 @@
 #include "..\..\script_component.hpp"
+#include "\A3\Ui_f\hpp\defineResinclDesign.inc"
 FIX_LINE_NUMBERS()
 /*
 Maintainer: Antistasi CHAOS
@@ -19,10 +20,34 @@ if (isNull _target) then {
 };
 if (isNull _unit) then { _unit = player };
 
+// Ensure event handlers and sorts are initialized
+[] call A3A_fnc_aceArsenalInit;
+
 // Save baseline loadout snapshot
 A3A_aceArsenal_initialLoadout = getUnitLoadout _unit;
 A3A_aceArsenal_activeBox = _target;
 A3A_aceArsenal_isOpen = true;
+
+// Build fast stock lookup maps for UI decorations and sorting
+A3A_aceArsenal_stockMap = createHashMap;
+A3A_aceArsenal_magMap = createHashMap;
+
+if (!isNil "jna_dataList") then {
+    {
+        private _tabIndex = _forEachIndex;
+        private _isMagTab = (_tabIndex == IDC_RSCDISPLAYARSENAL_TAB_CARGOMAGALL);
+        {
+            _x params ["_item", "_count"];
+            if (_item != "") then {
+                private _lower = toLowerANSI _item;
+                A3A_aceArsenal_stockMap set [_lower, _count];
+                if (_isMagTab) then {
+                    A3A_aceArsenal_magMap set [_lower, _count];
+                };
+            };
+        } forEach _x;
+    } forEach jna_dataList;
+};
 
 // Get available items from jna_dataList
 private _availableItems = [_target, _unit] call A3A_fnc_aceArsenalGetAvailable;

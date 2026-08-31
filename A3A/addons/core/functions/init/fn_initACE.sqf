@@ -18,7 +18,7 @@
 
 #include "..\..\script_component.hpp"
 
-if (A3A_hasACEMedical) then { 
+if (A3A_hasACEMedical) then {
     // log atropine, epinephrine, and morphine use
     // Appears to be local to the medic
     ["ace_treatmentSucceded", {
@@ -36,9 +36,9 @@ if (A3A_hasACEMedical) then {
     if (captive player && _unit == player) then { player setCaptive false };
 }] call CBA_fnc_addEventHandler;
 
-["ace_throwableThrown", { 
-    params ["_unit", "_throwable"]; 
-    if (captive player && _unit == player) then { player setCaptive false }; 
+["ace_throwableThrown", {
+    params ["_unit", "_throwable"];
+    if (captive player && _unit == player) then { player setCaptive false };
 }] call CBA_fnc_addEventHandler;
 
 ["ace_towing_ropeDeployed", {
@@ -48,6 +48,40 @@ if (A3A_hasACEMedical) then {
 
 [boxX, boxX] call ace_common_fnc_claim;	//Disables ALL Ace Interactions
 [vehicleBox, VehicleBox] call ace_common_fnc_claim;	//Disables ALL Ace Interactions
+
+// Register Clear Grass ACE Self-Interaction action
+private _parentPath = if (isClass (configFile >> "CfgPatches" >> "ace_trenches")) then {
+    ["ACE_SelfActions", "ACE_Equipment", "ACE_Trenches"]
+} else {
+    ["ACE_SelfActions", "ACE_Equipment"]
+};
+
+private _grassIcon = if (isClass (configFile >> "CfgPatches" >> "ace_trenches")) then {
+    "\z\ace\addons\trenches\ui\small.paa"
+} else {
+    ""
+};
+
+private _clearGrassAction = [
+    "A3A_ClearGrass",
+    localize "STR_A3A_actions_clear_grass",
+    _grassIcon,
+    {
+        params ["_target", "_player"];
+        [_player] call A3A_fnc_clearGrass;
+    },
+    {
+        params ["_target", "_player"];
+        alive _player &&
+        {isNull objectParent _player} &&
+        {!(_player getVariable ["ACE_isUnconscious", false])} &&
+        {(getPosATL _player) select 2 < 1} &&
+        {!surfaceIsWater (getPos _player)} &&
+        {[_player, "ACE_EntrenchingTool"] call BIS_fnc_hasItem}
+    }
+] call ace_interact_menu_fnc_createAction;
+
+["CAManBase", 1, _parentPath, _clearGrassAction, true] call ace_interact_menu_fnc_addActionToClass;
 
 if (isNil "ace_interact_menu_fnc_compileMenu" || isNil "ace_interact_menu_fnc_compileMenuSelfAction") exitWith {
     Error("ACE non-public functions have changed, rebel group join/leave actions will not be removed.");

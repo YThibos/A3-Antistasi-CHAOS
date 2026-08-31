@@ -54,6 +54,11 @@ if (_reqMajor > _major || (_reqMajor == _major && (_reqMinor > _minor || (_reqMi
 
 //************************* Init goes here ***************************************
 
+// Neutralize legacy BI High Command module scripts to prevent HC_local.sqf from wiping map UI event handlers (ACE Issue #7971).
+// Antistasi manages HC groups dynamically via native engine commands (hcSetGroup / hcRemoveGroup).
+BIS_fnc_moduleHighCommandCommander = {};
+BIS_fnc_moduleHighCommandSubordinate = {};
+
 call A3A_fnc_uintToHexGenTables;
 call A3A_fnc_shortID_init;
 

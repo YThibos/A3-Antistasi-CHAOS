@@ -16,6 +16,34 @@
         <Turkish>Yakındaki birlikleri yenile</Turkish>
         <Chinesesimp>恢复附近的单位</Chinesesimp>
       </Key>
+      <Key ID="STR_A3A_actions_clear_grass">
+        <Original>Clear Grass (3m)</Original>
+        <German>Gras entfernen (3m)</German>
+        <Spanish>Despejar hierba (3m)</Spanish>
+        <French>Couper l'herbe (3m)</French>
+        <Russian>Скосить траву (3м)</Russian>
+      </Key>
+      <Key ID="STR_A3A_actions_clear_grass_progress">
+        <Original>Clearing Grass...</Original>
+        <German>Gras wird entfernt...</German>
+        <Spanish>Despejando hierba...</Spanish>
+        <French>Coupe de l'herbe en cours...</French>
+        <Russian>Скашивание травы...</Russian>
+      </Key>
+      <Key ID="STR_A3A_actions_clear_grass_success">
+        <Original>Grass cleared.</Original>
+        <German>Gras entfernt.</German>
+        <Spanish>Hierba despejada.</Spanish>
+        <French>Herbe coupée.</French>
+        <Russian>Трава скошена.</Russian>
+      </Key>
+      <Key ID="STR_A3A_actions_clear_grass_no_tool">
+        <Original>You need an Entrenching Tool to clear grass.</Original>
+        <German>Du benötigst ein Schanzzeug, um Gras zu entfernen.</German>
+        <Spanish>Necesitas una herramienta de trinchera para despejar hierba.</Spanish>
+        <French>Vous avez besoin d'une pelle de tranchée pour couper l'herbe.</French>
+        <Russian>Вам нужна саперная лопатка, чтобы скосить траву.</Russian>
+      </Key>
     </Container>
     <Container name="A3A_customHint">
       <Key ID="STR_A3A_customHint_dismiss">

@@ -113,7 +113,10 @@ class CfgFunctions
         class Arsenal {
             file = QPATHTOFOLDER(functions\Arsenal);
             class aceArsenalClose {};
+            class aceArsenalDecorateLeft {};
+            class aceArsenalDecorateRight {};
             class aceArsenalDiffLoadout {};
+            class aceArsenalFormatStock {};
             class aceArsenalGetAvailable {};
             class aceArsenalGetLoadoutItems {};
             class aceArsenalInit {};
@@ -881,6 +884,7 @@ class CfgFunctions
             class boxCollisionCheck {};
             class checkRoadPlace {};
             class classNameToModel {};
+            class clearGrass {};
             class countAttachedObjects {};
             class createDataObject {};
             class createNamespace {};

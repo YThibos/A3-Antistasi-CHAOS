@@ -71,7 +71,7 @@ WORK.md                project owner's private notes; not tracked by agents, not
 5. Say plainly what was **not** verified — in-game behaviour cannot be tested from the CLI. Never
    claim a feature works when only the syntax was checked.
 6. Append a brief entry to `docs/CHANGELOG.md` (single line when possible) for every change you
-   make. Newest entries go at the top. Do not edit `WORK.md` — that file belongs to the project
+   make. Newest entries go at the top. Do not edit `tmp/WORK.md` — that file belongs to the project
    owner and is not committed to the repo.
 
 ## Testing reality

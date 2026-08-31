@@ -167,5 +167,5 @@ Do **not** re-implement PBO parsing inline; always import or call the tool.
 - Prefer adding files over rewriting upstream files; when an upstream file must change, keep the
   diff minimal and local to the change.
 - `docs/CHANGELOG.md` tracks every change made by agents. Append a brief entry (single line when
-  possible, newest first) for every change you make. `WORK.md` is the project owner's private
+  possible, newest first) for every change you make. `../../../tmp/WORK.md` is the project owner's private
   notes — do not read it as a task list or modify it.

@@ -87,11 +87,51 @@ private _onMapToggle = {
     [
         {
             params ["", "_handle"];
-            private _mapCtrl = findDisplay 12 displayCtrl 51;
+            private _display = findDisplay 12;
+            private _mapCtrl = _display displayCtrl 51;
             if (!isNull _mapCtrl) then {
                 _mapCtrl ctrlAddEventHandler ["Draw", "_this call A3A_GUI_fnc_mapDrawInfluenceEH"];
                 uiNamespace setVariable ["A3A_influenceMapCtrl", _mapCtrl];
                 Info("initMapOverlay: influence overlay attached to the vanilla map");
+
+                // Display-level safety bridge for ACE3 map features (tools, gestures, mouse tracking)
+                if (A3A_hasACE && {isNull (_display getVariable ["A3A_ACEMapBridgeAttached", displayNull])}) then {
+                    _display setVariable ["A3A_ACEMapBridgeAttached", _display];
+
+                    _display displayAddEventHandler ["MouseMoving", {
+                        params ["_display", "_xPos", "_yPos", "_mouseOver"];
+                        private _ctrl = _display displayCtrl 51;
+                        if (!isNull _ctrl && {!isNil "ace_maptools_fnc_handleMouseMoving"}) then {
+                            [_ctrl, _xPos, _yPos, _mouseOver] call ace_maptools_fnc_handleMouseMoving;
+                        };
+                    }];
+
+                    _display displayAddEventHandler ["MouseButtonDown", {
+                        params ["_display", "_button", "_xPos", "_yPos", "_shift", "_ctrl", "_alt"];
+                        private _ctrl = _display displayCtrl 51;
+                        if (!isNull _ctrl) then {
+                            if (!isNil "ace_maptools_fnc_handleMouseButtonDown") then {
+                                [_ctrl, _button, _xPos, _yPos, _shift, _ctrl, _alt] call ace_maptools_fnc_handleMouseButtonDown;
+                            };
+                            if (!isNil "ace_map_gestures_fnc_handleMouseButtonDown") then {
+                                [_ctrl, _button, _xPos, _yPos, _shift, _ctrl, _alt] call ace_map_gestures_fnc_handleMouseButtonDown;
+                            };
+                        };
+                    }];
+
+                    _display displayAddEventHandler ["MouseButtonUp", {
+                        params ["_display", "_button", "_xPos", "_yPos", "_shift", "_ctrl", "_alt"];
+                        private _ctrl = _display displayCtrl 51;
+                        if (!isNull _ctrl) then {
+                            if (!isNil "ace_maptools_fnc_handleMouseButtonUp") then {
+                                [_ctrl, _button, _xPos, _yPos, _shift, _ctrl, _alt] call ace_maptools_fnc_handleMouseButtonUp;
+                            };
+                            if (!isNil "ace_map_gestures_fnc_handleMouseButtonUp") then {
+                                [_ctrl, _button, _xPos, _yPos, _shift, _ctrl, _alt] call ace_map_gestures_fnc_handleMouseButtonUp;
+                            };
+                        };
+                    }];
+                };
             };
             // Stop retrying once attached, or once the player closed the map again.
             if (!isNull _mapCtrl || {!visibleMap}) then {
