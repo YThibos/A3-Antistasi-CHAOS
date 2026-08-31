@@ -63,6 +63,13 @@ while {true} do
         private _noAirport = -1 == airportsX findIf { sidesX getVariable _x == Occupants };
         if (_noAirport) then { _resRateDef = _resRateDef * 0.6; _resRateAtk = _resRateAtk * 0.6 };
 
+        // CHAOS: supply connectivity. Territory cut off from the side's root node
+        // stops paying for it. Stacks with the no-airport penalty above, which is
+        // the same kind of territorial modifier.
+        private _supplyMulOcc = [Occupants] call A3A_fnc_supplyRateMultiplier;
+        _resRateDef = _resRateDef * _supplyMulOcc;
+        _resRateAtk = _resRateAtk * _supplyMulOcc;
+
         // Move some attack resources to or from defence depending on defence resource level
         private _maxDef = _resRateDef*100;
         private _shift = linearConversion [0, _maxDef, A3A_resourcesDefenceOcc, -0.5, 0.5, true];
@@ -93,6 +100,11 @@ while {true} do
 
         private _noAirport = -1 == airportsX findIf { sidesX getVariable _x == Invaders };
         if (_noAirport) then { _resRateDef = _resRateDef * 0.2 };               // Invaders continue attacking but stop defending
+
+        // CHAOS: supply connectivity, as for the Occupants above.
+        private _supplyMulInv = [Invaders] call A3A_fnc_supplyRateMultiplier;
+        _resRateDef = _resRateDef * _supplyMulInv;
+        _resRateAtk = _resRateAtk * _supplyMulInv;
 
         // Move some attack resources to or from defence depending on defence resource level
         private _maxDef = _resRateDef*100;

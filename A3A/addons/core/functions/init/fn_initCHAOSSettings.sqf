@@ -54,7 +54,13 @@ private _invalidate = { A3A_influenceSignature = nil };
     [localize "STR_A3A_CHAOS_mapOverlay_range", localize "STR_A3A_CHAOS_mapOverlay_range_tt"],
     ["Antistasi CHAOS", "Map Overlay"],
     [100, 1400, 800, 0],    // min, max, default, 0 decimal places
-    0,
+    // GLOBAL, not per-client. This number defines the shape of the world: the
+    // server derives supply connectivity from it in A3A_fnc_computeSupplyGraph,
+    // so every machine has to agree on it. It was per-client while the overlay
+    // was pure decoration, which merely meant two players saw slightly
+    // different borders; that is no longer harmless. Presentation settings
+    // (fill, thickness, opacity, claim areas, enable) stay per-client below.
+    2,                      // server forces setting on clients
     _invalidate,
     false
 ] call CBA_fnc_addSetting;
@@ -72,7 +78,9 @@ private _invalidate = { A3A_influenceSignature = nil };
     [localize "STR_A3A_CHAOS_mapOverlay_reach", localize "STR_A3A_CHAOS_mapOverlay_reach_tt"],
     ["Antistasi CHAOS", "Map Overlay"],
     [0, 3.0, 2.0, 1],       // min, max, default, 1 decimal place
-    0,
+    // GLOBAL for the same reason as the range above: it multiplies every
+    // radius, so it moves both the drawn border and the supply corridors.
+    2,                      // server forces setting on clients
     _invalidate,
     false
 ] call CBA_fnc_addSetting;
@@ -169,4 +177,62 @@ private _invalidate = { A3A_influenceSignature = nil };
     2,
     {},
     true
+] call CBA_fnc_addSetting;
+
+// ============================================================================
+// ==  Supply network                                                        ==
+// ============================================================================
+
+// Drawing the supply edges is presentation, so it is per-client like the rest
+// of the overlay's appearance settings.
+[
+    "A3A_CHAOS_supplyShowEdges",
+    "CHECKBOX",
+    [localize "STR_A3A_CHAOS_supply_showEdges", localize "STR_A3A_CHAOS_supply_showEdges_tt"],
+    ["Antistasi CHAOS", "Map Overlay"],
+    true,
+    0,
+    {},
+    false
+] call CBA_fnc_addSetting;
+
+// How much of its rate a fully severed faction keeps. Global: it is a balance
+// number the server owns, and A3A_fnc_supplyRateMultiplier reads it server-side
+// anyway. Zero is allowed but not advised - a faction on no resources stops
+// attacking entirely, which makes for a very quiet endgame.
+[
+    "A3A_CHAOS_supplyRateFloor",
+    "SLIDER",
+    [localize "STR_A3A_CHAOS_supply_rateFloor", localize "STR_A3A_CHAOS_supply_rateFloor_tt"],
+    ["Antistasi CHAOS", "Supply"],
+    [0, 1, 0.5, 2],
+    2,                      // server forces setting on clients
+    {},
+    false
+] call CBA_fnc_addSetting;
+
+// BAR material produced per connected rebel factory per income tick, split
+// evenly over the four materials. Global: it is production balance.
+[
+    "A3A_CHAOS_barFactoryYield",
+    "SLIDER",
+    [localize "STR_A3A_CHAOS_supply_factoryYield", localize "STR_A3A_CHAOS_supply_factoryYield_tt"],
+    ["Antistasi CHAOS", "Supply"],
+    [0, 1000, 200, 0],
+    2,                      // server forces setting on clients
+    {},
+    false
+] call CBA_fnc_addSetting;
+
+// Ceiling per material per depot. This is the reason to build more depots
+// rather than one bottomless one.
+[
+    "A3A_CHAOS_barDepotCap",
+    "SLIDER",
+    [localize "STR_A3A_CHAOS_supply_depotCap", localize "STR_A3A_CHAOS_supply_depotCap_tt"],
+    ["Antistasi CHAOS", "Supply"],
+    [500, 20000, 3000, 0],
+    2,                      // server forces setting on clients
+    {},
+    false
 ] call CBA_fnc_addSetting;

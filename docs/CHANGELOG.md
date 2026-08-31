@@ -4,6 +4,19 @@ Newest entries at the top. One line per change when possible.
 
 ---
 
+## 2026-08-31
+
+- **Shared influence core (`A3A_fnc_influenceContext` / `A3A_fnc_influenceAt`)**: zone collection, per-type radii, the rebel training factor and every field constant moved out of `fn_computeInfluenceZones` into one context both consumers build on, so the drawn border and the supply graph cannot drift apart. `fn_computeInfluenceZones` now consumes the context and keeps only its grid rasterisation and claim-shape drawing.
+- **`A3A_CHAOS_influenceRange` and `A3A_CHAOS_influenceReach` are now global settings** (server-forced, isGlobal 2) instead of per-client. They define the geometry the server derives supply connectivity from, so every machine must agree. Presentation settings (fill, thickness, opacity, claim areas, enable) stay per-client.
+- **Supply graph (`A3A_fnc_computeSupplyGraph`)**: markers are nodes; same-side zones within `(R(A)+R(B)) * reach` are candidate edges, and a candidate becomes an edge only when every sample along the corridor between them comes back owned by that side. Supply reach is a breadth-first walk from the side's root (`Synd_HQ` for the player, best airfield/outpost otherwise). Rebuilt debounced on `markerChange`/`RebelControlCreated`/`HQPlaced`, and forced on the income tick.
+- **Supply lines drawn on the map**: dashed player-faction edges on every map that already draws the influence overlay, toggled by `A3A_CHAOS_supplyShowEdges`. The coarse border says why territory connects; the edges say what actually is connected. Enemy edges are deliberately not published to clients.
+- **Enemy factions scale with their own connectivity**: `fn_aggressionUpdateLoop` multiplies Occupant and Invader attack *and* defence rates by `A3A_fnc_supplyRateMultiplier` (`floor + (1-floor) * connected/owned`, floor configurable, default 0.5), stacking with the existing no-airport penalty. Since the loop caps the defence stockpile at `rate * 100`, cutting enemy lines lowers their reserve ceiling as well as their income.
+- **BAR crates are now empty freight** (`750€ → 250€`, new `barempty` flag zeroes contents in `fn_initObject`). Material comes only from a depot.
+- **BAR resource depot is gated behind the Construction Yard** (`yardonly`). This makes BAR a late-game system by design; trenches and the small/medium/large build boxes carry the early game.
+- **Connected factories produce building material** (`A3A_fnc_factoryDepotTick`): each rebel factory that is connected to HQ through the supply graph delivers `A3A_CHAOS_barFactoryYield` (default 200) into the resource depots inside the HQ build radius each income tick, split evenly over concrete/wood/sand/metal and clamped by `A3A_CHAOS_barDepotCap` per depot — so more production needs more depots. Cut-off factories still pay their cash multiplier but ship nothing.
+
+---
+
 ## 2026-08-28
 
 - **ACE3 Map Flashlight & Map Tools Cursor Fix (Fix 1)**:

@@ -42,6 +42,15 @@ if ("loot" in _flags and minWeaps == -1) then {
 _object setVariable ["A3A_canGarage", true, true];
 _object setVariable ["A3A_itemPrice", _price, true];
 
+// CHAOS: BAR crates are bought empty. BAR spawns its crates carrying stock, and
+// the price now covers the container only, so the contents are zeroed here.
+// Public, because every machine reads the crate's own resource array to decide
+// what it can build. A crate restored by fn_barLoad never comes through this
+// path - it already carries its saved contents and must keep them.
+if ("barempty" in _flags) then {
+    _object setVariable ["BuildAndRessources_ressources", [0,0,0,0], true];
+};
+
 if ("save" in _flags) then {
     [_object] remoteExec ["A3A_fnc_rebelVehPlacedWorker", 2];
     [_object] remoteExecCall ["A3A_fnc_addVehAttachDetachEH", 2];

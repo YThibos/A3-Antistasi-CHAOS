@@ -72,6 +72,8 @@ Dependencies:
 #define BORDER_ALPHA 0.8
 #define CLAIM_ALPHA  0.45
 #define LINE_BUDGET  24000
+#define SUPPLY_ALPHA 0.9
+#define SUPPLY_DASH  600
 
 params ["_map"];
 
@@ -171,4 +173,55 @@ if (missionNamespace getVariable ["A3A_CHAOS_influenceShowClaimAreas", true]) th
             };
         };
     } forEach (missionNamespace getVariable ["A3A_influenceShapes", []]);
+};
+
+
+// ---- Supply edges -------------------------------------------------------
+// The drawn border is a contour of a field rasterised on a 150-370 m grid, so
+// it can only ever be an approximation of where a corridor actually runs. The
+// supply edges are the authority: the server built them in
+// A3A_fnc_computeSupplyGraph by sampling the same field along each corridor,
+// and they are drawn here as literal lines between markers. So the border tells
+// the player WHY territory connects, and these lines tell them WHAT is actually
+// connected - which is the pair of jobs one coarse contour cannot do alone.
+//
+// Player-faction edges only: the server does not publish enemy connectivity,
+// because handing every client a live map of the enemy supply network with no
+// scouting is a design decision nobody has made yet.
+if (missionNamespace getVariable ["A3A_CHAOS_supplyShowEdges", true]) then {
+    private _edges = missionNamespace getVariable ["A3A_supplyEdges", []];
+    if (_edges isNotEqualTo []) then {
+        private _supplyCol = (missionNamespace getVariable ["A3A_influencePlayerColour", [0,0.5,0]]) + [SUPPLY_ALPHA];
+        {
+            _x params ["_mrkA", "_mrkB"];
+            private _a = getMarkerPos _mrkA;
+            private _b = getMarkerPos _mrkB;
+            private _ax = _a # 0;
+            private _ay = _a # 1;
+            private _bx = _b # 0;
+            private _by = _b # 1;
+            if ((_ax min _bx) <= _viewMaxX
+                && {(_ax max _bx) >= _viewMinX}
+                && {(_ay min _by) <= _viewMaxY}
+                && {(_ay max _by) >= _viewMinY}) then {
+                // Dashed, so a supply line never reads as a border segment. The
+                // dash length is in world metres rather than pixels, which keeps
+                // the count bounded when the player zooms out: a long edge on a
+                // zoomed-out map is a handful of segments, not hundreds.
+                private _len = sqrt (((_bx - _ax) ^ 2) + ((_by - _ay) ^ 2));
+                private _steps = (ceil (_len / SUPPLY_DASH)) max 1 min 40;
+                private _ux = (_bx - _ax) / _steps;
+                private _uy = (_by - _ay) / _steps;
+                for "_i" from 0 to (_steps - 1) do {
+                    private _x0 = _ax + _ux * _i;
+                    private _y0 = _ay + _uy * _i;
+                    _map drawLine [
+                        [_x0, _y0],
+                        [_x0 + _ux * 0.6, _y0 + _uy * 0.6],
+                        _supplyCol
+                    ];
+                };
+            };
+        } forEach _edges;
+    };
 };

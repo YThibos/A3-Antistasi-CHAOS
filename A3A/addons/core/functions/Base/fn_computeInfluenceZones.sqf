@@ -265,116 +265,73 @@ private _fillBudget  = 12000;      // max fill triangles per side
 // used to live here. They are runtime-tunable now and are read, with their
 // defaults, in section 1.
 
-// ---- 1. Settings and scaling --------------------------------------------
-private _refRange = missionNamespace getVariable ["A3A_CHAOS_influenceRange", 800];
-if !(_refRange isEqualType 0) then { _refRange = 800 };
-_refRange = ((round (_refRange / 100)) * 100) max 100 min 1400;
-
+// ---- 1+2. Shared influence context --------------------------------------
+// Zone collection, radii, the training factor and every model constant now come
+// from A3A_fnc_influenceContext, which is also what the server's supply graph is
+// built on. That is the point: the border drawn here and the corridors tested
+// there are two readings of one field, not two implementations of one idea.
+//
+// Only the presentation setting stays local - filling is a client's taste, and
+// nothing outside this function cares about it.
 private _doFill = missionNamespace getVariable ["A3A_CHAOS_influenceFill", false];
 if !(_doFill isEqualType false) then { _doFill = false };
 
-// How far territory reaches into empty ground, as a multiple of the influence
-// range: the radius of the faint second cone documented in the header. 0 is a
-// real setting and means no second cone at all, so it is tested for explicitly
-// rather than falling out of the arithmetic.
-// CBA sliders have no step, so - exactly as the influence range above does with
-// its 100 m step - the half step lives here.
-private _reach = missionNamespace getVariable ["A3A_CHAOS_influenceReach", 2.0];
-if !(_reach isEqualType 0) then { _reach = 2.0 };
-_reach = ((round (_reach / 0.5)) * 0.5) max 0 min 3;
+private _ctx = call A3A_fnc_influenceContext;
+if (_ctx isEqualTo []) exitWith {
+    A3A_influenceSides = [];
+    A3A_influenceShapes = [];
+    Debug("computeInfluenceZones: no influence context - overlay cleared");
+};
 
-// Rebel AI training, raised in HQ Management. fn_FIAskillAdd starts it at 1 and
-// refuses past 20, and the HQ dialog shows it as "n / 20". Applied to the
-// Guerilla side's zones only, in the collection loop below.
-private _skill = missionNamespace getVariable ["skillFIA", 1];
-if !(_skill isEqualType 0) then { _skill = 1 };
-private _trainScale = 0.8 + 0.4 * (((_skill max 1) min 20) - 1) / 19;
+_ctx params ["_sideList", "_sideZones", "_consts"];
+// _refRange and _trainScale are pulled out for the diagnostic line in section 8
+// only; the geometry below uses the rest.
+_consts params ["_cap", "_capTail", "_tailW", "_reach", "_reachMult", "_refRange", "_trainScale"];
 
-private _radii = [_refRange] call A3A_fnc_zoneInfluenceRadii;
-private _defaultRadius = _refRange;
+// Shallow copies of the two parallel arrays. The draw-order swap further down
+// reorders them, and the context's spatial index stores SIDE INDICES into the
+// order it built - reordering the context's own arrays in place would silently
+// invalidate that index for anything else holding the same context. The
+// rasteriser never touches the index, so this costs nothing and removes a trap.
+_sideList = _sideList + [];
+_sideZones = _sideZones + [];
 
-// Overlap ceiling and its residual slope. Debug/tuning overrides rather than
-// settings - see the header. Written in the affirmative so that a non-number,
-// an out-of-range value and NaN all fall through to the default: a cap of 0 or
-// less would divide by zero in the saturation in section 6.
-private _cap = missionNamespace getVariable ["A3A_influenceCap", 1];
-if !(_cap isEqualType 0 && {_cap >= 0.05} && {_cap <= 100}) then { _cap = 1 };
-private _capTail = missionNamespace getVariable ["A3A_influenceCapTail", 0.05];
-if !(_capTail isEqualType 0 && {_capTail >= 0} && {_capTail <= 1}) then { _capTail = 0.05 };
-
-// Weight of the faint long cone. A model constant, not a setting - see the
-// header for why, and for what it does to a rim where a real cone is fading out
-// while a neighbour's faint one arrives.
-private _tailW = missionNamespace getVariable ["A3A_influenceTailWeight", 0.05];
-if !(_tailW isEqualType 0 && {_tailW >= 0} && {_tailW <= 0.5}) then { _tailW = 0.05 };
-
-// Everything downstream asks two questions of the long cone: how far out does a
-// zone still write anything (the radius multiplier, never below 1x, since the
-// real cone is always stamped), and what does the faint term itself scale by.
-// Zeroing the second is what makes "reach 0" cost nothing.
-if (_reach <= 0 || {_tailW <= 0}) then { _reach = 0; _tailW = 0 };
-private _reachMult = 1 max _reach;
-
-// ---- 2. Collect zones per side and friendly claim shapes ----------------
+// ---- 2. Friendly claim shapes -------------------------------------------
+// Purely a drawing concern - the static attribution area of each owned zone, in
+// the marker's own shape, so it matches the inArea test fn_getMarkerForPos uses.
+// It used to be built inside the zone-collection loop; it is separate now
+// because the collection is shared with the supply graph, which has no use for
+// marker geometry.
 private _controls = missionNamespace getVariable ["controlsX", []];
 private _wpRadius = [] call A3A_fnc_garrisonVehicleRadius;   // watchpost/roadblock claim radius
+private _posts = missionNamespace getVariable ["outpostsFIA", []];
 
-private _allZones = markersX + outpostsFIA + _controls;
-private _postFrom = count markersX;
-private _postTo   = _postFrom + count outpostsFIA;
-
-private _shapes    = [];     // friendly claim areas, drawn as-is
-private _sideList  = [];     // SIDEs that hold ground
-private _sideZones = [];     // parallel: [[x, y, radius], ...] per side
-
+private _shapes = [];
 {
     private _mrk = _x;
+    if !((sidesX getVariable [_mrk, sideUnknown]) isEqualTo teamPlayer) then { continue };
     private _pos = getMarkerPos _mrk;
-    // Markers that were never broadcast to this client report [0,0,0]
     if (_pos isEqualTo [0,0,0]) then { continue };
 
-    private _side = sidesX getVariable [_mrk, sideUnknown];
-    if (_side isEqualTo sideUnknown) then { continue };
-
-    private _radius = _radii getOrDefault [_mrk, _defaultRadius];
-    // Rebel training widens the Guerilla side's reach and nobody else's.
-    if (_side isEqualTo teamPlayer) then { _radius = _radius * _trainScale };
-    if (_radius <= 0) then { continue };
-
-    private _idx = _sideList find _side;
-    if (_idx < 0) then {
-        _sideList pushBack _side;
-        _sideZones pushBack [];
-        _idx = (count _sideList) - 1;
+    private _semiA = 0;
+    private _semiB = 0;
+    private _isRect = false;
+    if (_mrk in _posts) then {
+        // Watchposts / roadblocks: fixed circular claim radius, marker size is cosmetic
+        _semiA = _wpRadius;
+        _semiB = _wpRadius;
+    } else {
+        private _size = markerSize _mrk;
+        _semiA = _size # 0;
+        _semiB = _size # 1;
+        _isRect = (markerShape _mrk) isEqualTo "RECTANGLE";
     };
-    (_sideZones select _idx) pushBack [_pos # 0, _pos # 1, _radius];
-
-    if (_side isEqualTo teamPlayer) then {
-        private _semiA = 0;
-        private _semiB = 0;
-        private _isRect = false;
-        if (_forEachIndex >= _postFrom && {_forEachIndex < _postTo}) then {
-            // Watchposts / roadblocks: fixed circular claim radius, marker size is cosmetic
-            _semiA = _wpRadius;
-            _semiB = _wpRadius;
-        } else {
-            private _size = markerSize _mrk;
-            _semiA = _size # 0;
-            _semiB = _size # 1;
-            _isRect = (markerShape _mrk) isEqualTo "RECTANGLE";
-        };
-        if (_semiA > 0 && {_semiB > 0}) then {
-            _shapes pushBack [_pos, _semiA, _semiB, markerDir _mrk, _isRect];
-        };
+    if (_semiA > 0 && {_semiB > 0}) then {
+        _shapes pushBack [_pos, _semiA, _semiB, markerDir _mrk, _isRect];
     };
-} forEach _allZones;
+} forEach (markersX + _posts + _controls);
 
 A3A_influenceShapes = _shapes;
-
-if (_sideList isEqualTo []) exitWith {
-    A3A_influenceSides = [];
-    Debug("computeInfluenceZones: no owned zones - overlay cleared");
-};
 
 // Draw order: the player faction last, so its border sits on top of the others.
 private _playerIdx = _sideList find teamPlayer;
@@ -382,6 +339,7 @@ if (_playerIdx >= 0 && {_playerIdx != (count _sideList) - 1}) then {
     _sideList pushBack (_sideList deleteAt _playerIdx);
     _sideZones pushBack (_sideZones deleteAt _playerIdx);
 };
+
 
 // ---- 3. Side colours, from the game's own marker colour config ----------
 // colorTeamPlayer / colorOccupants / colorInvaders hold CfgMarkerColors class
