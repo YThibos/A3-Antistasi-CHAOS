@@ -58,6 +58,10 @@ if (isServer && {isNil "A3A_influenceZonesRev"}) then {
     private _bump = {
         A3A_influenceZonesRev = A3A_influenceZonesRev + 1;
         publicVariable "A3A_influenceZonesRev";
+        // The supply graph is derived from the same territory, so it goes stale
+        // on exactly these events. Debounced, because taking one objective fires
+        // several of them in a burst.
+        [] call A3A_fnc_refreshSupplyGraph;
     };
     ["markerChange", "A3A_influenceOverlay", _bump] call EFUNC(Events,addEventListener);
     ["RebelControlCreated", "A3A_influenceOverlay", _bump] call EFUNC(Events,addEventListener);

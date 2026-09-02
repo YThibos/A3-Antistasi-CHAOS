@@ -143,6 +143,37 @@ specific version.
   `params ["_args"]` yields exactly what was passed. Passing `[[false]]` and then reading
   `_args # 0` yields the inner array, not the boolean — a type error that only shows up on the
   frames where the value is actually read.
+- 2026-08-31: **The influence field has one owner now.** `A3A_fnc_influenceContext` holds zone
+  collection, per-type radii, the training factor and every model constant; `fn_computeInfluenceZones`
+  (client raster) and `A3A_fnc_computeSupplyGraph` (server corridor test) are both built on it, so
+  the drawn border and supply connectivity cannot drift. `A3A_fnc_influenceAt` is the gather form of
+  the same maths the raster scatters - the four lines of cone/saturation arithmetic are duplicated
+  on purpose (a function call per grid node would cost the overlay far more than the duplication
+  costs us), so a change to one needs the same change in sections 5-6 of the raster.
+  The raster floors radii at 1.5 grid cells; that floor belongs to the grid, not the field, and is
+  deliberately absent from point queries.
+- 2026-08-31: **CBA setting scope is load-bearing, not cosmetic.** `A3A_CHAOS_influenceRange` and
+  `A3A_CHAOS_influenceReach` were `isGlobal 0` (per-client) while the overlay was decoration, which
+  merely meant two players saw slightly different borders. The moment the server derived supply
+  connectivity from the same numbers that became a correctness bug, and they are now `isGlobal 2`
+  (this repo's convention for server-forced). Rule of thumb: geometry settings global, presentation
+  settings per-client. Note that promoting a setting drops any per-client value players had set.
+- 2026-08-31: **`fn_chooseAttack` targets markers, not objects.** A destructible object placed at a
+  marker - a BAR depot, say - is therefore only ever attacked incidentally, as part of an attack on
+  its marker. Any design that relies on "the enemy will destroy this thing" needs a mission type
+  added to the attack director; it does not fall out of the existing AI.
+- 2026-08-31: **The economy is normalised per map and does not tolerate naive multipliers.**
+  `fn_initZones` sets `A3A_rebelCashResMult = 1500 / count resourcesX` and
+  `A3A_rebelCashFactMult = 1.4 / count factories`, so every map's resources are collectively worth
+  1500/tick and its factories +140%, whatever the count. Resources are the ADDITIVE cash term and
+  factories the MULTIPLIER, so tiering both compounds. Also: those multipliers are computed once at
+  init and `fn_tierCheck` derives `_totalPoints` from the same counts, so a marker added mid-campaign
+  is worth a full undiluted share AND can retroactively move the war tier.
+- 2026-08-31: **Enemy factions do have resource pools** - `A3A_resourcesAttackOcc/Inv` and
+  `A3A_resourcesDefenceOcc/Inv` in `fn_aggressionUpdateLoop`, fed by `A3A_balanceResourceRate`. The
+  loop already carried a territorial modifier (no airport -> x0.6 / x0.2), which is the precedent
+  supply connectivity follows. Because defence is capped at `rate * 100`, changing the rate also
+  moves the stockpile ceiling.
 - 2026-08-20: **`Tools/StreetArtist`** is a standalone navGrid-generation mission tool (separate
   Arma 3 mission, not part of the mod). Its `findDisplay 12 displayCtrl 51` usage is inside an
   `EachFrame` EH that already guards `!visibleMap`, making it useless as a general reference for

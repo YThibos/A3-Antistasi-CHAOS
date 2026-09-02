@@ -169,6 +169,7 @@ class CfgFunctions
             class fogCheck {};
             class garbageCleaner {};
             class garbageCleanerTracker {};
+            class factoryDepotTick {};
             class garrisonVehicleRadius {};
             class getAggroLevelString {};
             class getMarkerForPos {};
@@ -234,6 +235,18 @@ class CfgFunctions
             class unlockVehicle {};
             class updateHQMarkerRadius {};
             class zoneInfluenceRadii {};
+        };
+
+        // CHAOS: the shared influence field and everything derived from it.
+        // fn_computeInfluenceZones (Base) draws the border from the same
+        // context these build the supply graph from, so the two cannot drift.
+        class Influence {
+            file = QPATHTOFOLDER(functions\Influence);
+            class computeSupplyGraph {};
+            class influenceAt {};
+            class influenceContext {};
+            class refreshSupplyGraph {};
+            class supplyRateMultiplier {};
         };
 
         class Builder {

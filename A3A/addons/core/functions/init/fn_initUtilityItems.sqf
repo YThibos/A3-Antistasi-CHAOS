@@ -64,12 +64,26 @@ if(A3A_hasACE) then {
 // which BAR and Advanced Sling Loading already handle.
 // barsupply puts a "resupply nearby crates" action on the depot - BAR itself only ever
 // builds out of crates, so without it a depot is inert to the build menu.
+// CHAOS: crates are empty freight, the depot is the only source of material.
+// "barempty" zeroes a bought crate's contents in fn_initObject, so 250 buys the
+// container and nothing else - material comes from the depot, which is filled by
+// connected factories (A3A_fnc_factoryDepotTick) and emptied into crates by the
+// depot's own resupply action (A3A_fnc_barResupply). Buying a full crate outright
+// would have made that whole loop optional.
+//
+// The depot is "yardonly", so BAR material is a Construction Yard capability like
+// the military and airport build kits. That does make BAR a late-game system:
+// before the yard there is no depot, so there is no material at all. Deliberate -
+// trenches and the small/medium/large build boxes carry the early game.
+//
+// Crates must NOT be removed even though they are empty: BAR builds only ever
+// draw from a crate, so a depot with no crate near it is inert to the build menu.
 if (A3A_hasBAR) then {
-    _items pushBack ["RessourceCrate_Concrete", 750, "barcrate_concrete", "", ["place","save","noclear"]];
-    _items pushBack ["RessourceCrate_Metal",    750, "barcrate_metal",    "", ["place","save","noclear"]];
-    _items pushBack ["RessourceCrate_Sand",     750, "barcrate_sand",     "", ["place","save","noclear"]];
-    _items pushBack ["RessourceCrate_Wood",     750, "barcrate_wood",     "", ["place","save","noclear"]];
-    _items pushBack ["RessourceDepot",         3000, "bardepot",          "", ["cmmdr","place","save","noclear","barsupply"]];
+    _items pushBack ["RessourceCrate_Concrete", 250, "barcrate_concrete", "", ["place","save","noclear","barempty"]];
+    _items pushBack ["RessourceCrate_Metal",    250, "barcrate_metal",    "", ["place","save","noclear","barempty"]];
+    _items pushBack ["RessourceCrate_Sand",     250, "barcrate_sand",     "", ["place","save","noclear","barempty"]];
+    _items pushBack ["RessourceCrate_Wood",     250, "barcrate_wood",     "", ["place","save","noclear","barempty"]];
+    _items pushBack ["RessourceDepot",         3000, "bardepot",          "", ["cmmdr","place","save","noclear","barsupply","yardonly"]];
 };
 
 // Apply item name localization

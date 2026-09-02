@@ -35,6 +35,11 @@ while {true} do
 	[] call A3A_fnc_tierCheck;
 	[] spawn A3A_fnc_checkCampaignEnd; // check for population win
 
+	// CHAOS: rebuild the supply graph before anything spends it. Forced rather
+	// than debounced - the income tick wants the world as it is right now, and
+	// this is a 10-minute cadence, so the cost is irrelevant here.
+	[true] call A3A_fnc_refreshSupplyGraph;
+
 	private _resourcesRebel = {sidesX getVariable _x == teamPlayer and !(_x in destroyedSites)} count resourcesX;
 	_resAdd = _resAdd + _resourcesRebel * A3A_rebelCashResMult;
 
@@ -50,6 +55,10 @@ while {true} do
 	private _newBombRuns = bombRuns + 0.25 * ({sidesX getVariable [_x,sideUnknown] == teamPlayer} count airportsX);
 	bombRuns = _newBombRuns min (4 + tierWar*2);
 	publicVariable "bombRuns";
+
+	// CHAOS: connected rebel factories ship BAR building material into the
+	// depots standing in the HQ build area.
+	call A3A_fnc_factoryDepotTick;
 
 	// Add & delete enemy camps and roadblocks
 	call A3A_fnc_updateMinorSites;
