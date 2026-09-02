@@ -4,6 +4,13 @@ Newest entries at the top. One line per change when possible.
 
 ---
 
+## 2026-09-02
+
+- **Supply rate floor default raised 0.5 → 0.75** (`A3A_CHAOS_supplyRateFloor`). Ahead of replenishment gating, the pool multiplier stops being the mechanic and becomes a nudge; at severed markers it is redundant and at connected ones it punishes a faction for damage done elsewhere. Also avoids stacking a third penalty on a side that already loses camps and roadblocks as it loses ground.
+- **`RESEARCH.md` processed**: the seeding brainstorm transcript is removed and its content turned into tracked todos, ideas and open questions — supply iteration 2 (replenishment gating, with the source-verified hook), the tiered resource/factory ladder, marker sub-types, an audit of the enemy's existing structural advantages, and the outstanding tweaks.
+
+---
+
 ## 2026-08-31
 
 - **Shared influence core (`A3A_fnc_influenceContext` / `A3A_fnc_influenceAt`)**: zone collection, per-type radii, the rebel training factor and every field constant moved out of `fn_computeInfluenceZones` into one context both consumers build on, so the drawn border and the supply graph cannot drift apart. `fn_computeInfluenceZones` now consumes the context and keeps only its grid rasterisation and claim-shape drawing.

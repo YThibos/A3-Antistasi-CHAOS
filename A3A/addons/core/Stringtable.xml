@@ -16906,7 +16906,7 @@
         <Original>Severed faction resource floor</Original>
       </Key>
       <Key ID="STR_A3A_CHAOS_supply_rateFloor_tt">
-        <Original>The share of its normal resource rate an enemy faction keeps when its territory is completely cut off from its capital. Occupants and Invaders scale their attack and defence budgets by how much of their territory still reaches their own root node, so cutting their supply lines starves them - this sets how far that can go. Low values make a severed faction almost harmless; 0 makes it stop attacking altogether, which usually makes for a very quiet endgame.</Original>
+        <Original>The share of its normal resource rate an enemy faction keeps when its territory is completely cut off from its capital. Occupants and Invaders scale their attack and defence budgets by how much of their territory still reaches their own root node, so cutting their supply lines starves them - this sets how far that can go. Lower it for a harsher campaign where severing lines cripples a faction outright; 0 makes it stop attacking altogether, which usually makes for a very quiet endgame. Note that an enemy faction losing ground already loses camps and roadblocks with it, so this stacks with a squeeze they are under anyway.</Original>
       </Key>
       <Key ID="STR_A3A_CHAOS_supply_factoryYield">
         <Original>Factory material output</Original>

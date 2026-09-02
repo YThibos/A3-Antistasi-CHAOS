@@ -200,12 +200,20 @@ private _invalidate = { A3A_influenceSignature = nil };
 // number the server owns, and A3A_fnc_supplyRateMultiplier reads it server-side
 // anyway. Zero is allowed but not advised - a faction on no resources stops
 // attacking entirely, which makes for a very quiet endgame.
+//
+// Default raised 0.5 -> 0.75 ahead of replenishment gating (see RESEARCH.md).
+// Once a severed marker cannot be reinforced at all, whatever the pool holds,
+// this multiplier stops being the mechanic and becomes a nudge: at the cut
+// markers it is redundant, and at the still-connected ones it punishes them for
+// damage done elsewhere. 0.75 keeps the pressure without stacking a third
+// penalty onto a faction that is already losing minor sites as it loses ground
+// (fn_updateMinorSites sizes each side's camp network by markers owned).
 [
     "A3A_CHAOS_supplyRateFloor",
     "SLIDER",
     [localize "STR_A3A_CHAOS_supply_rateFloor", localize "STR_A3A_CHAOS_supply_rateFloor_tt"],
     ["Antistasi CHAOS", "Supply"],
-    [0, 1, 0.5, 2],
+    [0, 1, 0.75, 2],
     2,                      // server forces setting on clients
     {},
     false
