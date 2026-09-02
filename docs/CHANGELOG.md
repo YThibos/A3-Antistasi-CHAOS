@@ -6,7 +6,7 @@ Newest entries at the top. One line per change when possible.
 
 ## 2026-09-02
 
-- **Tiered resources and factories (CHAOS site upgrades)**: rebel resources and factories now carry an upgrade tier, delivered by a new **Site Upgrade** mission (`LOG_SiteUpgrade`).
+- **Tiered resources and factories (CHAOS site upgrades)**: rebel resources and factories now carry an upgrade tier, delivered by a new **Site Upgrade** mission (`ECON_SiteUpgrade`).
   - **Tier 1** — a shipping container (`Land_Cargo10_blue_F`) spawns at HQ; haul it to the site by truck, flatbed or sling, set it down, and build a supply warehouse (`Land_Warehouse_03_F`) from it through the normal RTS placer, so the building can be aligned before it is committed. The container's build budget is exactly the warehouse price, so it deletes itself once spent.
   - **Tier 2** — a `Land_PowerGenerator_F` is delivered as finished freight; set it down inside the site.
   - **Tier gates supply-graph membership.** A Tier 0 resource or factory is not a node: it can neither be supplied nor relay supply. Its vanilla income is completely untouched, so the ladder is upside only.
@@ -14,7 +14,9 @@ Newest entries at the top. One line per change when possible.
   - **No new saved state.** Tier is derived from the structures standing on the site, which are already persisted, so destroying a warehouse drops the site back to Tier 0 and makes it mission-eligible again with no extra code.
   - The mission picker deliberately applies **no `distanceMission` cutoff** — distance is a mild weighting only, so a settled HQ is never pushed to relocate to keep upgrade missions coming.
   - `sitetier` is an exclusive build catalogue, so an upgrade container cannot be used to build a general base out at a remote mine.
-  - **Fix**: the mission was first registered under a new `SITE` category, which made it unreachable — `fn_requestMissionDialog` hardcodes both its buttons and its `_missionTypes` whitelist, so only `AS / CONVOY / DES / CON / LOG / SUPP / RES` can ever be requested. It is now category `LOG`.
+  - **New `ECON` mission category with an Economy button.** The mission was first registered under a `SITE` category that had neither a button nor an entry in `fn_requestMissionDialog`'s `_missionTypes` whitelist, which made it unreachable from Petros — it could only appear on the random roll in the 10-minute tick. It now has a proper Economy category rather than being folded into Logistics, which already carries five live tasks.
+  - **Mission request dialog realigned.** Row 2 held three buttons centred on the dialog (x 26/64/102) while row 1 held four (x 7/45/83/121). Economy is the fourth button of row 2, so both rows now share the same column positions.
+  - **Fix (upstream, found in passing)**: `A3A/addons/gui/Stringtable.xml` had a mismatched closing tag — `<Czech>Custom AI Loadouts</Original>` — which made the whole file fail XML parsing. All three stringtables now parse.
 - **Supply rate floor default raised 0.5 → 0.75** (`A3A_CHAOS_supplyRateFloor`). Ahead of replenishment gating, the pool multiplier stops being the mechanic and becomes a nudge; at severed markers it is redundant and at connected ones it punishes a faction for damage done elsewhere. Also avoids stacking a third penalty on a side that already loses camps and roadblocks as it loses ground.
 - **`RESEARCH.md` processed**: the seeding brainstorm transcript is removed and its content turned into tracked todos, ideas and open questions — supply iteration 2 (replenishment gating, with the source-verified hook), the tiered resource/factory ladder, marker sub-types, an audit of the enemy's existing structural advantages, and the outstanding tweaks.
 

@@ -140,17 +140,16 @@ class Tasks {
         weight = 1;
         isLegacy = 0;
     };
-    // CHAOS: site upgrade. Category LOG, NOT a new category of its own: the request
-    // dialog's buttons and its _missionTypes whitelist (fn_requestMissionDialog) are
-    // hardcoded to AS / CONVOY / DES / CON / LOG / SUPP / RES, so a task in any other
-    // category is unreachable from Petros and can only ever turn up on the random roll
-    // in the 10-minute tick. It is a logistics job in any case.
-    // Weight 2 because it gates the whole supply economy - the player should meet it
-    // early and often relative to the other logistics missions.
-    class LOG_SiteUpgrade {
-        category = "LOG";
-        func = QFUNC(LOG_SiteUpgrade);
-        params = QFUNC(LOG_SiteUpgrade_p);
+    // CHAOS: site upgrade. Category ECON, with its own Economy button in
+    // requestMissionDialog and its own entry in that dialog's _missionTypes
+    // whitelist - a category with neither is unreachable from Petros and can only
+    // ever turn up on the random roll in the 10-minute tick. Its own category
+    // rather than LOG because Logistics already carries five live tasks, so a
+    // site upgrade would have been one roll in six of an already-busy button.
+    class ECON_SiteUpgrade {
+        category = "ECON";
+        func = QFUNC(ECON_SiteUpgrade);
+        params = QFUNC(ECON_SiteUpgrade_p);
         version = 1;
         weight = 2;
         isLegacy = 0;

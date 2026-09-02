@@ -42,7 +42,7 @@ class CfgFunctions {
             class RES_Prisoners_p {};
             class RES_Refugees_p {};
             class SUP_PoliceStation_p {};
-            class LOG_SiteUpgrade_p {};
+            class ECON_SiteUpgrade_p {};
             class SUP_Supplies_p {};
         };
         class Tasks {
@@ -52,7 +52,7 @@ class CfgFunctions {
             class city_hostage {};
             class city_taxi {};
             class city_repair {};
-            class LOG_SiteUpgrade {};
+            class ECON_SiteUpgrade {};
             class SUP_Supplies {};
             class LOG_Weapons {};
         };

@@ -62,7 +62,7 @@ if !("a3a_airControlCenter" in A3A_buildingPriceHM) then {
     // only these when the builder box carries the flag, so the delivered
     // container cannot be used to build a whole base out at a remote mine.
     // Prices are the container's build budget, so they must match what the
-    // mission puts on it - see A3A_fnc_LOG_SiteUpgrade.
+    // mission puts on it - see A3A_Tasks_fnc_ECON_SiteUpgrade.
     // Only the warehouse is BUILT. The Tier 2 power generator is delivered as a
     // finished object and simply set down where the player wants it, so it never
     // enters a build catalogue.

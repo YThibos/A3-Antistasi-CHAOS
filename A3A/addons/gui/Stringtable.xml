@@ -3606,6 +3606,9 @@
         <Turkish>Kurtarma</Turkish>
         <Chinesesimp>救援</Chinesesimp>
       </Key>
+      <Key ID="STR_antistasi_dialogs_mission_request_economy">
+        <Original>Economy</Original>
+      </Key>
       <Key ID="STR_antistasi_dialogs_mission_request_support">
         <Original>Support</Original>
         <German>Unterstützung</German>
@@ -5119,7 +5122,7 @@
     <Container name="custom_loadouts">
       <Key ID="STR_antistasi_dialogs_custom_loadouts_title">
         <Original>Custom AI Loadouts</Original>
-        <Czech>Custom AI Loadouts</Original>
+        <Czech>Custom AI Loadouts</Czech>
         <Spanish>Equipamientos de IA personalizados</Spanish>
       </Key>
       <Key ID="STR_antistasi_dialogs_custom_loadouts_priWeapon">

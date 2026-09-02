@@ -27,7 +27,7 @@ Maintainer: Antistasi CHAOS
     anything from an offroad up, exactly like the supply-delivery pallet.
 
     ---- No HQ distance limit ----------------------------------------------
-    A3A_Tasks_fnc_LOG_SiteUpgrade_p deliberately does not filter targets by
+    A3A_Tasks_fnc_ECON_SiteUpgrade_p deliberately does not filter targets by
     distanceMission; see its header. Timeouts here are correspondingly generous,
     because the far corner of the map is a legitimate target and a settled HQ
     must never be pushed to relocate just to keep upgrade missions coming.
@@ -73,8 +73,8 @@ private _fnc_createTask = {
     private _displayTime = [((_this get "_endTime") - time) / 60] call FUNC(minutesFromNow);
     private _targetTier = _this get "_targetTier";
 
-    private _taskName = localize "STR_A3A_Tasks_LOG_SiteUpgrade_title";
-    private _descKey = ["STR_A3A_Tasks_LOG_SiteUpgrade_description_t1", "STR_A3A_Tasks_LOG_SiteUpgrade_description_t2"] select (_targetTier >= 2);
+    private _taskName = localize "STR_A3A_Tasks_ECON_SiteUpgrade_title";
+    private _descKey = ["STR_A3A_Tasks_ECON_SiteUpgrade_description_t1", "STR_A3A_Tasks_ECON_SiteUpgrade_description_t2"] select (_targetTier >= 2);
     private _taskDesc = format [localize _descKey, _nameDest, _displayTime];
     private _taskPos = markerPos (_this get "_marker");
     private _notify = isNil {_this get "checkpoint"};
@@ -115,14 +115,14 @@ else {
 };
 
 // Category key, matching Tasks.hpp. This is what fn_requestTask throttles on:
-// while it is present, no other LOG mission can be requested, and the cleanup
+// while it is present, no other ECON mission can be requested, and the cleanup
 // state removes it again.
-A3A_activeTasks pushBack "LOG";
+A3A_activeTasks pushBack "ECON";
 
 _task set ["checkpoint", "c_started"];
 _task set ["state", "s_deliver"];
 _task set ["interval", 5];
-_task set ["_hintTitle", localize "STR_A3A_Tasks_LOG_SiteUpgrade_title"];
+_task set ["_hintTitle", localize "STR_A3A_Tasks_ECON_SiteUpgrade_title"];
 
 _task set ["c_started", {
     [_this get "_marker", _this get "_targetTier", getPosATL (_this get "_cargo"), (_this get "_endTime") - time];
@@ -161,7 +161,7 @@ _task set ["s_deliver", {
         _this set ["state", "s_succeeded"]; false
     };
 
-    [_this get "_hintTitle", localize "STR_A3A_Tasks_LOG_SiteUpgrade_nowBuild", getPosATL _cargo, 100] call FUNC(hintNear);
+    [_this get "_hintTitle", localize "STR_A3A_Tasks_ECON_SiteUpgrade_nowBuild", getPosATL _cargo, 100] call FUNC(hintNear);
     _this set ["state", "s_build"]; false
 }];
 
@@ -191,7 +191,7 @@ _task set ["s_succeeded", {
     private _targetTier = _this get "_targetTier";
     private _bonus = [1, 2] select (_targetTier >= 2);
 
-    [_this get "_hintTitle", localize "STR_A3A_Tasks_LOG_SiteUpgrade_done", markerPos _marker, 300] call FUNC(hintNear);
+    [_this get "_hintTitle", localize "STR_A3A_Tasks_ECON_SiteUpgrade_done", markerPos _marker, 300] call FUNC(hintNear);
 
     [20 * _bonus, false, markerPos _marker, 300] call FUNC(rewardPlayers);
     [0, 150 * _bonus] remoteExec ["A3A_fnc_resourcesFIA", 2];
@@ -201,7 +201,7 @@ _task set ["s_succeeded", {
 }];
 
 _task set ["s_failed", {
-    [_this get "_hintTitle", localize "STR_A3A_Tasks_LOG_SiteUpgrade_failed", markerPos (_this get "_marker"), 300] call FUNC(hintNear);
+    [_this get "_hintTitle", localize "STR_A3A_Tasks_ECON_SiteUpgrade_failed", markerPos (_this get "_marker"), 300] call FUNC(hintNear);
     [-10, theBoss] call A3A_fnc_playerScoreAdd;
     [_this get "_taskId", "FAILED"] call BIS_fnc_taskSetState;
     _this set ["state", "s_cleanup"]; false;
@@ -219,7 +219,7 @@ _task set ["s_cleanup", {
     [1200, _this get "_taskId"] spawn {
         params ["_delay", "_taskId"];
         sleep _delay;
-        A3A_activeTasks deleteAt (A3A_activeTasks find "LOG");
+        A3A_activeTasks deleteAt (A3A_activeTasks find "ECON");
         publicVariable "A3A_activeTasks";
         [_taskId, true, true] call BIS_fnc_deleteTask;
     };

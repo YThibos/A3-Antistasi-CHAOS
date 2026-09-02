@@ -24,6 +24,9 @@
       <Key ID="STR_A3A_Tasks_requestTask_no_DES">
         <Original>I have no Destroy missions for you.</Original>
       </Key>
+      <Key ID="STR_A3A_Tasks_requestTask_no_ECON">
+        <Original>We have no economic development work for you at the moment.</Original>
+      </Key>
       <Key ID="STR_A3A_Tasks_requestTask_no_LOG">
         <Original>I have no Logistics missions for you.</Original>
       </Key>
@@ -50,6 +53,9 @@
         <Original>Destroy missions require airbases or enemy radio towers within 4km of HQ.</Original>
         <Korean>파괴 임무에는 본부로부터 4km 이내에 있는 공군 기지나 적 통신탑이 필요합니다.</Korean>
         <Russian>Для выполнения миссий по уничтожению требуются авиабазы или радиовышки противника в радиусе 4 км от штаба.</Russian>
+      </Key>
+      <Key ID="STR_A3A_Tasks_requestTask_noHint_ECON">
+        <Original>There is nothing to develop right now. Economy missions upgrade the resources and factories we already hold, so we need to hold one that is not yet upgraded, and it must be quiet - a site with fighting nearby will not take a delivery.</Original>
       </Key>
       <Key ID="STR_A3A_Tasks_requestTask_noHint_LOG">
         <Original>Logistics missions require outposts, seaports, or banks within 4km of HQ.</Original>
@@ -140,22 +146,22 @@
       <Key ID="STR_A3A_Tasks_cityBattle_defeatDesc">
         <Original>The uprising has been defeated. We will need to rebuild support in %1 before we have another chance to take it.</Original>
       </Key>
-      <Key ID="STR_A3A_Tasks_LOG_SiteUpgrade_title">
+      <Key ID="STR_A3A_Tasks_ECON_SiteUpgrade_title">
         <Original>Site Upgrade</Original>
       </Key>
-      <Key ID="STR_A3A_Tasks_LOG_SiteUpgrade_description_t1">
+      <Key ID="STR_A3A_Tasks_ECON_SiteUpgrade_description_t1">
         <Original>%1 can be brought onto our supply network, but it needs a warehouse first. A shipping container is waiting at HQ. Get it to the site - it will load onto any truck or flatbed, or you can sling it under a helicopter - set it down inside the site, then build the warehouse from it. You will be able to position the building before you commit to it. Until this is done the site earns as it always has, but it is not connected to anything. Time remaining: %2.</Original>
       </Key>
-      <Key ID="STR_A3A_Tasks_LOG_SiteUpgrade_description_t2">
+      <Key ID="STR_A3A_Tasks_ECON_SiteUpgrade_description_t2">
         <Original>%1 has a warehouse but no power for the machinery. A generator is waiting at HQ. Load it onto a vehicle, sling it, or drive it out on a flatbed, and set it down inside the site. Time remaining: %2.</Original>
       </Key>
-      <Key ID="STR_A3A_Tasks_LOG_SiteUpgrade_nowBuild">
+      <Key ID="STR_A3A_Tasks_ECON_SiteUpgrade_nowBuild">
         <Original>Container delivered. Use the build action on it to place the warehouse.</Original>
       </Key>
-      <Key ID="STR_A3A_Tasks_LOG_SiteUpgrade_done">
+      <Key ID="STR_A3A_Tasks_ECON_SiteUpgrade_done">
         <Original>Site upgraded. It is now part of our supply network.</Original>
       </Key>
-      <Key ID="STR_A3A_Tasks_LOG_SiteUpgrade_failed">
+      <Key ID="STR_A3A_Tasks_ECON_SiteUpgrade_failed">
         <Original>The site upgrade was not completed in time.</Original>
       </Key>
       <Key ID="STR_A3A_Tasks_LOG_Supplies_title">
