@@ -114,7 +114,10 @@ else {
     _task call _fnc_createTask;
 };
 
-A3A_activeTasks pushBack "SITE";
+// Category key, matching Tasks.hpp. This is what fn_requestTask throttles on:
+// while it is present, no other LOG mission can be requested, and the cleanup
+// state removes it again.
+A3A_activeTasks pushBack "LOG";
 
 _task set ["checkpoint", "c_started"];
 _task set ["state", "s_deliver"];
@@ -216,7 +219,7 @@ _task set ["s_cleanup", {
     [1200, _this get "_taskId"] spawn {
         params ["_delay", "_taskId"];
         sleep _delay;
-        A3A_activeTasks deleteAt (A3A_activeTasks find "SITE");
+        A3A_activeTasks deleteAt (A3A_activeTasks find "LOG");
         publicVariable "A3A_activeTasks";
         [_taskId, true, true] call BIS_fnc_deleteTask;
     };
