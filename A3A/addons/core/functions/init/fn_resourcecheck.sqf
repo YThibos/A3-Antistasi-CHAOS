@@ -35,15 +35,36 @@ while {true} do
 	[] call A3A_fnc_tierCheck;
 	[] spawn A3A_fnc_checkCampaignEnd; // check for population win
 
-	// CHAOS: rebuild the supply graph before anything spends it. Forced rather
-	// than debounced - the income tick wants the world as it is right now, and
-	// this is a 10-minute cadence, so the cost is irrelevant here.
+	// CHAOS: refresh site tiers, then rebuild the supply graph before anything
+	// spends either. Forced rather than debounced - the income tick wants the
+	// world as it is right now, and this is a 10-minute cadence, so the cost is
+	// irrelevant here. Tiers first: the graph gates its nodes on them.
+	call A3A_fnc_siteTiers;
 	[true] call A3A_fnc_refreshSupplyGraph;
 
-	private _resourcesRebel = {sidesX getVariable _x == teamPlayer and !(_x in destroyedSites)} count resourcesX;
+	// CHAOS: each site contributes its vanilla share scaled by its upgrade tier.
+	// Tier 0 is exactly 1.0, so an un-upgraded map earns precisely what it always
+	// did; the ladder is upside only. Resources scale the ADDITIVE term and
+	// factories the MULTIPLIER, which is the split the economy already had - see
+	// A3A_fnc_siteTier for the numbers and for why they compound.
+	private _resourcesRebel = 0;
+	{
+		if (sidesX getVariable _x != teamPlayer) then { continue };
+		if (_x in destroyedSites) then { continue };
+		// Bound to a local rather than indexed inline: `call` and `#` are both
+		// binary operators and the grouping is not worth being probably right about.
+		private _tierData = [_x] call A3A_fnc_siteTier;
+		_resourcesRebel = _resourcesRebel + (_tierData # 1);
+	} forEach resourcesX;
 	_resAdd = _resAdd + _resourcesRebel * A3A_rebelCashResMult;
 
-	private _factoriesRebel = {sidesX getVariable _x == teamPlayer and !(_x in destroyedSites)} count factories;
+	private _factoriesRebel = 0;
+	{
+		if (sidesX getVariable _x != teamPlayer) then { continue };
+		if (_x in destroyedSites) then { continue };
+		private _tierData = [_x] call A3A_fnc_siteTier;
+		_factoriesRebel = _factoriesRebel + (_tierData # 1);
+	} forEach factories;
 	private _resBoost = 1 + _factoriesRebel * A3A_rebelCashFactMult;
 	_resAdd = _resAdd * _resBoost;
 

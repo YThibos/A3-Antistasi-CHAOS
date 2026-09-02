@@ -174,6 +174,27 @@ specific version.
   loop already carried a territorial modifier (no airport -> x0.6 / x0.2), which is the precedent
   supply connectivity follows. Because defence is capped at `rate * 100`, changing the rate also
   moves the stockpile ceiling.
+- 2026-09-02: **Derive state from the world before you store it.** CHAOS site tiers were
+  designed as a saved number per marker and shipped as a derivation instead: the tier IS
+  which structures stand on the site (`A3A_fnc_siteTiers`). That removed the save/load work
+  entirely, made "destroy it and the tier drops" free, and dodged a real trap - a building
+  restored from a save does NOT carry its custom `setVariable` data back, so a
+  variable-based marker would have wiped every tier on campaign reload. Class plus
+  proximity survives anything that can restore the building at all.
+- 2026-09-02: **`fn_runTask`'s stage/constructor framework is commented out.** Lines 1-104
+  of `A3A/addons/tasks/Core/fn_runTask.sqf` are one big block comment; the live driver is
+  the state-machine loop below it (`state` / `checkpoint` / `interval` keys on a task
+  hashmap). `isLegacy = 0` in `Tasks.hpp` selects that loop, not the stages. Copy
+  `fn_SUP_Supplies.sqf`, not the commented header, when writing a new task.
+- 2026-09-02: **`A3A_Logistics_fnc_getCargoConfig` matches CLASS NAME before model.** So a
+  new loadable object needs a `class Land_Whatever_F` entry in `Cargo/Vanilla.hpp` and no
+  p3d path at all - which is both less brittle and immune to Bohemia moving a model.
+- 2026-09-02: **A utility item priced -1 is registered but unpurchasable.**
+  `A3A_utilityItemList` filters on `price >= 0` while `A3A_utilityItemHM` keeps everything,
+  so -1 is how a mission-spawned object still gets flags, persistence and actions.
+  Paired with `fn_lockBuilderBox`, which DELETES a builder box released with no budget
+  left, a mission container whose `A3A_itemPrice` equals its one buildable's price
+  disposes of itself the moment that building is paid for.
 - 2026-08-20: **`Tools/StreetArtist`** is a standalone navGrid-generation mission tool (separate
   Arma 3 mission, not part of the mod). Its `findDisplay 12 displayCtrl 51` usage is inside an
   `EachFrame` EH that already guards `!visibleMap`, making it useless as a general reference for

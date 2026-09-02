@@ -140,6 +140,17 @@ class Tasks {
         weight = 1;
         isLegacy = 0;
     };
+    // CHAOS: site upgrade. Category SITE so the request throttle treats it as its
+    // own kind; weight 2 because it is the gate on the whole supply economy and
+    // the player should meet it reasonably early and often.
+    class LOG_SiteUpgrade {
+        category = "SITE";
+        func = QFUNC(LOG_SiteUpgrade);
+        params = QFUNC(LOG_SiteUpgrade_p);
+        version = 1;
+        weight = 2;
+        isLegacy = 0;
+    };
     class SUP_Supplies {
         category = "SUPP";
         func = QFUNC(SUP_Supplies);

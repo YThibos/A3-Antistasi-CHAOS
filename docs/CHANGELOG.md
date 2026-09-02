@@ -6,6 +6,14 @@ Newest entries at the top. One line per change when possible.
 
 ## 2026-09-02
 
+- **Tiered resources and factories (CHAOS site upgrades)**: rebel resources and factories now carry an upgrade tier, delivered by a new **Site Upgrade** mission (`LOG_SiteUpgrade`).
+  - **Tier 1** — a shipping container (`Land_Cargo10_blue_F`) spawns at HQ; haul it to the site by truck, flatbed or sling, set it down, and build a supply warehouse (`Land_Warehouse_03_F`) from it through the normal RTS placer, so the building can be aligned before it is committed. The container's build budget is exactly the warehouse price, so it deletes itself once spent.
+  - **Tier 2** — a `Land_PowerGenerator_F` is delivered as finished freight; set it down inside the site.
+  - **Tier gates supply-graph membership.** A Tier 0 resource or factory is not a node: it can neither be supplied nor relay supply. Its vanilla income is completely untouched, so the ladder is upside only.
+  - **Tier scales income along the economy's existing split** — resources scale the additive cash term, factories the multiplier: T0 1.00, T1 1.25, T2 1.60.
+  - **No new saved state.** Tier is derived from the structures standing on the site, which are already persisted, so destroying a warehouse drops the site back to Tier 0 and makes it mission-eligible again with no extra code.
+  - The mission picker deliberately applies **no `distanceMission` cutoff** — distance is a mild weighting only, so a settled HQ is never pushed to relocate to keep upgrade missions coming.
+  - `sitetier` is an exclusive build catalogue, so an upgrade container cannot be used to build a general base out at a remote mine.
 - **Supply rate floor default raised 0.5 → 0.75** (`A3A_CHAOS_supplyRateFloor`). Ahead of replenishment gating, the pool multiplier stops being the mechanic and becomes a nudge; at severed markers it is redundant and at connected ones it punishes a faction for damage done elsewhere. Also avoids stacking a third penalty on a side that already loses camps and roadblocks as it loses ground.
 - **`RESEARCH.md` processed**: the seeding brainstorm transcript is removed and its content turned into tracked todos, ideas and open questions — supply iteration 2 (replenishment gating, with the source-verified hook), the tiered resource/factory ladder, marker sub-types, an audit of the enemy's existing structural advantages, and the outstanding tweaks.
 

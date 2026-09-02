@@ -83,6 +83,38 @@ if (_ctx isEqualTo []) exitWith {
 _ctx params ["_sideList", "_sideZones", "_consts"];
 _consts params ["", "", "", "", "_reachMult"];
 
+// ---- Tier gate on the player's own resources and factories --------------
+// A rebel resource or factory only joins the graph once it has been upgraded
+// to Tier 1. Below that it is not a node at all: it can neither be supplied
+// nor relay supply through itself. Its vanilla income is untouched - the tier
+// ladder is upside, never a tax (see A3A_fnc_siteTier).
+//
+// This filter lives here and NOT in A3A_fnc_influenceContext on purpose. The
+// context is the influence FIELD, and a Tier 0 resource still projects
+// influence and still draws its share of the border exactly as before;
+// removing it there would silently redraw the map. Topology and field are
+// different questions asked of the same data.
+//
+// Enemy-held resources and factories are unaffected: tiers are a Guerilla
+// mechanic and the enemy has no equivalent, so gating their nodes on a tier
+// they can never have would sever their networks for free.
+private _tiers = call A3A_fnc_siteTiers;
+private _tierGated = (missionNamespace getVariable ["resourcesX", []])
+                   + (missionNamespace getVariable ["factories", []]);
+
+private _playerIdx = _sideList find teamPlayer;
+if (_playerIdx >= 0) then {
+    private _before = count (_sideZones select _playerIdx);
+    _sideZones set [_playerIdx, (_sideZones select _playerIdx) select {
+        private _mrk = _x # 3;
+        !(_mrk in _tierGated) || {(_tiers getOrDefault [_mrk, 0]) > 0}
+    }];
+    private _after = count (_sideZones select _playerIdx);
+    if (_after < _before) then {
+        Debug_2("computeSupplyGraph: %1 of %2 rebel sites held back at Tier 0", _before - _after, _before);
+    };
+};
+
 // ---- Tunables -----------------------------------------------------------
 private _sampleStep   = 250;    // metres between corridor samples, before budgeting
 private _samplesMin   = 5;

@@ -57,6 +57,17 @@ if !("a3a_airControlCenter" in A3A_buildingPriceHM) then {
     ["Land_Razorwire_F",               60, "basetier"],
     ["Land_Net_Fence_4m_F",            40, "basetier"],
 
+    // Site upgrade tier (delivered by the site upgrade mission only).
+    // "sitetier" is an EXCLUSIVE catalogue: fn_teamLeaderRTSPlacerDialog shows
+    // only these when the builder box carries the flag, so the delivered
+    // container cannot be used to build a whole base out at a remote mine.
+    // Prices are the container's build budget, so they must match what the
+    // mission puts on it - see A3A_fnc_LOG_SiteUpgrade.
+    // Only the warehouse is BUILT. The Tier 2 power generator is delivered as a
+    // finished object and simply set down where the player wants it, so it never
+    // enters a build catalogue.
+    ["Land_Warehouse_03_F",          1500, "sitetier"],
+
     // Airport tier (Airport Construction Kit)
     ["Land_Hangar_F",                 5000, "airtier"],
     ["Land_TentHangar_V1_F",          4000, "airtier"],

@@ -50,6 +50,20 @@ private _items = [
 
 ];
 
+// CHAOS: site upgrade container. Price -1 keeps it OUT of the purchase list
+// (A3A_utilityItemList filters on price >= 0) while keeping it IN the lookup
+// hashmap, which is the same mechanism the packed logistics variants use. It is
+// spawned by the site upgrade mission and never sold: the effort is the
+// delivery, not the purchase. Its build budget is set on the object at spawn
+// time as A3A_itemPrice, which fn_lockBuilderBox turns into build money - and
+// because fn_lockBuilderBox deletes a box released with nothing left, the
+// container disposes of itself once the warehouse is paid for.
+_items pushBack ["Land_Cargo10_blue_F", -1, "sitecontainer", "", ["place","save","noclear","build","sitetier"]];
+// The Tier 2 power generator. Registered so that "save" persists it once set
+// down - it IS the upgrade, so losing it on reload would silently downgrade the
+// site. Not buildable and not purchasable: the mission delivers it finished.
+_items pushBack ["Land_PowerGenerator_F", -1, "sitegenerator", "", ["place","save","noclear"]];
+
 if (LootToCrateRadius == 0) then { _items deleteAt 0 };
 
 if(A3A_hasACE) then {

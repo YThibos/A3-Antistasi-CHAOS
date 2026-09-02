@@ -121,9 +121,14 @@ The economy's own split is the tier ladder: in `fn_resourcecheck`, resources are
 additive term and factory tiers scale the multiplier — no new currency, no change to
 the shape of the existing formula.
 
-### 2.1 Tier 1 — the supply warehouse
+**Decided (2026-09-02):** Tier 0 is not a graph node at all — an un-upgraded resource
+or factory can neither be supplied nor relay supply. Its vanilla income is untouched,
+so the ladder is upside only, never a tax. Multipliers T0 1.00 / T1 1.25 / T2 1.60,
+held as constants in `A3A_fnc_siteTier` rather than CBA settings while they are young.
 
-**[TODO]** A mission picks a player-owned resource or factory that has no tier yet.
+### 2.1 Tier 1 — the supply warehouse **[DONE]**
+
+A mission picks a player-owned resource or factory that has no tier yet.
 The player brings a container (`Land_Cargo10_blue_F` as the base — flatbed-loadable and
 sling-loadable), drops it at the site, and builds a warehouse (`Land_Warehouse_03_F`)
 from it.
@@ -138,9 +143,9 @@ catalogue. A scroll-wheel action is the fallback only if the placer proves impra
 Naming: call this the **supply warehouse**, never "depot" — "depot" already means the
 BAR `RessourceDepot` at HQ in iteration 1, and the collision would be permanent.
 
-### 2.2 Tier 2 — power
+### 2.2 Tier 2 — power **[DONE]**
 
-**[TODO]** Deliver a `Land_PowerGenerator_F` to a tier-1 site. Stands in for heavy
+Deliver a `Land_PowerGenerator_F` to a tier-1 site. Stands in for heavy
 machinery (Arma has no excavator or drill-rig asset worth using) and reads naturally as
 "more power for the machines".
 
@@ -164,9 +169,14 @@ the supply chain actually biting.
    `fn_tierCheck` derives `_totalPoints` from the same counts, so adding one can
    retroactively *lower* `tierWar`. Any dynamic-site feature must keep surveyed sites in
    a separate list excluded from `tierCheck`.
-3. **Tier state is new persistent state.** It must go into the save/load path under
-   `A3A/addons/core/functions/Save/` or it silently resets on reload. Iteration 1
-   introduced no new saved state precisely because the graph is derived; tiers end that.
+3. **Tier state turned out NOT to need the save path.** The original plan was a stored
+   number per marker. It is instead **derived** from the structures standing on the site
+   (`A3A_fnc_siteTiers`): warehouse → Tier 1, warehouse + generator → Tier 2. The
+   structures are already persisted, so the tier persists with them, and the agreed
+   "destroy the warehouse and the site drops to Tier 0" rule needs no code at all.
+   Deliberately no marker variable on the structures — a restored building does not
+   carry custom variables back, so a variable-based test would silently wipe every tier
+   on campaign reload.
 
 ---
 

@@ -178,6 +178,25 @@ class A3_Supplies_F_Heli_CargoNets_CargoNet_01_box_F_p3d: TRIPLES(ADDON,Cargo,Ba
     size = 2;
 };
 
+// CHAOS: site upgrade freight. Keyed by CLASS NAME rather than by p3d - the
+// lookup in A3A_Logistics_fnc_getCargoConfig tries the class before the model,
+// so this needs no model path and cannot break if Bohemia moves the p3d.
+// Both are meant to load onto anything from an offroad up, like the supply
+// pallet, so the sizes match the comparable vanilla containers below.
+class Land_Cargo10_blue_F: TRIPLES(ADDON,Cargo,Base)
+{
+    offset[] = {0,0.1,1.35};
+    rotation[] = {1,0,0};
+    size = 4;
+};
+
+class Land_PowerGenerator_F: TRIPLES(ADDON,Cargo,Base)
+{
+    offset[] = {0,0,0.9};
+    rotation[] = {0,1,0};
+    size = 3;
+};
+
 class A3_Structures_F_Heli_Ind_Cargo_Cargo10_military_green_F_p3d: TRIPLES(ADDON,Cargo,Base)
 {
     offset[] = {0,0.1,1.35};

@@ -16896,6 +16896,12 @@
       <Key ID="STR_A3A_CHAOS_mapOverlay_reach_tt">
         <Original>How far a holding's territory stretches across ground nobody actually holds, as a multiple of the Influence range. Past its influence range a zone lays a very faint claim out to this multiple of it - far too weak to move a border two sides genuinely contest, but enough for two distant holdings to meet somewhere sensible in between instead of both stopping short. Ground further out than that still belongs to nobody. Set to 0 to switch this off, which leaves hard gaps between holdings that are far apart. Higher values also make the map's border outline coarser.</Original>
       </Key>
+      <Key ID="STR_A3A_Utility_Items_Name_sitecontainer">
+        <Original>Site Upgrade Container</Original>
+      </Key>
+      <Key ID="STR_A3A_Utility_Items_Name_sitegenerator">
+        <Original>Site Power Generator</Original>
+      </Key>
       <Key ID="STR_A3A_CHAOS_supply_showEdges">
         <Original>Show supply lines</Original>
       </Key>
