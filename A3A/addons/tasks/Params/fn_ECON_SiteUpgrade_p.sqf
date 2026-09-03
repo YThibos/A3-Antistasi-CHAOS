@@ -80,4 +80,15 @@ private _weighted = [];
 
 if (_weighted isEqualTo []) exitWith { false };
 
-[1, [selectRandomWeighted _weighted]]
+// Return shape matters and is easy to get wrong. fn_requestTask hands the task
+// function `_params # 1` as its WHOLE argument list, so element 1 must be the
+// flat list the task's own `params` unpacks - here [_marker, _targetTier].
+//
+// The single-value tasks (SUP_Supplies_p) return [1, [selectRandomWeighted ...]]
+// because their picked value is one marker string, and the brackets ARE the
+// argument list. Copying that shape here double-nested it: the task received
+// [[_marker, _tier]], bound _marker to an array and _targetTier to nil, and threw
+// on the first comparison - before A3A_activeTasks was touched, which is why
+// Petros happily announced a mission every single time and never created one.
+private _pick = selectRandomWeighted _weighted;      // already [_marker, _targetTier]
+[1, _pick]

@@ -16920,6 +16920,30 @@
       <Key ID="STR_A3A_CHAOS_supply_maxLinks_tt">
         <Original>How many supply lines a single site keeps, shortest first. The length cap alone still leaves a tight cluster of sites fully interconnected, and this thins that out into something readable. A site can still end up with more lines than this when neighbours choose it, so nothing is ever left stranded. Raise it for a denser, more resilient network; lower it for a sparser one that is easier to cut.</Original>
       </Key>
+      <Key ID="STR_A3A_CHAOS_supply_hubRange">
+        <Original>Hub reach to outposts (m)</Original>
+      </Key>
+      <Key ID="STR_A3A_CHAOS_supply_hubRange_tt">
+        <Original>How close an outpost, airfield or seaport must be to a connected supply hub to be supplied by it. Hubs are the HQ, resources, factories and cities, and they form the backbone network between themselves; everything else hangs off the nearest connected hub by a single line and never passes supply onward. Raise this to let the backbone support garrisons further out.</Original>
+      </Key>
+      <Key ID="STR_A3A_CHAOS_supply_carrierRadius">
+        <Original>Enemy support corridor reach (m)</Original>
+      </Key>
+      <Key ID="STR_A3A_CHAOS_supply_carrierRadius_tt">
+        <Original>How far the Occupant and Invader off-map support corridors project influence inland. Their supply networks are rooted at these corridors rather than at a base, so this also decides where their backbone can start from. Large enough to reach the nearest land is the useful minimum.</Original>
+      </Key>
+      <Key ID="STR_A3A_CHAOS_supply_thickness">
+        <Original>Supply line thickness (px)</Original>
+      </Key>
+      <Key ID="STR_A3A_CHAOS_supply_thickness_tt">
+        <Original>Width of the drawn supply lines, in screen pixels. Lines to outposts are drawn one step thinner and dashed, because they receive supply but never pass it on.</Original>
+      </Key>
+      <Key ID="STR_A3A_CHAOS_supply_showEnemy">
+        <Original>Show enemy supply lines</Original>
+      </Key>
+      <Key ID="STR_A3A_CHAOS_supply_showEnemy_tt">
+        <Original>Draw the Occupant and Invader supply networks in their own colours. They are rooted at their off-map support corridors, so cutting inland from the coast severs everything behind the cut. Currently on by default while the system is being tuned - once intel missions exist to uncover enemy lines by scouting, this becomes a debug override rather than free information.</Original>
+      </Key>
       <Key ID="STR_A3A_CHAOS_supply_rateFloor">
         <Original>Severed faction resource floor</Original>
       </Key>

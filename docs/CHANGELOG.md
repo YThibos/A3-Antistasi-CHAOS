@@ -4,6 +4,19 @@ Newest entries at the top. One line per change when possible.
 
 ---
 
+## 2026-09-02 (in-game fixes, round 2)
+
+- **Fix: the Economy mission announced itself but never created a task.** `fn_ECON_SiteUpgrade_p` returned `[1, [[marker, tier]]]`, double-nesting its arguments — `fn_requestTask` passes `_params#1` as the task's *whole* argument list, so the task bound `_marker` to an array and `_targetTier` to `nil` and threw on the first comparison. Because the throw happened before `A3A_activeTasks pushBack`, the request was infinitely repeatable. Now returns `[1, [marker, tier]]`.
+- **Supply graph restructured into a backbone and spokes.** The flat one-node-per-marker model meshed badly.
+  - **Hubs** — HQ, resources, factories, cities (plus the enemy support corridors). These form the backbone: distance-capped, link-limited, corridor-tested.
+  - **Spokes** — outposts, airfields, seaports. Never part of the backbone; each hangs off the nearest *connected* hub within `A3A_CHAOS_supplyHubRange` by one line, and never relays supply onward.
+  - **Roadblocks and watchposts are no longer graph nodes at all, under any setting.** They still project influence exactly as before, which is how they sever corridors — but supply can never route through them, so they can no longer repair the network they exist to cut.
+- **Enemy support corridors now project influence.** `NATO_carrier` and `CSAT_carrier` had marker text and nothing else — not in `markersX`, unowned in `sidesX`. They now carry an explicit side and a flat `A3A_CHAOS_supplyCarrierRadius` (default 1500 m), and **each enemy supply network is rooted at its corridor** rather than at a base, so cutting inland from the coast severs everything behind the cut.
+- **Enemy supply networks are drawn** in their own side colours, toggled by `A3A_CHAOS_supplyShowEnemyEdges` (on by default while the system is being tuned; it becomes a debug override once intel missions can uncover enemy lines properly).
+- **Supply line thickness is configurable** (`A3A_CHAOS_supplyLineThickness`, per-client). Spokes draw one step thinner and dashed to distinguish them from backbone links.
+
+---
+
 ## 2026-09-02 (in-game fixes, round 1)
 
 - **Fix: Economy missions were never offered.** `fn_ECON_SiteUpgrade_p` skipped any site whose `spawner` state was not 0, on the belief that 0 meant "quiet". It is the opposite — `fn_distance` defines `ENABLED 0` / `DISABLED 1` and `fn_initZones` seeds every marker at `2`, so `0` means the marker is currently spawned in around a player. The guard therefore rejected nearly every site and Petros always answered "nothing to develop". The guard is removed entirely: the site is already ours, and whether it happens to be rendered says nothing about whether we can be tasked to upgrade it.

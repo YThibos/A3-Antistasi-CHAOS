@@ -275,3 +275,58 @@ private _invalidate = { A3A_influenceSignature = nil };
     {},
     false
 ] call CBA_fnc_addSetting;
+
+// How close a spoke (outpost, airfield, seaport) must be to a CONNECTED hub to
+// hang off it. Spokes are never part of the backbone and never relay supply, so
+// this is purely "how far does a hub's reach extend to the garrisons around it".
+[
+    "A3A_CHAOS_supplyHubRange",
+    "SLIDER",
+    [localize "STR_A3A_CHAOS_supply_hubRange", localize "STR_A3A_CHAOS_supply_hubRange_tt"],
+    ["Antistasi CHAOS", "Supply"],
+    [250, 5000, 1500, 0],
+    2,                      // server forces setting on clients
+    {},
+    false
+] call CBA_fnc_addSetting;
+
+// Influence radius of the enemy off-map support corridors (NATO_carrier /
+// CSAT_carrier). Flat, not a type multiplier: these are not capturable zones, so
+// the question is "how far inland does off-map support reach", which is a
+// different one from how hard a base pushes.
+[
+    "A3A_CHAOS_supplyCarrierRadius",
+    "SLIDER",
+    [localize "STR_A3A_CHAOS_supply_carrierRadius", localize "STR_A3A_CHAOS_supply_carrierRadius_tt"],
+    ["Antistasi CHAOS", "Supply"],
+    [500, 6000, 1500, 0],
+    2,                      // server forces setting on clients
+    {},
+    false
+] call CBA_fnc_addSetting;
+
+// Presentation, so per-client like the rest of the overlay's appearance.
+[
+    "A3A_CHAOS_supplyLineThickness",
+    "SLIDER",
+    [localize "STR_A3A_CHAOS_supply_thickness", localize "STR_A3A_CHAOS_supply_thickness_tt"],
+    ["Antistasi CHAOS", "Map Overlay"],
+    [1, 8, 2, 0],
+    0,
+    {},
+    false
+] call CBA_fnc_addSetting;
+
+// Enemy supply networks. Default ON while the feature is being built: seeing
+// their backbone is how we tune it. Once intel missions exist to uncover enemy
+// lines properly, this becomes the debug override rather than the norm.
+[
+    "A3A_CHAOS_supplyShowEnemyEdges",
+    "CHECKBOX",
+    [localize "STR_A3A_CHAOS_supply_showEnemy", localize "STR_A3A_CHAOS_supply_showEnemy_tt"],
+    ["Antistasi CHAOS", "Map Overlay"],
+    true,
+    0,
+    {},
+    false
+] call CBA_fnc_addSetting;

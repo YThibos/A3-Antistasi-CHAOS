@@ -84,6 +84,29 @@ There is no automated test harness for gameplay. Verification is:
 - an in-game session on a **dedicated local server with a separate client** — the only way to
   catch locality, JIP and persistence bugs. Hosted-host testing hides them.
 
+## Reporting back to the project owner
+
+Every report in this repository uses the same structure, in this order:
+
+1. **Done** - everything that was changed, as a flat enumerated list.
+2. **Findings** - what was discovered for each of those items, keyed to the same numbers.
+3. **Needs your input** - at the bottom, everything awaiting a decision or a test result.
+
+Number every item so it can be replied to individually: `1a`, `1b`, `2a`, `2b`, `3a`.
+The point is that the owner can answer a specific point without re-reading the whole
+report, so keep the identifiers stable within a report and never bury a question in
+prose above the input section.
+
+## Documents and briefings
+
+`docs/` briefings and any shared write-up follow the design established by the supply
+layer briefing (published 2026-09-02): a technical-spec treatment, olive-biased
+neutrals rather than generic grey, the mod's own side colours (Guerilla green,
+Occupant blue, Invader red) as semantic accents, Saira Condensed headings with
+Source Sans 3 prose and JetBrains Mono for formulae, and layered section numbering
+only where the content genuinely stacks. Load the `artifact-design` skill and treat
+that page as the house baseline rather than starting a new visual identity.
+
 ## Notes for future work
 
 Append durable, non-obvious findings about Arma 3 scripting or this codebase here (or into the
@@ -174,6 +197,19 @@ specific version.
   loop already carried a territorial modifier (no airport -> x0.6 / x0.2), which is the precedent
   supply connectivity follows. Because defence is capped at `rate * 100`, changing the rate also
   moves the stockpile ceiling.
+- 2026-09-02: **A task params function returns `[weight, argumentList]`, and element 1 is the
+  WHOLE argument list.** `fn_requestTask` hands `_params # 1` straight to the task function,
+  whose own `params` unpacks it. The single-value tasks return
+  `[1, [selectRandomWeighted ...]]` because their picked value is one string and the brackets
+  ARE the list - copying that shape for a multi-value pick double-nests it, binds the first
+  argument to an array and the rest to nil, and throws inside the spawned task. The symptom is
+  distinctive: Petros announces the mission every time and never creates one, repeatable
+  forever, because the throw happens before `A3A_activeTasks` is touched.
+- 2026-09-02: **`NATO_carrier` and `CSAT_carrier` are the enemy off-map support corridors.**
+  `fn_initVarServer` only sets their marker TEXT from the faction template; they are not in
+  `markersX`, no side owns them in `sidesX`, and they project no influence unless something
+  adds them explicitly. They are the natural root for an enemy supply network - an occupying
+  army's supply comes from off the map, not from a base.
 - 2026-09-02: **Derive state from the world before you store it.** CHAOS site tiers were
   designed as a saved number per marker and shipped as a derivation instead: the tier IS
   which structures stand on the site (`A3A_fnc_siteTiers`). That removed the save/load work
