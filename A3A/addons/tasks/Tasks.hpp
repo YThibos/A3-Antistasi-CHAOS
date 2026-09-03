@@ -140,6 +140,20 @@ class Tasks {
         weight = 1;
         isLegacy = 0;
     };
+    // CHAOS: site upgrade. Category ECON, with its own Economy button in
+    // requestMissionDialog and its own entry in that dialog's _missionTypes
+    // whitelist - a category with neither is unreachable from Petros and can only
+    // ever turn up on the random roll in the 10-minute tick. Its own category
+    // rather than LOG because Logistics already carries five live tasks, so a
+    // site upgrade would have been one roll in six of an already-busy button.
+    class ECON_SiteUpgrade {
+        category = "ECON";
+        func = QFUNC(ECON_SiteUpgrade);
+        params = QFUNC(ECON_SiteUpgrade_p);
+        version = 1;
+        weight = 2;
+        isLegacy = 0;
+    };
     class SUP_Supplies {
         category = "SUPP";
         func = QFUNC(SUP_Supplies);

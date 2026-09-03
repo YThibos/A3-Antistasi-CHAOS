@@ -16896,17 +16896,59 @@
       <Key ID="STR_A3A_CHAOS_mapOverlay_reach_tt">
         <Original>How far a holding's territory stretches across ground nobody actually holds, as a multiple of the Influence range. Past its influence range a zone lays a very faint claim out to this multiple of it - far too weak to move a border two sides genuinely contest, but enough for two distant holdings to meet somewhere sensible in between instead of both stopping short. Ground further out than that still belongs to nobody. Set to 0 to switch this off, which leaves hard gaps between holdings that are far apart. Higher values also make the map's border outline coarser.</Original>
       </Key>
+      <Key ID="STR_A3A_Utility_Items_Name_sitecontainer">
+        <Original>Site Upgrade Container</Original>
+      </Key>
+      <Key ID="STR_A3A_Utility_Items_Name_sitegenerator">
+        <Original>Site Power Generator</Original>
+      </Key>
       <Key ID="STR_A3A_CHAOS_supply_showEdges">
         <Original>Show supply lines</Original>
       </Key>
       <Key ID="STR_A3A_CHAOS_supply_showEdges_tt">
         <Original>Draw a dashed line between friendly zones that are linked by an unbroken supply corridor. The territory border is a coarse outline and can only hint at what is connected; these lines are the actual supply network the game uses, walked out from your HQ. A zone with no line to it is cut off.</Original>
       </Key>
+      <Key ID="STR_A3A_CHAOS_supply_maxEdge">
+        <Original>Max supply line length (m)</Original>
+      </Key>
+      <Key ID="STR_A3A_CHAOS_supply_maxEdge_tt">
+        <Original>The longest a single supply line may be. Two zones further apart than this are never linked directly, however much territory joins them. Without a cap, a faction holding most of the map links every site to every other one and the network stops meaning anything. Lower values make supply a chain of short local hops with real chokepoints; higher values let distant holdings support each other directly.</Original>
+      </Key>
+      <Key ID="STR_A3A_CHAOS_supply_maxLinks">
+        <Original>Max supply lines per site</Original>
+      </Key>
+      <Key ID="STR_A3A_CHAOS_supply_maxLinks_tt">
+        <Original>How many supply lines a single site keeps, shortest first. The length cap alone still leaves a tight cluster of sites fully interconnected, and this thins that out into something readable. A site can still end up with more lines than this when neighbours choose it, so nothing is ever left stranded. Raise it for a denser, more resilient network; lower it for a sparser one that is easier to cut.</Original>
+      </Key>
+      <Key ID="STR_A3A_CHAOS_supply_hubRange">
+        <Original>Hub reach to outposts (m)</Original>
+      </Key>
+      <Key ID="STR_A3A_CHAOS_supply_hubRange_tt">
+        <Original>How close an outpost, airfield or seaport must be to a connected supply hub to be supplied by it. Hubs are the HQ, resources, factories and cities, and they form the backbone network between themselves; everything else hangs off the nearest connected hub by a single line and never passes supply onward. Raise this to let the backbone support garrisons further out.</Original>
+      </Key>
+      <Key ID="STR_A3A_CHAOS_supply_carrierRadius">
+        <Original>Enemy support corridor reach (m)</Original>
+      </Key>
+      <Key ID="STR_A3A_CHAOS_supply_carrierRadius_tt">
+        <Original>How far the Occupant and Invader off-map support corridors project influence inland. Their supply networks are rooted at these corridors rather than at a base, so this also decides where their backbone can start from. Large enough to reach the nearest land is the useful minimum.</Original>
+      </Key>
+      <Key ID="STR_A3A_CHAOS_supply_thickness">
+        <Original>Supply line thickness (px)</Original>
+      </Key>
+      <Key ID="STR_A3A_CHAOS_supply_thickness_tt">
+        <Original>Width of the drawn supply lines, in screen pixels. Lines to outposts are drawn one step thinner and dashed, because they receive supply but never pass it on.</Original>
+      </Key>
+      <Key ID="STR_A3A_CHAOS_supply_showEnemy">
+        <Original>Show enemy supply lines</Original>
+      </Key>
+      <Key ID="STR_A3A_CHAOS_supply_showEnemy_tt">
+        <Original>Draw the Occupant and Invader supply networks in their own colours. They are rooted at their off-map support corridors, so cutting inland from the coast severs everything behind the cut. Currently on by default while the system is being tuned - once intel missions exist to uncover enemy lines by scouting, this becomes a debug override rather than free information.</Original>
+      </Key>
       <Key ID="STR_A3A_CHAOS_supply_rateFloor">
         <Original>Severed faction resource floor</Original>
       </Key>
       <Key ID="STR_A3A_CHAOS_supply_rateFloor_tt">
-        <Original>The share of its normal resource rate an enemy faction keeps when its territory is completely cut off from its capital. Occupants and Invaders scale their attack and defence budgets by how much of their territory still reaches their own root node, so cutting their supply lines starves them - this sets how far that can go. Low values make a severed faction almost harmless; 0 makes it stop attacking altogether, which usually makes for a very quiet endgame.</Original>
+        <Original>The share of its normal resource rate an enemy faction keeps when its territory is completely cut off from its capital. Occupants and Invaders scale their attack and defence budgets by how much of their territory still reaches their own root node, so cutting their supply lines starves them - this sets how far that can go. Lower it for a harsher campaign where severing lines cripples a faction outright; 0 makes it stop attacking altogether, which usually makes for a very quiet endgame. Note that an enemy faction losing ground already loses camps and roadblocks with it, so this stacks with a squeeze they are under anyway.</Original>
       </Key>
       <Key ID="STR_A3A_CHAOS_supply_factoryYield">
         <Original>Factory material output</Original>

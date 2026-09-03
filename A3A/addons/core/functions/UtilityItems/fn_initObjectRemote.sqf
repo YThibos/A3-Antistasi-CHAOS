@@ -66,7 +66,17 @@ if ("build" in _flags) then {
     _object addAction [
         localize "STR_A3A_fn_UtilItem_initObjRem_addact_build",
         {
-            private _radius = call A3A_fnc_hqBuildRadius;
+            // CHAOS: a site upgrade container gets a tight placement radius, not the
+            // HQ build radius. Its warehouse has to end up close enough to the site
+            // for A3A_fnc_siteTiers to count it, and the HQ radius reaches 210 m at
+            // war tier 10 - far enough to strand the mission with a warehouse built
+            // outside the marker it was meant to upgrade, with nothing on screen to
+            // explain why. 50 m is plenty to align a single building.
+            private _radius = if ("sitetier" in ((A3A_utilityItemHM getOrDefault [typeOf (_this#0), []]) param [4, []])) then {
+                50
+            } else {
+                call A3A_fnc_hqBuildRadius
+            };
             [_this#0, _radius, _this#0] spawn A3A_fnc_buildingPlacerStart
         },
         nil, 1.5, true, true, "",

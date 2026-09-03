@@ -122,7 +122,7 @@ class A3A_RequestMissionDialog : A3A_DefaultDialog
           idc = -1;
           colorBackground[] = A3A_COLOR_TRANSPARENT;
           text = A3A_Icon_Rescue;
-          x = 34 * GRID_W;
+          x = 15 * GRID_W;
           y = 56 * GRID_H;
           w = 16 * GRID_W;
           h = 16 * GRID_H;
@@ -134,7 +134,7 @@ class A3A_RequestMissionDialog : A3A_DefaultDialog
           text = $STR_antistasi_dialogs_mission_request_rescue;
           onButtonClick = "closeDialog 0; [""missionButtonClicked"", [""RES""]] call A3A_GUI_fnc_requestMissionDialog;";
           sizeEx = GUI_TEXT_SIZE_LARGE;
-          x = 26 * GRID_W;
+          x = 7 * GRID_W;
           y = 76 * GRID_H;
           w = 32 * GRID_W;
           h = 12 * GRID_H;
@@ -146,7 +146,7 @@ class A3A_RequestMissionDialog : A3A_DefaultDialog
           idc = -1;
           colorBackground[] = A3A_COLOR_TRANSPARENT;
           text = A3A_Icon_Logistics;
-          x = 72 * GRID_W;
+          x = 53 * GRID_W;
           y = 56 * GRID_H;
           w = 16 * GRID_W;
           h = 16 * GRID_H;
@@ -158,7 +158,7 @@ class A3A_RequestMissionDialog : A3A_DefaultDialog
           text = $STR_antistasi_dialogs_mission_request_logistics;
           onButtonClick = "closeDialog 0; [""missionButtonClicked"", [""LOG""]] call A3A_GUI_fnc_requestMissionDialog;";
           sizeEx = GUI_TEXT_SIZE_LARGE;
-          x = 64 * GRID_W;
+          x = 45 * GRID_W;
           y = 76 * GRID_H;
           w = 32 * GRID_W;
           h = 12 * GRID_H;
@@ -170,7 +170,7 @@ class A3A_RequestMissionDialog : A3A_DefaultDialog
           idc = -1;
           colorBackground[] = A3A_COLOR_TRANSPARENT;
           text = A3A_Icon_Support;
-          x = 110 * GRID_W;
+          x = 91 * GRID_W;
           y = 56 * GRID_H;
           w = 16 * GRID_W;
           h = 16 * GRID_H;
@@ -182,7 +182,34 @@ class A3A_RequestMissionDialog : A3A_DefaultDialog
           text = $STR_antistasi_dialogs_mission_request_support;
           onButtonClick = "closeDialog 0; [""missionButtonClicked"", [""SUPP""]] call A3A_GUI_fnc_requestMissionDialog;";
           sizeEx = GUI_TEXT_SIZE_LARGE;
-          x = 102 * GRID_W;
+          x = 83 * GRID_W;
+          y = 76 * GRID_H;
+          w = 32 * GRID_W;
+          h = 12 * GRID_H;
+        };
+
+        // Economy (CHAOS)
+        // Row 2 used to hold three buttons centred on the dialog (x 26/64/102) while
+        // row 1 held four (x 7/45/83/121). Adding a fourth here means both rows can
+        // share row 1's column positions, so the grid finally lines up.
+        class EconomyIcon : A3A_Picture
+        {
+          idc = -1;
+          colorBackground[] = A3A_COLOR_TRANSPARENT;
+          text = A3A_Icon_Economy;
+          x = 129 * GRID_W;
+          y = 56 * GRID_H;
+          w = 16 * GRID_W;
+          h = 16 * GRID_H;
+        };
+
+        class EconomyButton : A3A_Button
+        {
+          idc = -1;
+          text = $STR_antistasi_dialogs_mission_request_economy;
+          onButtonClick = "closeDialog 0; [""missionButtonClicked"", [""ECON""]] call A3A_GUI_fnc_requestMissionDialog;";
+          sizeEx = GUI_TEXT_SIZE_LARGE;
+          x = 121 * GRID_W;
           y = 76 * GRID_H;
           w = 32 * GRID_W;
           h = 12 * GRID_H;

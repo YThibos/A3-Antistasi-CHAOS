@@ -4,6 +4,48 @@ Newest entries at the top. One line per change when possible.
 
 ---
 
+## 2026-09-02 (in-game fixes, round 2)
+
+- **Fix: the Economy mission announced itself but never created a task.** `fn_ECON_SiteUpgrade_p` returned `[1, [[marker, tier]]]`, double-nesting its arguments — `fn_requestTask` passes `_params#1` as the task's *whole* argument list, so the task bound `_marker` to an array and `_targetTier` to `nil` and threw on the first comparison. Because the throw happened before `A3A_activeTasks pushBack`, the request was infinitely repeatable. Now returns `[1, [marker, tier]]`.
+- **Supply graph restructured into a backbone and spokes.** The flat one-node-per-marker model meshed badly.
+  - **Hubs** — HQ, resources, factories, cities (plus the enemy support corridors). These form the backbone: distance-capped, link-limited, corridor-tested.
+  - **Spokes** — outposts, airfields, seaports. Never part of the backbone; each hangs off the nearest *connected* hub within `A3A_CHAOS_supplyHubRange` by one line, and never relays supply onward.
+  - **Roadblocks and watchposts are no longer graph nodes at all, under any setting.** They still project influence exactly as before, which is how they sever corridors — but supply can never route through them, so they can no longer repair the network they exist to cut.
+- **Enemy support corridors now project influence.** `NATO_carrier` and `CSAT_carrier` had marker text and nothing else — not in `markersX`, unowned in `sidesX`. They now carry an explicit side and a flat `A3A_CHAOS_supplyCarrierRadius` (default 1500 m), and **each enemy supply network is rooted at its corridor** rather than at a base, so cutting inland from the coast severs everything behind the cut.
+- **Enemy supply networks are drawn** in their own side colours, toggled by `A3A_CHAOS_supplyShowEnemyEdges` (on by default while the system is being tuned; it becomes a debug override once intel missions can uncover enemy lines properly).
+- **Supply line thickness is configurable** (`A3A_CHAOS_supplyLineThickness`, per-client). Spokes draw one step thinner and dashed to distinguish them from backbone links.
+
+---
+
+## 2026-09-02 (in-game fixes, round 1)
+
+- **Fix: Economy missions were never offered.** `fn_ECON_SiteUpgrade_p` skipped any site whose `spawner` state was not 0, on the belief that 0 meant "quiet". It is the opposite — `fn_distance` defines `ENABLED 0` / `DISABLED 1` and `fn_initZones` seeds every marker at `2`, so `0` means the marker is currently spawned in around a player. The guard therefore rejected nearly every site and Petros always answered "nothing to develop". The guard is removed entirely: the site is already ours, and whether it happens to be rendered says nothing about whether we can be tasked to upgrade it.
+- **Fix: Economy button icon was missing.** It pointed at a vanilla `money_ca.paa` simple-task texture that does not exist (`Picture ... not found` on load). Now uses the mod's own `icon_resource.paa`, which ships in the PBO. A coins/banknote icon needs an actual `.paa` authored into `dialogues\textures\`; `A3A_Icon_Economy` in `textures.inc` is the only line that would change.
+- **Fix: the supply graph drew a line from everything to everything.** The candidate test only asked whether two zones' outer cones could overlap, which reaches 4 km between outposts and 5.6 km airfield-to-airfield at Altis defaults. Once a side holds most of the map every candidate passes the corridor test and the graph degenerates into a near-complete mesh. Two limits now shape it, both server-forced settings:
+  - `A3A_CHAOS_supplyMaxEdge` (default 1500 m) — a hard ceiling on edge length, applied alongside the radius test.
+  - `A3A_CHAOS_supplyMaxLinks` (default 3) — links kept per node, shortest first, applied **after** the corridor test as a symmetric union, so a pruned edge is one that lost to nearer neighbours rather than one that failed on the ground, and no outlying site is left stranded.
+- **Fix: no supply graph until territory changed.** It was only built on `markerChange` / `RebelControlCreated` / `HQPlaced` and the 10-minute income tick, so a fresh or freshly loaded campaign had no network until something moved — moving the HQ and replacing it was what made the lines appear. It is now built once at server start, gated on the zone globals being broadcast.
+
+---
+
+## 2026-09-02
+
+- **Tiered resources and factories (CHAOS site upgrades)**: rebel resources and factories now carry an upgrade tier, delivered by a new **Site Upgrade** mission (`ECON_SiteUpgrade`).
+  - **Tier 1** — a shipping container (`Land_Cargo10_blue_F`) spawns at HQ; haul it to the site by truck, flatbed or sling, set it down, and build a supply warehouse (`Land_Warehouse_03_F`) from it through the normal RTS placer, so the building can be aligned before it is committed. The container's build budget is exactly the warehouse price, so it deletes itself once spent.
+  - **Tier 2** — a `Land_PowerGenerator_F` is delivered as finished freight; set it down inside the site.
+  - **Tier gates supply-graph membership.** A Tier 0 resource or factory is not a node: it can neither be supplied nor relay supply. Its vanilla income is completely untouched, so the ladder is upside only.
+  - **Tier scales income along the economy's existing split** — resources scale the additive cash term, factories the multiplier: T0 1.00, T1 1.25, T2 1.60.
+  - **No new saved state.** Tier is derived from the structures standing on the site, which are already persisted, so destroying a warehouse drops the site back to Tier 0 and makes it mission-eligible again with no extra code.
+  - The mission picker deliberately applies **no `distanceMission` cutoff** — distance is a mild weighting only, so a settled HQ is never pushed to relocate to keep upgrade missions coming.
+  - `sitetier` is an exclusive build catalogue, so an upgrade container cannot be used to build a general base out at a remote mine.
+  - **New `ECON` mission category with an Economy button.** The mission was first registered under a `SITE` category that had neither a button nor an entry in `fn_requestMissionDialog`'s `_missionTypes` whitelist, which made it unreachable from Petros — it could only appear on the random roll in the 10-minute tick. It now has a proper Economy category rather than being folded into Logistics, which already carries five live tasks.
+  - **Mission request dialog realigned.** Row 2 held three buttons centred on the dialog (x 26/64/102) while row 1 held four (x 7/45/83/121). Economy is the fourth button of row 2, so both rows now share the same column positions.
+  - **Fix (upstream, found in passing)**: `A3A/addons/gui/Stringtable.xml` had a mismatched closing tag — `<Czech>Custom AI Loadouts</Original>` — which made the whole file fail XML parsing. All three stringtables now parse.
+- **Supply rate floor default raised 0.5 → 0.75** (`A3A_CHAOS_supplyRateFloor`). Ahead of replenishment gating, the pool multiplier stops being the mechanic and becomes a nudge; at severed markers it is redundant and at connected ones it punishes a faction for damage done elsewhere. Also avoids stacking a third penalty on a side that already loses camps and roadblocks as it loses ground.
+- **`RESEARCH.md` processed**: the seeding brainstorm transcript is removed and its content turned into tracked todos, ideas and open questions — supply iteration 2 (replenishment gating, with the source-verified hook), the tiered resource/factory ladder, marker sub-types, an audit of the enemy's existing structural advantages, and the outstanding tweaks.
+
+---
+
 ## 2026-08-31
 
 - **Shared influence core (`A3A_fnc_influenceContext` / `A3A_fnc_influenceAt`)**: zone collection, per-type radii, the rebel training factor and every field constant moved out of `fn_computeInfluenceZones` into one context both consumers build on, so the drawn border and the supply graph cannot drift apart. `fn_computeInfluenceZones` now consumes the context and keeps only its grid rasterisation and claim-shape drawing.

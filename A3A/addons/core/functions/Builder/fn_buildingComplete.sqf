@@ -62,3 +62,13 @@ else {
 if (_className isEqualTo (A3A_faction_reb get "flag")) then {
     _building setFlagTexture (A3A_faction_reb get "flagTexture");
 };
+
+// CHAOS: a site upgrade structure changes the tier of the resource or factory it
+// stands on, and tier decides supply-graph membership and income. Recompute now
+// rather than waiting for the income tick, so the player sees the site join the
+// network as soon as the build finishes. A3A_fnc_siteTiers derives tiers from the
+// structures present, so nothing needs recording here - the building IS the state.
+if (typeOf _building in ["Land_Warehouse_03_F", "Land_PowerGenerator_F"]) then {
+    call A3A_fnc_siteTiers;
+    [] call A3A_fnc_refreshSupplyGraph;
+};

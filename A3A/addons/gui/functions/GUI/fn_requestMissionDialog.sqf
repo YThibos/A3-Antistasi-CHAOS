@@ -53,7 +53,8 @@ switch (_mode) do
             "CON",
             "LOG",
             "SUPP",
-            "RES"
+            "RES",
+            "ECON"
         ];
 
         if !(_missionType in _missionTypes) exitWith

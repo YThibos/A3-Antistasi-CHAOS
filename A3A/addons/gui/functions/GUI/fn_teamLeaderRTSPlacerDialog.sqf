@@ -55,11 +55,20 @@ switch (_mode) do
 		// so no further box-tier check is needed here - owning the box is the licence.
 		private _boxFlags = (A3A_utilityItemHM getOrDefault [typeOf (A3A_building_EHDB # TEAMLEADER_BOX), []]) param [4, []];
 		private _buildableObjects = A3A_buildableObjects;
-		if !("basetier" in _boxFlags) then {
-			_buildableObjects = _buildableObjects select { (_x param [2, ""]) isNotEqualTo "basetier" };
-		};
-		if !("airtier" in _boxFlags) then {
-			_buildableObjects = _buildableObjects select { (_x param [2, ""]) isNotEqualTo "airtier" };
+		// CHAOS: "sitetier" is an EXCLUSIVE catalogue, unlike basetier/airtier which
+		// are additive. A site upgrade container carries exactly one job out to a
+		// resource or factory; letting it also build the general catalogue there
+		// would quietly turn every mine into a second base.
+		if ("sitetier" in _boxFlags) then {
+			_buildableObjects = _buildableObjects select { (_x param [2, ""]) isEqualTo "sitetier" };
+		} else {
+			_buildableObjects = _buildableObjects select { (_x param [2, ""]) isNotEqualTo "sitetier" };
+			if !("basetier" in _boxFlags) then {
+				_buildableObjects = _buildableObjects select { (_x param [2, ""]) isNotEqualTo "basetier" };
+			};
+			if !("airtier" in _boxFlags) then {
+				_buildableObjects = _buildableObjects select { (_x param [2, ""]) isNotEqualTo "airtier" };
+			};
 		};
 
 		private _boxWidth = round ((ctrlPosition _buildControlsGroup # 2) / GRID_W);

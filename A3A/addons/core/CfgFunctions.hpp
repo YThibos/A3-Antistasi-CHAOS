@@ -246,6 +246,8 @@ class CfgFunctions
             class influenceAt {};
             class influenceContext {};
             class refreshSupplyGraph {};
+            class siteTier {};
+            class siteTiers {};
             class supplyRateMultiplier {};
         };
 

@@ -771,6 +771,11 @@ for "_s" from 0 to _sLast do {
     _out pushBack [_sideColours select _s, _segs select _s, _fills select _s];
 };
 A3A_influenceSides = _out;
+// Parallel to A3A_influenceSides: which SIDE each entry belongs to. The supply
+// overlay needs a side -> colour lookup, and this is the only place the marker
+// colour config has already been resolved, so exporting the ordering is far
+// better than resolving those colours a second time somewhere else.
+A3A_influenceSideList = _sideList;
 A3A_influenceCellSize = _cell;
 
 // Debug_8 is the widest logging macro there is, so the grid and the side count

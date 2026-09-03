@@ -132,6 +132,39 @@ private _sideZones = [];
     (_sideZones select _idx) pushBack [_pos # 0, _pos # 1, _radius, _mrk];
 } forEach _allZones;
 
+// ---- Enemy off-map entry points -----------------------------------------
+// NATO_carrier and CSAT_carrier are the Occupant and Invader support corridors -
+// where their reinforcements arrive from off the map. fn_initVarServer only ever
+// sets their marker TEXT from the faction template; they are not in markersX, no
+// side owns them in sidesX, and so they projected no influence at all and could
+// not anchor anything.
+//
+// They are given an explicit side and a flat radius here. That radius is a
+// setting rather than a type multiplier because these are not zones anyone can
+// capture: the number is asking "how far inland does off-map support reach",
+// which is a different question from how hard a base pushes.
+private _carrierRadius = missionNamespace getVariable ["A3A_CHAOS_supplyCarrierRadius", 1500];
+if !(_carrierRadius isEqualType 0 && {_carrierRadius > 0}) then { _carrierRadius = 1500 };
+
+{
+    _x params ["_cMrk", "_cSide"];
+    private _cPos = getMarkerPos _cMrk;
+    if (_cPos isEqualTo [0,0,0]) then { continue };
+
+    private _idx = _sideList find _cSide;
+    if (_idx < 0) then {
+        _sideList pushBack _cSide;
+        _sideZones pushBack [];
+        _idx = (count _sideList) - 1;
+    };
+    (_sideZones select _idx) pushBack [_cPos # 0, _cPos # 1, _carrierRadius, _cMrk];
+} forEach (
+    // gameMode 3 runs without Invaders, and a side global can be nil before init
+    // completes, so each entry is admitted only if its side actually exists.
+    ([] + (if (isNil "Occupants") then { [] } else { [["NATO_carrier", Occupants]] })
+       + (if (isNil "Invaders")  then { [] } else { [["CSAT_carrier", Invaders]] }))
+);
+
 if (_sideList isEqualTo []) exitWith {
     Debug("influenceContext: no owned zones");
     []
