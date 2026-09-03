@@ -16908,6 +16908,18 @@
       <Key ID="STR_A3A_CHAOS_supply_showEdges_tt">
         <Original>Draw a dashed line between friendly zones that are linked by an unbroken supply corridor. The territory border is a coarse outline and can only hint at what is connected; these lines are the actual supply network the game uses, walked out from your HQ. A zone with no line to it is cut off.</Original>
       </Key>
+      <Key ID="STR_A3A_CHAOS_supply_maxEdge">
+        <Original>Max supply line length (m)</Original>
+      </Key>
+      <Key ID="STR_A3A_CHAOS_supply_maxEdge_tt">
+        <Original>The longest a single supply line may be. Two zones further apart than this are never linked directly, however much territory joins them. Without a cap, a faction holding most of the map links every site to every other one and the network stops meaning anything. Lower values make supply a chain of short local hops with real chokepoints; higher values let distant holdings support each other directly.</Original>
+      </Key>
+      <Key ID="STR_A3A_CHAOS_supply_maxLinks">
+        <Original>Max supply lines per site</Original>
+      </Key>
+      <Key ID="STR_A3A_CHAOS_supply_maxLinks_tt">
+        <Original>How many supply lines a single site keeps, shortest first. The length cap alone still leaves a tight cluster of sites fully interconnected, and this thins that out into something readable. A site can still end up with more lines than this when neighbours choose it, so nothing is ever left stranded. Raise it for a denser, more resilient network; lower it for a sparser one that is easier to cut.</Original>
+      </Key>
       <Key ID="STR_A3A_CHAOS_supply_rateFloor">
         <Original>Severed faction resource floor</Original>
       </Key>

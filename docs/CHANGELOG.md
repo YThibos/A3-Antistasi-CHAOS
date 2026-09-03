@@ -4,6 +4,17 @@ Newest entries at the top. One line per change when possible.
 
 ---
 
+## 2026-09-02 (in-game fixes, round 1)
+
+- **Fix: Economy missions were never offered.** `fn_ECON_SiteUpgrade_p` skipped any site whose `spawner` state was not 0, on the belief that 0 meant "quiet". It is the opposite — `fn_distance` defines `ENABLED 0` / `DISABLED 1` and `fn_initZones` seeds every marker at `2`, so `0` means the marker is currently spawned in around a player. The guard therefore rejected nearly every site and Petros always answered "nothing to develop". The guard is removed entirely: the site is already ours, and whether it happens to be rendered says nothing about whether we can be tasked to upgrade it.
+- **Fix: Economy button icon was missing.** It pointed at a vanilla `money_ca.paa` simple-task texture that does not exist (`Picture ... not found` on load). Now uses the mod's own `icon_resource.paa`, which ships in the PBO. A coins/banknote icon needs an actual `.paa` authored into `dialogues\textures\`; `A3A_Icon_Economy` in `textures.inc` is the only line that would change.
+- **Fix: the supply graph drew a line from everything to everything.** The candidate test only asked whether two zones' outer cones could overlap, which reaches 4 km between outposts and 5.6 km airfield-to-airfield at Altis defaults. Once a side holds most of the map every candidate passes the corridor test and the graph degenerates into a near-complete mesh. Two limits now shape it, both server-forced settings:
+  - `A3A_CHAOS_supplyMaxEdge` (default 1500 m) — a hard ceiling on edge length, applied alongside the radius test.
+  - `A3A_CHAOS_supplyMaxLinks` (default 3) — links kept per node, shortest first, applied **after** the corridor test as a symmetric union, so a pruned edge is one that lost to nearer neighbours rather than one that failed on the ground, and no outlying site is left stranded.
+- **Fix: no supply graph until territory changed.** It was only built on `markerChange` / `RebelControlCreated` / `HQPlaced` and the 10-minute income tick, so a fresh or freshly loaded campaign had no network until something moved — moving the HQ and replacing it was what made the lines appear. It is now built once at server start, gated on the zone globals being broadcast.
+
+---
+
 ## 2026-09-02
 
 - **Tiered resources and factories (CHAOS site upgrades)**: rebel resources and factories now carry an upgrade tier, delivered by a new **Site Upgrade** mission (`ECON_SiteUpgrade`).

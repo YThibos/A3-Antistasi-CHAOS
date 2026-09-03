@@ -244,3 +244,34 @@ private _invalidate = { A3A_influenceSignature = nil };
     {},
     false
 ] call CBA_fnc_addSetting;
+
+// Hard ceiling on the length of a supply edge. The radius-derived candidate test
+// reaches 4 km between outposts and 5.6 km airfield to airfield at the Altis
+// defaults, which is far enough that a side holding most of the map links
+// everything to everything - measured in game as a solid fan of lines from every
+// marker. This is the cutoff that turns it back into a neighbour network.
+[
+    "A3A_CHAOS_supplyMaxEdge",
+    "SLIDER",
+    [localize "STR_A3A_CHAOS_supply_maxEdge", localize "STR_A3A_CHAOS_supply_maxEdge_tt"],
+    ["Antistasi CHAOS", "Supply"],
+    [500, 5000, 1500, 0],
+    2,                      // server forces setting on clients
+    {},
+    false
+] call CBA_fnc_addSetting;
+
+// Links kept per node, shortest first. The distance cap alone still leaves a
+// dense cluster fully meshed, so this thins it. Applied AFTER the corridor test,
+// as a symmetric union - a pruned edge is one that was genuinely available and
+// simply lost to nearer neighbours, never one that failed on the ground.
+[
+    "A3A_CHAOS_supplyMaxLinks",
+    "SLIDER",
+    [localize "STR_A3A_CHAOS_supply_maxLinks", localize "STR_A3A_CHAOS_supply_maxLinks_tt"],
+    ["Antistasi CHAOS", "Supply"],
+    [1, 10, 3, 0],
+    2,                      // server forces setting on clients
+    {},
+    false
+] call CBA_fnc_addSetting;

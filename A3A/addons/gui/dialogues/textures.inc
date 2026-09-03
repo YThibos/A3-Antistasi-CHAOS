@@ -86,11 +86,12 @@ Maintainer: DoomMetal
 #define A3A_Icon_Seaport            A3A_GUI_QTEXTURE_PATH_OF(icon_seaport.paa)
 #define A3A_Icon_Clear_Trees        A3A_GUI_QTEXTURE_PATH_OF(icon_clear_trees.paa)
 #define A3A_Icon_Support            A3A_GUI_QTEXTURE_PATH_OF(icon_support.paa)
-// CHAOS: Economy missions. Points at Bohemia's own "Money" simple-task icon
-// rather than a new .paa, so it needs no art asset - the garage defines already
-// set the precedent for referencing vanilla UI textures directly. If this ever
-// renders blank, the fix is this one line: swap it for A3A_Icon_Resource.
-#define A3A_Icon_Economy            "\A3\ui_f\data\igui\cfg\simpletasks\types\money_ca.paa"
+// CHAOS: Economy missions. This pointed at a vanilla "money" simple-task texture,
+// which does NOT exist - Arma logged "money_ca.paa not found" on load. Using the
+// mod's own resource icon instead, which is guaranteed present because it ships
+// in this PBO. A coins/banknote icon would need an actual .paa authored and
+// dropped into dialogues\textures\; this define is the only line that would change.
+#define A3A_Icon_Economy            A3A_GUI_QTEXTURE_PATH_OF(icon_resource.paa)
 
 // New map icons
 #define A3A_Icon_Map_Blank          A3A_GUI_QTEXTURE_PATH_OF(icon_map_blank.paa)

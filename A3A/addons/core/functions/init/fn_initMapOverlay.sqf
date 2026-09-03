@@ -66,6 +66,19 @@ if (isServer && {isNil "A3A_influenceZonesRev"}) then {
     ["markerChange", "A3A_influenceOverlay", _bump] call EFUNC(Events,addEventListener);
     ["RebelControlCreated", "A3A_influenceOverlay", _bump] call EFUNC(Events,addEventListener);
     ["HQPlaced", "A3A_influenceOverlay", _bump] call EFUNC(Events,addEventListener);
+
+    // Build the graph once at startup. Without this the only triggers are those
+    // three events and the 10-minute income tick, so a freshly started or freshly
+    // loaded campaign has no supply network at all until territory happens to
+    // change - which is why moving the HQ and putting it straight back was what
+    // made the lines appear. Waits for the zone globals rather than assuming
+    // init order: A3A_fnc_influenceContext needs markersX, outpostsFIA and sidesX
+    // broadcast, and this runs from fn_initServer where that is not guaranteed.
+    [
+        { !isNil "markersX" && {!isNil "outpostsFIA"} && {!isNil "sidesX"} },
+        { [true] call A3A_fnc_refreshSupplyGraph },
+        []
+    ] call CBA_fnc_waitUntilAndExecute;
 };
 
 // ---- Client half --------------------------------------------------------

@@ -48,9 +48,17 @@ private _weighted = [];
     if (_marker in destroyedSites) then { continue };
     if !((sidesX getVariable [_marker, sideUnknown]) isEqualTo teamPlayer) then { continue };
 
-    // Don't hand out a mission for a site that is currently spawned in and
-    // possibly being fought over - the same guard the other logistics tasks use.
-    if ((spawner getVariable [_marker, 0]) != 0) then { continue };
+    // NO spawner guard. An earlier version skipped markers whose spawner state was
+    // not 0, believing 0 meant "quiet". It is the opposite: fn_distance defines
+    // ENABLED 0 / DISABLED 1, and fn_initZones seeds every marker at 2, so 0 means
+    // the marker is currently SPAWNED IN around a player. The guard therefore
+    // rejected every site that was not loaded at that moment, which in practice is
+    // nearly all of them, and Petros always answered "nothing to develop".
+    //
+    // There is no guard here now because there is nothing to guard against: the
+    // site is already ours, and whether it happens to be rendered says nothing
+    // about whether we can be tasked to upgrade it. The container spawns at HQ
+    // either way.
 
     private _tier = _tiers getOrDefault [_marker, 0];
     if (_tier >= 2) then { continue };                  // fully upgraded

@@ -121,6 +121,32 @@ private _samplesMin   = 5;
 private _samplesMax   = 16;
 private _sampleBudget = 60000;  // total corridor samples across every side
 
+// ---- Sparsification: why the radius test alone is not enough ------------
+// The candidate test asks whether two zones' outer cones could overlap, which on
+// Altis at the defaults reaches 4 km between outposts and 5.6 km airfield to
+// airfield. That is a fine test for "could these be linked", and a hopeless one
+// for "is this a supply network": once a side holds most of the map, the
+// corridor between ANY two of its zones is its own ground, every candidate
+// passes, and the graph degenerates into a near-complete mesh - measured in game
+// as a solid fan of lines from every marker to every other one.
+//
+// Two limits turn it back into a network. A hard metre cap kills the cross-map
+// links the radius test allows, and a per-node link limit thins the dense
+// clusters that survive the cap. Both are settings, because the right numbers
+// depend on how a given map spaces its objectives.
+//
+// The link limit is applied AFTER the corridor test, so a pruned edge is one
+// that was genuinely available and simply lost to nearer neighbours - never one
+// that failed on the ground. It is a symmetric union: A keeping B always yields
+// an edge, whether or not B would have kept A, so no node is left stranded
+// merely because its neighbours are all in a denser cluster than it is.
+private _maxEdge = missionNamespace getVariable ["A3A_CHAOS_supplyMaxEdge", 1500];
+if !(_maxEdge isEqualType 0 && {_maxEdge > 0}) then { _maxEdge = 1500 };
+
+private _maxLinks = missionNamespace getVariable ["A3A_CHAOS_supplyMaxLinks", 3];
+if !(_maxLinks isEqualType 0 && {_maxLinks >= 1}) then { _maxLinks = 3 };
+_maxLinks = round _maxLinks;
+
 private _ratios = createHashMap;
 private _playerEdges = [];
 private _playerConnected = [];
@@ -144,7 +170,8 @@ private _candidateCount = 0;
             private _dx = _bx - _ax;
             private _dy = _by - _ay;
             private _d2 = _dx * _dx + _dy * _dy;
-            private _lim = (_ar + _br) * _reachMult;
+            // Whichever is tighter: the cones-could-overlap test, or the hard cap.
+            private _lim = ((_ar + _br) * _reachMult) min _maxEdge;
             if (_d2 <= _lim * _lim) then {
                 _sideCands pushBack [_a, _b, sqrt _d2];
             };
@@ -178,6 +205,9 @@ private _samplesTaken = 0;
     private _adj = [];
     { _adj pushBack [] } forEach _zones;
 
+    // Edges that passed the corridor test, as [_a, _b, _dist], before pruning.
+    private _survivors = [];
+
     {
         _x params ["_a", "_b", "_dist"];
         (_zones select _a) params ["_ax", "_ay"];
@@ -201,11 +231,63 @@ private _samplesTaken = 0;
             if (_owner != _sideIdx) exitWith { _ok = false };
         };
 
-        if (_ok) then {
+        if (_ok) then { _survivors pushBack [_a, _b, _dist] };
+    } forEach _sideCands;
+
+    // ---- Prune to the nearest _maxLinks per node ------------------------
+    // Each node nominates its own nearest surviving edges; an edge is kept if
+    // EITHER endpoint nominated it. Without the union a node on the rim of a
+    // dense cluster loses every link, because each of its neighbours has closer
+    // company - which would cut off exactly the outlying sites the network is
+    // supposed to reach.
+    private _incident = [];
+    { _incident pushBack [] } forEach _zones;
+    {
+        _x params ["_a", "_b"];
+        (_incident select _a) pushBack _forEachIndex;
+        (_incident select _b) pushBack _forEachIndex;
+    } forEach _survivors;
+
+    private _keep = [];
+    { _keep pushBack false } forEach _survivors;
+    {
+        private _edgeIdxs = _x;
+        if (count _edgeIdxs <= _maxLinks) then {
+            { _keep set [_x, true] } forEach _edgeIdxs;
+        } else {
+            // Nominate the _maxLinks shortest by repeated minimum selection rather
+            // than a sort. _maxLinks is 3 by default, so this is a handful of passes
+            // over a short list - and it avoids BIS_fnc_sortBy, whose algorithm block
+            // has a calling convention that is easy to get subtly wrong and that
+            // would fail by silently mis-ordering rather than by erroring.
+            private _remaining = +_edgeIdxs;
+            for "_n" from 1 to _maxLinks do {
+                if (_remaining isEqualTo []) exitWith {};
+                private _bestPos = 0;
+                private _bestLen = (_survivors select (_remaining select 0)) # 2;
+                {
+                    private _len = (_survivors select _x) # 2;
+                    if (_len < _bestLen) then { _bestLen = _len; _bestPos = _forEachIndex };
+                } forEach _remaining;
+                _keep set [_remaining deleteAt _bestPos, true];
+            };
+        };
+    } forEach _incident;
+
+    private _pruned = 0;
+    {
+        if (_keep select _forEachIndex) then {
+            _x params ["_a", "_b"];
             (_adj select _a) pushBack _b;
             (_adj select _b) pushBack _a;
+        } else {
+            _pruned = _pruned + 1;
         };
-    } forEach _sideCands;
+    } forEach _survivors;
+
+    if (_pruned > 0) then {
+        Debug_3("computeSupplyGraph: side %1 kept %2 edges, pruned %3 to the link limit", _side, (count _survivors) - _pruned, _pruned);
+    };
 
     // ---- Root node ------------------------------------------------------
     // The player faction is rooted at the HQ, which is the whole point of the
