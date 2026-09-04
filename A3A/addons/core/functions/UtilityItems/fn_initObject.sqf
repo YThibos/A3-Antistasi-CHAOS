@@ -51,12 +51,20 @@ if ("barempty" in _flags) then {
     _object setVariable ["BuildAndRessources_ressources", [0,0,0,0], true];
 };
 
-// CHAOS: a freshly placed BAR depot starts with a tenth of its capacity in each
+// CHAOS: a freshly created BAR depot starts with a tenth of its capacity in each
 // material rather than bone empty. The depot costs 3000 credits and is gated
 // behind the Construction Yard; arriving with nothing in it means the player
 // pays for the gate and then waits several income ticks before it does anything.
 // fn_factoryDepotTick tops it up from there and enforces the same cap.
-if (typeOf _object isEqualTo "RessourceDepot") then {
+//
+// Reached from both depot paths: fn_buildingComplete calls initObject on a
+// newly built depot, and fn_AIVEHinit calls it on one the garrison respawns.
+// Hence the isNil guard - only a depot whose stocks have never been set gets
+// seeded. On a campaign reload fn_barLoad's EntityCreated handler has already
+// written the saved stocks by the time the garrison spawner reaches
+// fn_AIVEHinit, and an unguarded seed would overwrite them with cap/10.
+if (typeOf _object isEqualTo "RessourceDepot"
+    && {isNil {_object getVariable "BuildAndRessources_depotStocks"}}) then {
     private _seed = floor ((missionNamespace getVariable ["A3A_CHAOS_barDepotCap", 3000]) / 10);
     _object setVariable ["BuildAndRessources_depotStocks", [_seed, _seed, _seed, _seed], true];
 };

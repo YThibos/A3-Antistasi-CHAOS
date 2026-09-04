@@ -4,6 +4,13 @@ Newest entries at the top. One line per change when possible.
 
 ---
 
+## 2026-09-04 (BAR depot moved into the construction catalogue)
+
+- **The BAR resource depot is built, not bought.** It moved out of the garage purchase list into the general construction catalogue at 3000 credits, buildable from any construction kit and gated on an existing Construction Yard through a new `"bardepot"` ability case in `fn_teamLeaderRTSPlacerDialog` — the same mechanism as `constructionyard`/`aircontrolcenter`, replacing the old `yardonly` purchase gate. Its utility-item entry stays, priced `-1`: registered in `A3A_utilityItemHM` (so the garrison files it under `vehicles` and respawns it through `fn_AIVEHinit` → `fn_initObject`, keeping persistence, the `barsupply` resupply action and `noclear`) but filtered out of the purchase list. `fn_buildingComplete` now calls the shared `fn_initObject` on any completed build whose class is a registered utility item, so the build path and the respawn path cannot drift, and overwrites `A3A_itemPrice` with what the build actually cost so a stored depot refunds correctly.
+- **Fix: a campaign reload wiped a saved depot's stocks.** `fn_barLoad` restores `BuildAndRessources_depotStocks` from an `EntityCreated` handler, then the garrison spawner reached `fn_initObject`, which re-seeded every depot to a tenth of capacity on top. The seed is now applied only to a depot whose stocks have never been set.
+
+---
+
 ## 2026-09-04 (tier persistence, mission cleanup, QoL)
 
 - **Fix: a built site upgrade was invisible to everything that read it.** `fn_buildingComplete` threw twice on every completed construction — it compared `sidesX getVariable ""` (which is `nil`) to a side whenever `fn_getMarkerForPos` found no enclosing marker, and it tested an undeclared `_className` for the flagpole case. Both aborted the function before the tier recompute at its end ever ran. Fixed, and site structures placed just outside a small resource/factory outline now claim the nearest rebel-held site within `max(markerExtent, 150 m)`.

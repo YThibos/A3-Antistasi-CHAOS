@@ -144,6 +144,9 @@
       <Key ID="STR_A3A_aircontrolcenter_not_at_hq">
         <Original>You must be inside the HQ build area (%1 m) to build the Air Control Center.</Original>
       </Key>
+      <Key ID="STR_A3A_bardepot_need_yard">
+        <Original>Requires a Construction Yard to be built at HQ first.</Original>
+      </Key>
       <Key ID="STR_A3A_constructionyard_duplicate">
         <Original>A Construction Yard is already built at this HQ.</Original>
       </Key>

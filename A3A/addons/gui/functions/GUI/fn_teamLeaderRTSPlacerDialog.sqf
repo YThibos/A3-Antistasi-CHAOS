@@ -157,6 +157,15 @@ switch (_mode) do
 				};
 			};
 
+			// BAR resource depot gate — requires a Construction Yard, like the ACC.
+			// No HQ-radius check: a depot is useful at any rebel-held marker it can be
+			// garrisoned into, even though only depots inside the HQ build radius
+			// receive the factory yield (A3A_fnc_factoryDepotTick).
+			if (_ability isEqualTo "bardepot" && {!(call A3A_fnc_hasConstructionYard)}) then {
+				_button ctrlEnable false;
+				_button ctrlSetTooltip localize "STR_A3A_bardepot_need_yard";
+			};
+
 			_button ctrlAddEventHandler ["ButtonDown", {
 				params ["_control"];
 

@@ -43,6 +43,18 @@ if !("a3a_airControlCenter" in A3A_buildingPriceHM) then {
     A3A_buildingPriceHM set ["a3a_airControlCenter", 8000];
 };
 
+// BAR resource depot - the only source of BAR building material in CHAOS.
+// Built rather than bought, from any construction kit, and gated on an existing
+// Construction Yard: the "bardepot" ability is handled specially in
+// fn_teamLeaderRTSPlacerDialog, the same way "constructionyard"/"aircontrolcenter"
+// are. Deliberately NOT tagged "basetier"/"airtier": those are exclusive kit
+// catalogues, and requiring a 3000 credit military kit on top of the yard would
+// gate BAR twice for no design reason. The class only exists when BAR is loaded.
+if (missionNamespace getVariable ["A3A_hasBAR", false] && {!("RessourceDepot" in A3A_buildingPriceHM)}) then {
+    A3A_buildableObjects pushBack ["RessourceDepot", 3000, "bardepot"];
+    A3A_buildingPriceHM set ["RessourceDepot", 3000];
+};
+
 {
     if !(_x#0 in A3A_buildingPriceHM) then {
         A3A_buildableObjects pushBack _x;

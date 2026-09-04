@@ -89,10 +89,24 @@ if(A3A_hasACE) then {
 // depot's own resupply action (A3A_fnc_barResupply). Buying a full crate outright
 // would have made that whole loop optional.
 //
-// The depot is "yardonly", so BAR material is a Construction Yard capability like
-// the military and airport build kits. That does make BAR a late-game system:
-// before the yard there is no depot, so there is no material at all. Deliberate -
-// trenches and the small/medium/large build boxes carry the early game.
+// The depot is BUILT, not bought: it lives in the general construction catalogue
+// (fn_initBuildableObjects) and is gated there on A3A_fnc_hasConstructionYard, so
+// BAR material is a Construction Yard capability like the military and airport
+// build kits. That does make BAR a late-game system: before the yard there is no
+// depot, so there is no material at all. Deliberate - trenches and the
+// small/medium/large build boxes carry the early game.
+//
+// Its item entry stays, priced -1: A3A_utilityItemList filters on price >= 0 so it
+// is unpurchasable, while A3A_utilityItemHM keeps it, and that hashmap membership
+// is load-bearing three times over.
+//   1. fn_garrisonServer_addVehicle files a utility item under "vehicles" rather
+//      than "buildings", which is the array fn_spawnGarrisonVehicles respawns
+//      through fn_AIVEHinit -> fn_initObject. Drop the entry and a saved depot
+//      comes back as a bare prop with no resupply action.
+//   2. "barsupply" is read by fn_initObjectRemote, so the action follows from the
+//      same registration on both the build and the respawn path.
+//   3. "noclear" keeps BAR's cargo intact, and "save" installs the attach/detach
+//      handler so a sling-loaded depot re-garrisons where it lands.
 //
 // Crates must NOT be removed even though they are empty: BAR builds only ever
 // draw from a crate, so a depot with no crate near it is inert to the build menu.
@@ -101,7 +115,7 @@ if (A3A_hasBAR) then {
     _items pushBack ["RessourceCrate_Metal",    250, "barcrate_metal",    "", ["place","save","noclear","barempty"]];
     _items pushBack ["RessourceCrate_Sand",     250, "barcrate_sand",     "", ["place","save","noclear","barempty"]];
     _items pushBack ["RessourceCrate_Wood",     250, "barcrate_wood",     "", ["place","save","noclear","barempty"]];
-    _items pushBack ["RessourceDepot",         3000, "bardepot",          "", ["cmmdr","place","save","noclear","barsupply","yardonly"]];
+    _items pushBack ["RessourceDepot",           -1, "bardepot",          "", ["cmmdr","place","save","noclear","barsupply"]];
 };
 
 // Apply item name localization
