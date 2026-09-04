@@ -4,6 +4,15 @@ Newest entries at the top. One line per change when possible.
 
 ---
 
+## 2026-09-04 (mission object fixes)
+
+- **The supply warehouse has a build-menu picture again.** Its `editorPreview` pointed at `EditorPreviews_F_Enoch`, but `Land_Warehouse_03_F` is an APEX asset whose preview ships in `EditorPreviews_F_Exp`. The RTS placer `fileExists`-checks the path and silently substitutes its "No Vehicle Preview" placeholder, so the wrong prefix cost the tile its thumbnail. Verified against the shipped game files.
+- **Building-class cargo now settles on the ground when unloaded.** The logistics unload slides the cargo off the back of the vehicle and detaches it at bed height; a `ThingX` crate falls the last half metre under PhysX, but a `Building`/`House` class has no rigid body and simply hung in the air forever (the Tier 2 power generator did exactly this). `A3A_Logistics_fnc_unload` now snaps building-class cargo down to the terrain and levels it to the surface normal. PhysX cargo is untouched, so the working haul flow is unchanged.
+- **Utility items placed through Zeus get initialised.** The curator places a *new* object, so a mission container relocated in Zeus arrived with no `A3A_canGarage`, no price and no scroll actions, and never got them back. `CuratorObjectPlaced` now hands a recognised utility item to `A3A_fnc_initObject` a frame later, on the curator's machine only.
+- **`Tools/pboextract/derapify.py`** — reads binarised `config.bin` files, so vanilla class facts (parent chain, simulation, previews, sling points) can be checked against the shipped game files rather than guessed.
+
+---
+
 ## 2026-09-04 (enemy supply networks)
 
 - **Enemy supply networks now exist.** The Occupant and Invader off-map corridors (`NATO_carrier` / `CSAT_carrier`) were structurally isolated roots and produced no edges at all. Each enemy corridor now gets explicit seed links to the nearest airfield and the nearest seaport that side actually owns — one of each, nearest by distance from the corridor, so the network starts local. Seeds skip the ground test (open water cannot be interdicted with a roadblock) and skip link pruning, but are rebuilt from current ownership every pass: taking a side's port takes the link with it. A side owning neither an airfield nor a seaport falls back to its nearest owned city, so it degrades rather than collapsing to zero supply on top of the vanilla no-airport penalty.

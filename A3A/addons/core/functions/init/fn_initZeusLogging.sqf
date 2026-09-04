@@ -89,6 +89,28 @@ params ["_curatorModules"];
     _x addEventHandler ["CuratorObjectPlaced", {
         params ["_curator", "_entity"];
         ServerInfo_4("Event: CuratorObjectPlaced, Curator: %1, STEAMID64: %2, Object: %3, Object Type: %4",name player,getPlayerUID player,str str _entity,typeOf _entity);
+
+        // CHAOS: a utility item that arrives through the curator has never been
+        // through A3A_fnc_initObject, so it carries none of Antistasi's state -
+        // no A3A_canGarage, no price, and above all none of the scroll actions,
+        // which is why a mission container relocated in Zeus loses its menu and
+        // never gets it back. The curator places a NEW object; the actions were
+        // added to the old one and went with it.
+        //
+        // Guarded to the curator's own machine: this file installs its handlers
+        // on every client for every curator module, and one initObject request
+        // per player would be one Error line per player.
+        if (_curator isEqualTo getAssignedCuratorLogic player
+            && {typeOf _entity in A3A_utilityItemHM}) then {
+            // One frame later, so that an object the mission itself created and
+            // is about to initialise wins the race and is skipped here.
+            [{
+                params ["_entity"];
+                if (isNull _entity) exitWith {};
+                if (!isNil {_entity getVariable "A3A_canGarage"}) exitWith {};
+                [_entity] remoteExecCall ["A3A_fnc_initObject", 2];
+            }, [_entity], 0] call CBA_fnc_waitAndExecute;
+        };
     }];
 /*
     _x addEventHandler ["CuratorObjectSelectionChanged", {

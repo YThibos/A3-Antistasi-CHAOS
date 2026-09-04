@@ -181,15 +181,17 @@ class CfgVehicles
     // Supply warehouse - the Tier 1 site upgrade (A3A_fnc_siteTiers). Its own class
     // for the same reason as the yard above: tier is derived from class name, and
     // Land_Warehouse_03_F occurs as scenery on several terrains. The explicit
-    // editorPreview is what puts a picture on its tile in the RTS placer, which the
-    // parent class does not carry. Untested against the shipped game files: the placer
-    // checks fileExists and falls back to its own placeholder, so a wrong path costs a
-    // thumbnail and nothing else.
+    // editorPreview is what puts a picture on its tile in the RTS placer
+    // (fn_teamLeaderRTSPlacerDialog fileExists-checks it and substitutes its own
+    // "No Vehicle Preview" placeholder when the path is wrong).
+    // Path verified against the shipped game files: Land_Warehouse_03_F is an APEX
+    // asset, so its preview lives in EditorPreviews_F_EXP, not _Enoch - the earlier
+    // guess at _Enoch is exactly why the tile rendered the placeholder.
     class Land_Warehouse_03_F;
     class a3a_warehouse : Land_Warehouse_03_F {
         scope = 2;
         scopeCurator = 2;
         displayName = $STR_A3A_Utility_Items_Name_supplywarehouse;
-        editorPreview = "\A3\EditorPreviews_F_Enoch\Data\CfgVehicles\Land_Warehouse_03_F.jpg";
+        editorPreview = "\A3\EditorPreviews_F_Exp\Data\CfgVehicles\Land_Warehouse_03_F.jpg";
     };
 };

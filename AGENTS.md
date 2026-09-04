@@ -278,3 +278,20 @@ specific version.
   reload MUST stay in the utility-item list - price `-1` if it should not be purchasable.
   The BAR `RessourceDepot` is the worked example: built from the construction catalogue,
   registered at `-1`, and given the shared init by `fn_buildingComplete`.
+- 2026-09-04: **Vanilla config facts can and must be verified locally, not guessed.** Arma 3 is
+  installed on the captain's workstation (`/mnt/c/Program Files (x86)/Steam/steamapps/common/Arma 3`
+  from WSL); `Tools/pboextract/pboextract.py <pbo> <dest> --exts bin` plus
+  `Tools/pboextract/derapify.py <config.bin> [filter]` prints the real values. Two things that
+  earned this note: `Land_Warehouse_03_F`'s `editorPreview` lives in `EditorPreviews_F_Exp`, not
+  `_Enoch` as a comment in `CfgVehicles.hpp` once guessed, and the placer's `fileExists` fallback
+  turns any such guess into a silent placeholder icon.
+- 2026-09-04: **A cargo object's parent chain decides whether it can fall or be slung.**
+  `ThingX` descendants (`Cargo_base_F` -> `Land_Cargo10/20_*`, `Items_base_F` -> the supply
+  pallets, `Machine_base_F`) have a PhysX rigid body and settle on their own; `House_*` /
+  `Building` descendants have `simulation = "house"` - no rigid body, no mass, and no
+  `slingLoadCargoMemoryPoints`. So a building-class object detached in mid-air stays there
+  forever, never appears in the vanilla Sling Load Assistant, and Advanced Sling Loading can
+  attach ropes to it but never lift it. None of that is fixable in script: the ground-settle in
+  `A3A_Logistics_fnc_unload` papers over the first symptom only. If an object has to be slung,
+  pick a `ThingX` class that ships `slingLoadCargoMemoryPoints` - `Land_PowerGenerator_F` is
+  `House_Small_F` and never will be.
