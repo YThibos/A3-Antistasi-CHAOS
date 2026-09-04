@@ -48,6 +48,15 @@ for "_i" from 0 to (_sphereCount - 1) do {
     A3A_boundingCircle pushBack _piece;
 };
 
+// CHAOS: when the box sits inside a rebel-held zone, add a second ring around the
+// MARKER centre - the area A3A_fnc_getMarkerForPos will actually claim a finished
+// building for. The ring above is the placement gate and is centred on the box;
+// the two are different circles whenever the box is not parked dead centre, and
+// only showing one of them left the player to infer the gap. Purely visual: both
+// rules are untouched. Pushed into A3A_boundingCircle so the existing teardown in
+// A3A_fnc_initPlacerDB deletes it with everything else.
+A3A_boundingCircle append ([getPosATL _centerObject] call A3A_fnc_placerClaimRing);
+
 
 private _emptyDisplay = findDisplay 46 createDisplay "A3A_teamLeaderBuilder";
 A3A_building_EHDB set [BUILD_DISPLAY, _emptyDisplay];

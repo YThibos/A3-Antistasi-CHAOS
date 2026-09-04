@@ -265,6 +265,7 @@ class CfgFunctions
             class initPlacerDB {};
             class lockBuilderBox {};
             class placeBuilderObjects {};
+            class placerClaimRing {};
             class processBuildingTimeouts {};
         };
 
