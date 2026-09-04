@@ -159,7 +159,10 @@
         <Original>Container delivered. Use the build action on it to place the warehouse.</Original>
       </Key>
       <Key ID="STR_A3A_Tasks_ECON_SiteUpgrade_done">
-        <Original>Site upgraded. It is now part of our supply network.</Original>
+        <Original>%1 upgraded to Tier %2, and it is on our supply network.</Original>
+      </Key>
+      <Key ID="STR_A3A_Tasks_ECON_SiteUpgrade_doneUnlinked">
+        <Original>%1 upgraded to Tier %2. It is not on our supply network yet - nothing we hold is close enough to run a line to it, or the ground between is held against us. It joins the moment a connected site comes within reach.</Original>
       </Key>
       <Key ID="STR_A3A_Tasks_ECON_SiteUpgrade_failed">
         <Original>The site upgrade was not completed in time.</Original>

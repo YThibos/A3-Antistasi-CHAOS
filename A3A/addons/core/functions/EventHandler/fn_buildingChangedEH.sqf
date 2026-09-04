@@ -1,6 +1,7 @@
 
 #include "..\..\script_component.hpp"
 FIX_LINE_NUMBERS()
+#include "..\..\Includes\siteTiers.hpp"
 
 params ["_oldBuilding", "_newBuilding", "_isRuin"];
 
@@ -47,5 +48,23 @@ if (_isRuin) then {
     // Antenna dead/alive status is handled separately
     if !(_origBuilding in A3A_antennas) then {
         A3A_destroyedBuildings pushBack _origBuilding;
+    };
+
+    // CHAOS: a site's upgrade tier is derived from its garrison record, and
+    // upstream never removes a destroyed building from one - the despawn/spawn
+    // cycle would put the warehouse back intact and the site would stay Tier 1
+    // with nothing standing on it. A3A_fnc_siteTiers reconciles the record
+    // against the world, so all this has to do is run it while the wreck is
+    // still there to be seen. Same shape as the police-station case above:
+    // destruction is bookkeeping, and the bookkeeping happens here.
+    //
+    // Deferred by a frame's worth of time because BuildingChanged can fire
+    // alongside the damage that caused it, and the reconcile only recognises a
+    // structure as lost once `alive` on it is false.
+    if (typeOf _origBuilding in TIER_STRUCTURE_CLASSES) then {
+        [{
+            call A3A_fnc_siteTiers;
+            [true] call A3A_fnc_refreshSupplyGraph;
+        }, [], 1] call CBA_fnc_waitAndExecute;
     };
 };
