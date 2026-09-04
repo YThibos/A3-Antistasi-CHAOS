@@ -58,7 +58,7 @@ private _items = [
 // time as A3A_itemPrice, which fn_lockBuilderBox turns into build money - and
 // because fn_lockBuilderBox deletes a box released with nothing left, the
 // container disposes of itself once the warehouse is paid for.
-_items pushBack ["Land_Cargo10_blue_F", -1, "sitecontainer", "", ["place","save","noclear","build","sitetier"]];
+_items pushBack ["Land_Cargo10_blue_F", -1, "sitecontainer", "", ["place","noclear","build","sitetier"]];
 // The Tier 2 power generator. Registered so that "save" persists it once set
 // down - it IS the upgrade, so losing it on reload would silently downgrade the
 // site. Not buildable and not purchasable: the mission delivers it finished.
@@ -97,7 +97,6 @@ if (A3A_hasBAR) then {
     _items pushBack ["RessourceCrate_Metal",    250, "barcrate_metal",    "", ["place","save","noclear","barempty"]];
     _items pushBack ["RessourceCrate_Sand",     250, "barcrate_sand",     "", ["place","save","noclear","barempty"]];
     _items pushBack ["RessourceCrate_Wood",     250, "barcrate_wood",     "", ["place","save","noclear","barempty"]];
-    _items pushBack ["RessourceDepot",         3000, "bardepot",          "", ["cmmdr","place","save","noclear","barsupply","yardonly"]];
 };
 
 // Apply item name localization

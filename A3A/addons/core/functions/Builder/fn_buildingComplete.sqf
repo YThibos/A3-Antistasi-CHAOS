@@ -46,20 +46,31 @@ if (typeOf _building isEqualTo "a3a_airControlCenter") then {
 
 // Add to garrison data if it's within one
 private _marker = [getPosATL _building] call A3A_fnc_getMarkerForPos;
-if (sidesX getVariable _marker == teamPlayer) then { [_marker, _building] call A3A_fnc_garrisonServer_addVehicle }
-else {
-    // WP5b: If built within the HQ's current build radius, still attribute it to the HQ garrison
-    // so it registers for calcBuildingReveal and calcBuildingCosts regardless of marker size.
-    private _hqRadius = call A3A_fnc_hqBuildRadius;
-    if ((_building distance2D (getMarkerPos "Synd_HQ")) <= _hqRadius) then {
-        ["Synd_HQ", _building] call A3A_fnc_garrisonServer_addVehicle
+if (_marker != "" && { (sidesX getVariable [_marker, sideUnknown]) == teamPlayer }) then {
+    [_marker, _building] call A3A_fnc_garrisonServer_addVehicle;
+} else {
+    // Proximity fallback for site upgrade structures placed near rebel resource or factory sites
+    private _siteCandidates = (resourcesX + factories) select {
+        (sidesX getVariable [_x, sideUnknown]) == teamPlayer &&
+        { (_building distance2D markerPos _x) <= (([_x] call A3A_fnc_garrisonVehicleRadius) max 150) }
+    };
+    if (_siteCandidates isNotEqualTo []) then {
+        _siteCandidates = [_siteCandidates, [], { _building distance2D markerPos _x }, "ASCEND"] call BIS_fnc_sortBy;
+        [_siteCandidates # 0, _building] call A3A_fnc_garrisonServer_addVehicle;
     } else {
-        A3A_buildingsToSave pushBack _building
+        // WP5b: If built within the HQ's current build radius, still attribute it to the HQ garrison
+        // so it registers for calcBuildingReveal and calcBuildingCosts regardless of marker size.
+        private _hqRadius = call A3A_fnc_hqBuildRadius;
+        if ((_building distance2D (getMarkerPos "Synd_HQ")) <= _hqRadius) then {
+            ["Synd_HQ", _building] call A3A_fnc_garrisonServer_addVehicle;
+        } else {
+            A3A_buildingsToSave pushBack _building;
+        };
     };
 };
 
 // Allowing flagpole construction is probably not a good idea due to how markerChange handles flags atm
-if (_className isEqualTo (A3A_faction_reb get "flag")) then {
+if (typeOf _building isEqualTo (A3A_faction_reb get "flag")) then {
     _building setFlagTexture (A3A_faction_reb get "flagTexture");
 };
 
@@ -68,7 +79,7 @@ if (_className isEqualTo (A3A_faction_reb get "flag")) then {
 // rather than waiting for the income tick, so the player sees the site join the
 // network as soon as the build finishes. A3A_fnc_siteTiers derives tiers from the
 // structures present, so nothing needs recording here - the building IS the state.
-if (typeOf _building in ["Land_Warehouse_03_F", "Land_PowerGenerator_F"]) then {
+if (typeOf _building in ["a3a_warehouse", "Land_Warehouse_03_F", "Land_PowerGenerator_F"]) then {
     call A3A_fnc_siteTiers;
     [] call A3A_fnc_refreshSupplyGraph;
 };

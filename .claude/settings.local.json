@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls \"C:/Program Files \\(x86\\)/Steam/steamapps/common/Arma 3\" 2>/dev/null | head; echo \"--- workshop ---\"; ls \"C:/Program Files \\(x86\\)/Steam/steamapps/workshop/content/107410\" 2>/dev/null | head -5; echo \"--- other drives ---\"; ls -d /c/Arma* /d/* /e/* 2>/dev/null | head -20; echo \"--- P: ---\"; ls /p 2>/dev/null | head)",
+      "Bash(py Tools/pboextract/pboextract.py \"C:/Program Files \\(x86\\)/Steam/steamapps/common/Arma 3/!Workshop/@ace/addons/ace_arsenal.pbo\" /tmp/ace_arsenal --exts sqf,hpp,cpp)",
+      "Bash(cd /tmp/ace_arsenal && find . -type f | sort && echo \"=== XEH_PREP ===\" && cat XEH_PREP.hpp 2>/dev/null)"
+    ]
+  }
+}

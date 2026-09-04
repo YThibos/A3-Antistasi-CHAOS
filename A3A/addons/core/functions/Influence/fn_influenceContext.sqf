@@ -106,6 +106,9 @@ private _radii = [_refRange] call A3A_fnc_zoneInfluenceRadii;
 // ---- Collect the zones that hold ground, grouped by side ----------------
 private _controls = missionNamespace getVariable ["controlsX", []];
 private _allZones = markersX + outpostsFIA + _controls;
+_allZones pushBackUnique "NATO_carrier";
+_allZones pushBackUnique "CSAT_carrier";
+
 
 private _sideList  = [];
 private _sideZones = [];

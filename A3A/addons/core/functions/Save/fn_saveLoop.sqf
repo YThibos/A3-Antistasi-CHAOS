@@ -52,6 +52,7 @@ Debug_1("Saving params: %1", _savedParams);
 ["weather",[fogParams,rain]] call A3A_fnc_setStatVariable;
 ["arsenalLimits", A3A_arsenalLimits] call A3A_fnc_setStatVariable;
 ["rebelLoadouts", A3A_rebelLoadouts] call A3A_fnc_setStatVariable;
+["buildingsToSave", A3A_buildingsToSave select { alive _x } apply { [typeOf _x, getPosWorld _x, vectorDir _x, vectorUp _x] }] call A3A_fnc_setStatVariable;
 ["destroyedBuildings", A3A_destroyedBuildings apply { getPosATL _x }] call A3A_fnc_setStatVariable;
 ["aggressionOccupants", [aggressionLevelOccupants, aggressionStackOccupants]] call A3A_fnc_setStatVariable;
 ["aggressionInvaders", [aggressionLevelInvaders, aggressionStackInvaders]] call A3A_fnc_setStatVariable;

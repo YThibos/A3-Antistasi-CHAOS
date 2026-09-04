@@ -177,4 +177,12 @@ class CfgVehicles
         scopeCurator = 2;
         displayName = $STR_A3A_Utility_Items_Name_aircontrolcenter;
     };
+
+    class Land_Warehouse_03_F;
+    class a3a_warehouse : Land_Warehouse_03_F {
+        scope = 2;
+        scopeCurator = 2;
+        displayName = "Warehouse";
+        editorPreview = "\A3\EditorPreviews_F_Exp\Data\CfgVehicles\Land_Warehouse_03_F.jpg";
+    };
 };

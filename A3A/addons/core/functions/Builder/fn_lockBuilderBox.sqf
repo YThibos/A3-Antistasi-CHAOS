@@ -3,7 +3,7 @@ Description:
     Server-side function to take or release ownership of builder box
 
 Environment: Server, unscheduled
-Arguments: 
+Arguments:
     1. <object> Builder box to take control of
     2. <object> Player unit to take control
     3. <bool> True to take, false to release
@@ -29,6 +29,10 @@ if (_take) then {
     } forEach _nearRuins;
 
     private _money = _box getVariable ["A3A_itemPrice", 0];
+    private _flags = (A3A_utilityItemHM getOrDefault [typeOf _box, []]) param [4, []];
+    if ("sitetier" in _flags && _money <= 0) then {
+        _money = 1500;
+    };
     _box setVariable ["A3A_itemPrice", 0, true];
     _box setVariable ["A3A_build_money", _money, true];
     _box setVariable ["A3A_build_owner", _player, true];
@@ -37,7 +41,12 @@ if (_take) then {
     if (isNil "_curOwner" or { _player != _curOwner }) exitWith {
         Error("Attempted to release builder box by player who wasn't controlling it");
     };
-    if (_money <= 0) exitWith { deleteVehicle _box };                   // get rid of the box if it's empty
+    if (_money <= 0) exitWith {
+        if (!isNil {_box getVariable "markerX"}) then {
+            [_box] call A3A_fnc_garrisonServer_remVehicle;
+        };
+        deleteVehicle _box;
+    };                   // get rid of the box if it's empty
 
     _box setVariable ["A3A_itemPrice", _money, true];
     _box setVariable ["A3A_build_owner", nil, true];

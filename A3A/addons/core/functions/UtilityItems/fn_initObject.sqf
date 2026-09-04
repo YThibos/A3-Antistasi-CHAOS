@@ -56,6 +56,13 @@ if ("save" in _flags) then {
     [_object] remoteExecCall ["A3A_fnc_addVehAttachDetachEH", 2];
 };
 
+if (typeOf _object == "RessourceDepot") then {
+    private _cap = missionNamespace getVariable ["A3A_CHAOS_barDepotCap", 3000];
+    private _tenth = floor (_cap / 10);
+    _object setVariable ["BuildAndRessources_depotStocks", [_tenth, _tenth, _tenth, _tenth], true];
+};
+
+
 // Let logistics do its own JIPing for the moment
 // Assumption that the object isn't loaded into anything?
 if ([typeOf _object] call A3A_Logistics_fnc_isLoadable) then {[_object] call A3A_Logistics_fnc_addLoadAction};

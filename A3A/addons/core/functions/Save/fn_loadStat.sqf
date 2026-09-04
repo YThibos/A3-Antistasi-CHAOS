@@ -36,7 +36,7 @@ private _specialVarLoads = [
     "chopForest","weather","killZones","jna_datalist","mrkCSAT","nextTick",
     "bombRuns","wurzelGarrison","aggressionOccupants", "aggressionInvaders", "enemyResources", "HQKnowledge",
     "testingTimerIsActive", "version", "HR_Garage", "A3A_fuelAmountleftArray", "arsenalLimits", "rebelLoadouts",
-    "minorSites", "newGarrison", "radioKeys", "cityData"
+    "minorSites", "newGarrison", "radioKeys", "cityData", "buildingsToSave"
 ];
 
 private _varName = _this select 0;
@@ -62,7 +62,7 @@ if (_varName in _specialVarLoads) then {
     //Keeping these for older saves
     if (_varName == 'prestigeNATO') then {[Occupants, _varValue, 120] call A3A_fnc_addAggression};
     if (_varName == 'prestigeCSAT') then {[Invaders, _varValue, 120] call A3A_fnc_addAggression};
-    if (_varName == 'radioKeys') then 
+    if (_varName == 'radioKeys') then
     {
         occRadioKeys = _varValue#0;
         invRadioKeys = _varValue#1;
@@ -281,6 +281,9 @@ if (_varName in _specialVarLoads) then {
         A3A_minorSitesHM = createHashMap;
         { [_y#0, _y#1, _numToSide get _y#2, _y#3] call A3A_fnc_addMinorSite } forEach _varValue;
         // pair refs get sanity checked in initMinorSites later
+    };
+    if (_varName == "buildingsToSave") then {
+        buildingsToSave = _varValue;
     };
 } else {
     call compile format ["%1 = %2",_varName,_varValue];

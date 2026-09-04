@@ -32,6 +32,26 @@ if (isServer) then {
     ["HR_Garage"] call A3A_fnc_getStatVariable;
     ["A3A_fuelAmountleftArray"] call A3A_fnc_getStatVariable;
 	["destroyedBuildings"] call A3A_fnc_getStatVariable;
+	["buildingsToSave"] call A3A_fnc_getStatVariable;
+	if (isNil "buildingsToSave") then { buildingsToSave = [] };
+
+	{
+		_x params ["_typeVeh", "_posVeh", "_vecDir", "_vecUp"];
+		isNil {
+			private _veh = createVehicle [_typeVeh, _posVeh, [], 0, "CAN_COLLIDE"];
+			_veh setPosWorld _posVeh;
+			_veh setVectorDirAndUp [_vecDir, _vecUp];
+			_veh setVariable ["A3A_building", true, true];
+			if (_typeVeh isEqualTo "a3a_constructionYard") then {
+				_veh setVariable ["A3A_isConstructionYard", true, true];
+			};
+			if (_typeVeh isEqualTo "a3a_airControlCenter") then {
+				_veh setVariable ["A3A_isAirControlCenter", true, true];
+			};
+			A3A_buildingsToSave pushBack _veh;
+		};
+	} forEach buildingsToSave;
+
 	["enemyResources"] call A3A_fnc_getStatVariable;
 	["HQKnowledge"] call A3A_fnc_getStatVariable;
 //	["idlebases"] call A3A_fnc_getStatVariable;			// Might bring this back at some point
@@ -212,6 +232,9 @@ if (isServer) then {
 			[A3A_barSaveData] call A3A_fnc_barLoad;
 		};
 	};
+
+	call A3A_fnc_siteTiers;
+	[] call A3A_fnc_refreshSupplyGraph;
 
     Info("Persistent Load Completed.");
 

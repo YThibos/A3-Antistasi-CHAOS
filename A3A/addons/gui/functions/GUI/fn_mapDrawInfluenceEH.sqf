@@ -73,7 +73,7 @@ Dependencies:
 #define CLAIM_ALPHA  0.45
 #define LINE_BUDGET  24000
 #define SUPPLY_ALPHA 0.9
-#define SUPPLY_DASH  600
+#define SUPPLY_DASH  225
 
 params ["_map"];
 
@@ -184,44 +184,70 @@ if (missionNamespace getVariable ["A3A_CHAOS_influenceShowClaimAreas", true]) th
 // and they are drawn here as literal lines between markers. So the border tells
 // the player WHY territory connects, and these lines tell them WHAT is actually
 // connected - which is the pair of jobs one coarse contour cannot do alone.
-//
-// Player-faction edges only: the server does not publish enemy connectivity,
-// because handing every client a live map of the enemy supply network with no
-// scouting is a design decision nobody has made yet.
 if (missionNamespace getVariable ["A3A_CHAOS_supplyShowEdges", true]) then {
-    private _edges = missionNamespace getVariable ["A3A_supplyEdges", []];
-    if (_edges isNotEqualTo []) then {
-        private _supplyCol = (missionNamespace getVariable ["A3A_influencePlayerColour", [0,0.5,0]]) + [SUPPLY_ALPHA];
+    private _allEdges = missionNamespace getVariable ["A3A_supplyEdges", []];
+    private _showEnemy = missionNamespace getVariable ["A3A_CHAOS_supplyShowEnemyEdges", false];
+    private _edgeThickness = missionNamespace getVariable ["A3A_CHAOS_influenceThickness", 4];
+    
+    // Fallback if the user has older settings or variables missing thickness
+    if !(_edgeThickness isEqualType 0 && {_edgeThickness >= 1}) then { _edgeThickness = 1 };
+    
+    // Perpendicular offsets for thickness (same as borders)
+    private _edgeOffsets = [];
+    private _edgeHalf = (_edgeThickness - 1) / 2;
+    for "_t" from 0 to (_edgeThickness - 1) do { _edgeOffsets pushBack ((_t - _edgeHalf) * _metresPerPixel) };
+
+    if (_allEdges isNotEqualTo []) then {
         {
-            _x params ["_mrkA", "_mrkB"];
-            private _a = getMarkerPos _mrkA;
-            private _b = getMarkerPos _mrkB;
-            private _ax = _a # 0;
-            private _ay = _a # 1;
-            private _bx = _b # 0;
-            private _by = _b # 1;
-            if ((_ax min _bx) <= _viewMaxX
-                && {(_ax max _bx) >= _viewMinX}
-                && {(_ay min _by) <= _viewMaxY}
-                && {(_ay max _by) >= _viewMinY}) then {
-                // Dashed, so a supply line never reads as a border segment. The
-                // dash length is in world metres rather than pixels, which keeps
-                // the count bounded when the player zooms out: a long edge on a
-                // zoomed-out map is a handful of segments, not hundreds.
-                private _len = sqrt (((_bx - _ax) ^ 2) + ((_by - _ay) ^ 2));
-                private _steps = (ceil (_len / SUPPLY_DASH)) max 1 min 40;
-                private _ux = (_bx - _ax) / _steps;
-                private _uy = (_by - _ay) / _steps;
-                for "_i" from 0 to (_steps - 1) do {
-                    private _x0 = _ax + _ux * _i;
-                    private _y0 = _ay + _uy * _i;
-                    _map drawLine [
-                        [_x0, _y0],
-                        [_x0 + _ux * 0.6, _y0 + _uy * 0.6],
-                        _supplyCol
-                    ];
+            _x params ["_cSide", "_cRgb", "_cEdges"];
+            if (_cSide isNotEqualTo teamPlayer && !_showEnemy) then { continue };
+            
+            // Allow the client's player colour to override the server's fallback for teamPlayer
+            private _rgbToUse = if (_cSide isEqualTo teamPlayer) then { missionNamespace getVariable ["A3A_influencePlayerColour", _cRgb] } else { _cRgb };
+            private _supplyCol = _rgbToUse + [SUPPLY_ALPHA];
+            
+            {
+                _x params ["_mrkA", "_mrkB"];
+                private _a = getMarkerPos _mrkA;
+                private _b = getMarkerPos _mrkB;
+                private _ax = _a # 0;
+                private _ay = _a # 1;
+                private _bx = _b # 0;
+                private _by = _b # 1;
+                if ((_ax min _bx) <= _viewMaxX
+                    && {(_ax max _bx) >= _viewMinX}
+                    && {(_ay min _by) <= _viewMaxY}
+                    && {(_ay max _by) >= _viewMinY}) then {
+                    // Dashed, so a supply line never reads as a border segment.
+                    private _dx = _bx - _ax;
+                    private _dy = _by - _ay;
+                    private _len = sqrt ((_dx ^ 2) + (_dy ^ 2));
+                    private _steps = (ceil (_len / SUPPLY_DASH)) max 1 min 40;
+                    private _ux = _dx / _steps;
+                    private _uy = _dy / _steps;
+                    
+                    // For thickness, compute cross normal
+                    private _normX = -(_dy / _len);
+                    private _normY = (_dx / _len);
+                    
+                    for "_i" from 0 to (_steps - 1) do {
+                        private _x0 = _ax + _ux * _i;
+                        private _y0 = _ay + _uy * _i;
+                        private _x1 = _x0 + _ux * 0.8;
+                        private _y1 = _y0 + _uy * 0.8;
+                        
+                        {
+                            private _ox = _normX * _x;
+                            private _oy = _normY * _x;
+                            _map drawLine [
+                                [_x0 + _ox, _y0 + _oy],
+                                [_x1 + _ox, _y1 + _oy],
+                                _supplyCol
+                            ];
+                        } forEach _edgeOffsets;
+                    };
                 };
-            };
-        } forEach _edges;
+            } forEach _cEdges;
+        } forEach _allEdges;
     };
 };

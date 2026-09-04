@@ -434,6 +434,9 @@ A3A_garrisonOps = [];
     };
 };
 
+// Override supply line threshold based on map topology
+[] call A3A_fnc_computeMaxSupplyEdge;
+
 // Zone of influence map overlay (CHAOS): server half publishes the refresh signal
 [] call A3A_fnc_initMapOverlay;
 

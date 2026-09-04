@@ -57,7 +57,7 @@ if (!isServer) exitWith {
     missionNamespace getVariable ["A3A_siteTiers", createHashMap]
 };
 
-#define TIER_WAREHOUSE_CLASS "Land_Warehouse_03_F"
+#define TIER_WAREHOUSE_CLASSES ["a3a_warehouse", "Land_Warehouse_03_F"]
 #define TIER_GENERATOR_CLASS "Land_PowerGenerator_F"
 
 private _tiers = createHashMap;
@@ -67,16 +67,9 @@ private _sites = (missionNamespace getVariable ["resourcesX", []])
 
 // One scan of each class for the whole map, rather than a nearObjects call per
 // site: there are only ever a handful of these, and the site count is not.
-private _warehouses = (allMissionObjects TIER_WAREHOUSE_CLASS) select { alive _x };
+private _warehouses = ((allMissionObjects "a3a_warehouse") + (allMissionObjects "Land_Warehouse_03_F")) select { alive _x };
 private _generators = (allMissionObjects TIER_GENERATOR_CLASS) select { alive _x };
 
-if (_warehouses isEqualTo []) exitWith {
-    // Nothing built anywhere: every site is Tier 0. Publish the empty map so
-    // consumers do not have to distinguish "no tiers" from "not computed yet".
-    A3A_siteTiers = _tiers;
-    publicVariable "A3A_siteTiers";
-    _tiers
-};
 
 {
     private _marker = _x;
@@ -86,8 +79,6 @@ if (_warehouses isEqualTo []) exitWith {
     private _pos = getMarkerPos _marker;
     if (_pos isEqualTo [0,0,0]) then { continue };
 
-    // The marker's own extent, from the same helper the garrison attribution
-    // uses, so "on the site" means the same thing here as it does there.
     // The marker's own extent, floored at 150 m. The floor matters: the upgrade
     // container places its warehouse within 50 m of itself, so a container set
     // down near the edge of a small marker can legitimately put the building
@@ -95,11 +86,41 @@ if (_warehouses isEqualTo []) exitWith {
     // player staring at a finished warehouse that the mission refuses to accept.
     private _radius = ([_marker] call A3A_fnc_garrisonVehicleRadius) max 150;
 
-    private _hasWarehouse = -1 != _warehouses findIf { (_x distance2D _pos) <= _radius };
+    private _garrison = A3A_garrison getOrDefault [_marker, []];
+    private _garrisonObjects = if (_garrison isNotEqualTo []) then {
+        (_garrison getOrDefault ["buildings", []]) + (_garrison getOrDefault ["vehicles", []])
+    } else { [] };
+
+    private _hasWarehouse = false;
+    if (_garrisonObjects findIf { (_x#0) in TIER_WAREHOUSE_CLASSES } >= 0) then {
+        _hasWarehouse = true;
+    } else {
+        if (-1 != _warehouses findIf { (_x distance2D _pos) <= _radius }) then {
+            _hasWarehouse = true;
+        } else {
+            _hasWarehouse = -1 != A3A_buildingsToSave findIf {
+                alive _x && { (_x distance2D _pos) <= _radius } && { (typeOf _x) in TIER_WAREHOUSE_CLASSES }
+            };
+        };
+    };
+
     if (!_hasWarehouse) then { continue };
 
-    private _hasGenerator = -1 != _generators findIf { (_x distance2D _pos) <= _radius };
+    private _hasGenerator = false;
+    if (_garrisonObjects findIf { (_x#0) == TIER_GENERATOR_CLASS } >= 0) then {
+        _hasGenerator = true;
+    } else {
+        if (-1 != _generators findIf { (_x distance2D _pos) <= _radius }) then {
+            _hasGenerator = true;
+        } else {
+            _hasGenerator = -1 != A3A_buildingsToSave findIf {
+                alive _x && { (_x distance2D _pos) <= _radius } && { (typeOf _x) == TIER_GENERATOR_CLASS }
+            };
+        };
+    };
+
     _tiers set [_marker, [1, 2] select _hasGenerator];
+
 
 } forEach _sites;
 

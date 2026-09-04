@@ -58,7 +58,14 @@ if ("_civ" in _marker) exitWith
 };
 
 private _side = sidesX getVariable _marker;
-if (_side == teamPlayer) exitWith {};           // nothing to do here at the moment. TODO: Could use to set threat for unknown vehicles on init?
+if (_side == teamPlayer) exitWith {
+    // Purge temporary site upgrade / builder boxes if they were saved into rebel garrison vehicles
+    private _vehicles = _garrison get "vehicles";
+    private _filtered = _vehicles select { !((_x#0) in ["Land_Cargo10_blue_F", "CargoNet_01_box_F", "Land_Pallet_MilBoxes_F"]) };
+    if (count _filtered != count _vehicles) then {
+        _garrison set ["vehicles", _filtered];
+    };
+};           // nothing to do here at the moment. TODO: Could use to set threat for unknown vehicles on init?
 
 // Refund any excess troops
 private _troops = _garrison get "troops";

@@ -242,6 +242,7 @@ class CfgFunctions
         // context these build the supply graph from, so the two cannot drift.
         class Influence {
             file = QPATHTOFOLDER(functions\Influence);
+            class computeMaxSupplyEdge {};
             class computeSupplyGraph {};
             class influenceAt {};
             class influenceContext {};

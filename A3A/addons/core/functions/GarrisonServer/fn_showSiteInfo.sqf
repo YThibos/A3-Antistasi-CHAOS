@@ -64,11 +64,15 @@ private _text = call {
     };
     if (_marker in resourcesX) exitWith {
         if (_marker in destroyedSites) exitWith { format ["%1 Resource<br/>DESTROYED", _nameFaction] };
-        format [localize "STR_A3A_fn_init_cityinfo_reso_1", _nameFaction];
+        private _tiers = call A3A_fnc_siteTiers;
+        private _tier = _tiers getOrDefault [_marker, 0];
+        format [localize "STR_A3A_fn_init_cityinfo_reso_1" + "<br/>Upgrade Tier: %2", _nameFaction, _tier];
     };
     if (_marker in factories) exitWith {
         if (_marker in destroyedSites) exitWith { format ["%1 Factory<br/>DESTROYED", _nameFaction] };
-        format [localize "STR_A3A_fn_init_cityinfo_fact_1", _nameFaction];
+        private _tiers = call A3A_fnc_siteTiers;
+        private _tier = _tiers getOrDefault [_marker, 0];
+        format [localize "STR_A3A_fn_init_cityinfo_fact_1" + "<br/>Upgrade Tier: %2", _nameFaction, _tier];
     };
     if (_marker in outpostsFIA) exitWith {
         format ["%1 %2", _nameFaction, ["Watchpost", "Roadblock"] select isOnRoad markerPos _marker];

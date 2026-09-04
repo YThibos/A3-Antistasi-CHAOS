@@ -23,29 +23,38 @@ A3A_buildingPriceHM = createHashMapFromArray A3A_buildableObjects; // you can fe
 // Uses vanilla structures available on all maps.
 // Only adds entries not already present in the map's own buildObjects[].
 
-// Construction Yard — one per campaign, must be built inside the HQ radius, and is
-// buildable from any standard construction kit. "constructionyard" ability is handled specially
-// in fn_teamLeaderRTSPlacerDialog: disabled when a yard already exists or player is outside HQ.
+// Construction Yard, Air Control Center, Resource Depot, and MCK structures
 if !("a3a_constructionYard" in A3A_buildingPriceHM) then {
-    A3A_buildableObjects pushBack ["a3a_constructionYard", 5000, "constructionyard"];
-    A3A_buildingPriceHM set ["a3a_constructionYard", ["a3a_constructionYard", 5000, "constructionyard"]];
+    A3A_buildableObjects pushBack ["a3a_constructionYard", 5000, "basetier"];
+    A3A_buildingPriceHM set ["a3a_constructionYard", 5000];
 };
 
-// Air Control Center — one per campaign, must be built inside the HQ radius, requires Construction Yard,
-// and is buildable from standard construction kits. "aircontrolcenter" ability is handled specially
-// in fn_teamLeaderRTSPlacerDialog: disabled when ACC exists, Yard missing, or outside HQ.
 if !("a3a_airControlCenter" in A3A_buildingPriceHM) then {
-    A3A_buildableObjects pushBack ["a3a_airControlCenter", 8000, "aircontrolcenter"];
-    A3A_buildingPriceHM set ["a3a_airControlCenter", ["a3a_airControlCenter", 8000, "aircontrolcenter"]];
+    A3A_buildableObjects pushBack ["a3a_airControlCenter", 8000, "basetier"];
+    A3A_buildingPriceHM set ["a3a_airControlCenter", 8000];
+};
+
+if !("RessourceDepot" in A3A_buildingPriceHM) then {
+    A3A_buildableObjects pushBack ["RessourceDepot", 3000, "basetier"];
+    A3A_buildingPriceHM set ["RessourceDepot", 3000];
 };
 
 {
-    if !(_x#0 in A3A_buildingPriceHM) then {
+    private _class = _x#0;
+    if (_class in A3A_buildingPriceHM) then {
+        // Force override to make it basetier/airtier only and remove from generic BB
+        private _idx = A3A_buildableObjects findIf { _x#0 == _class };
+        if (_idx >= 0) then {
+            A3A_buildableObjects set [_idx, _x];
+        };
+        A3A_buildingPriceHM set [_class, _x#1];
+    } else {
         A3A_buildableObjects pushBack _x;
-        A3A_buildingPriceHM set [_x#0, _x];
+        A3A_buildingPriceHM set [_class, _x#1];
     };
 } forEach [
     // Military base tier (Military Construction Kit)
+    ["Land_PillboxBunker_01_hex_F",  1500, "basetier"],
     ["Land_Cargo_Tower_V1_F",        3000, "basetier"],
     ["Land_Cargo_Patrol_V1_F",       1200, "basetier"],
     ["Land_Cargo_House_V1_F",         900, "basetier"],
@@ -66,7 +75,7 @@ if !("a3a_airControlCenter" in A3A_buildingPriceHM) then {
     // Only the warehouse is BUILT. The Tier 2 power generator is delivered as a
     // finished object and simply set down where the player wants it, so it never
     // enters a build catalogue.
-    ["Land_Warehouse_03_F",          1500, "sitetier"],
+    ["a3a_warehouse",          1500, "sitetier"],
 
     // Airport tier (Airport Construction Kit)
     ["Land_Hangar_F",                 5000, "airtier"],

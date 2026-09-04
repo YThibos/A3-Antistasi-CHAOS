@@ -62,12 +62,14 @@ switch (_mode) do
 		if ("sitetier" in _boxFlags) then {
 			_buildableObjects = _buildableObjects select { (_x param [2, ""]) isEqualTo "sitetier" };
 		} else {
-			_buildableObjects = _buildableObjects select { (_x param [2, ""]) isNotEqualTo "sitetier" };
-			if !("basetier" in _boxFlags) then {
-				_buildableObjects = _buildableObjects select { (_x param [2, ""]) isNotEqualTo "basetier" };
-			};
-			if !("airtier" in _boxFlags) then {
-				_buildableObjects = _buildableObjects select { (_x param [2, ""]) isNotEqualTo "airtier" };
+			if ("basetier" in _boxFlags) then {
+				_buildableObjects = _buildableObjects select { (_x param [2, ""]) isEqualTo "basetier" };
+			} else {
+				if ("airtier" in _boxFlags) then {
+					_buildableObjects = _buildableObjects select { (_x param [2, ""]) isEqualTo "airtier" };
+				} else {
+					_buildableObjects = _buildableObjects select { (_x param [2, ""]) isNotEqualTo "sitetier" && (_x param [2, ""]) isNotEqualTo "basetier" && (_x param [2, ""]) isNotEqualTo "airtier" };
+				};
 			};
 		};
 
@@ -86,8 +88,24 @@ switch (_mode) do
 
 			private _configClass = configFile >> "CfgVehicles" >> _className;
 			private _displayName = getText (_configClass >> "displayName");
+			if (_className isEqualTo "a3a_airControlCenter") then { _displayName = "AIR CC" };
+			if (_className isEqualTo "a3a_constructionYard") then { _displayName = "CONST YARD" };
+			if (_className isEqualTo "RessourceDepot") then { _displayName = "BAR DEPOT" };
+			if (_className isEqualTo "a3a_warehouse") then { _displayName = "WAREHOUSE" };
 			private _editorPreview = getText (_configClass >> "editorPreview");
+			if (_className isEqualTo "a3a_warehouse" && { _editorPreview isEqualTo "" || !fileExists _editorPreview }) then {
+				_editorPreview = getText (configFile >> "CfgVehicles" >> "Land_Warehouse_03_F" >> "editorPreview");
+				if (_editorPreview isEqualTo "" || !fileExists _editorPreview) then {
+					_editorPreview = "\A3\EditorPreviews_F_Exp\Data\CfgVehicles\Land_Warehouse_03_F.jpg";
+				};
+				if (!fileExists _editorPreview) then {
+					_editorPreview = "\A3\EditorPreviews_F\Data\CfgVehicles\Land_Warehouse_03_F.jpg";
+				};
+			};
 			private _model = getText (_configClass >> "model");
+			if (_className isEqualTo "a3a_warehouse" && _model isEqualTo "") then {
+				_model = getText (configFile >> "CfgVehicles" >> "Land_Warehouse_03_F" >> "model");
+			};
 
 			private _hasVehiclePreview = fileExists _editorPreview;
 
@@ -122,7 +140,7 @@ switch (_mode) do
 				_button ctrlSetTooltip localize "STR_antistasi_teamleader_placer_cannotBuildHelipad";
 			};
 			// Construction Yard gate — one per campaign, must be inside HQ build area
-			if (_ability isEqualTo "constructionyard") then {
+			if (_className isEqualTo "a3a_constructionYard") then {
 				private _hqPos = getMarkerPos "Synd_HQ";
 				private _hqRadius = call A3A_fnc_hqBuildRadius;
 				private _playerAtHQ = (player distance2D _hqPos) <= _hqRadius;
@@ -137,7 +155,7 @@ switch (_mode) do
 				};
 			};
 			// Air Control Center gate — one per campaign, requires Construction Yard, must be inside HQ build area
-			if (_ability isEqualTo "aircontrolcenter") then {
+			if (_className isEqualTo "a3a_airControlCenter") then {
 				private _hqPos = getMarkerPos "Synd_HQ";
 				private _hqRadius = call A3A_fnc_hqBuildRadius;
 				private _playerAtHQ = (player distance2D _hqPos) <= _hqRadius;
@@ -157,6 +175,25 @@ switch (_mode) do
 				};
 			};
 
+
+			// Any MCK item except Construction Yard requires Construction Yard
+			if ((_x param [2, ""]) isEqualTo "basetier" && _className isNotEqualTo "a3a_constructionYard") then {
+				if !(call A3A_fnc_hasConstructionYard) then {
+					_button ctrlEnable false;
+					_button ctrlSetTooltip localize "STR_A3A_aircontrolcenter_need_yard";
+				};
+			};
+
+			if (_className isEqualTo "RessourceDepot") then {
+				private _hqPos = getMarkerPos "Synd_HQ";
+				private _hqRadius = call A3A_fnc_hqBuildRadius;
+				private _playerAtHQ = (player distance2D _hqPos) <= _hqRadius;
+				if (!_playerAtHQ) then {
+					_button ctrlEnable false;
+					_button ctrlSetTooltip format [localize "STR_A3A_aircontrolcenter_not_at_hq", round _hqRadius];
+				};
+			};
+
 			_button ctrlAddEventHandler ["ButtonDown", {
 				params ["_control"];
 
@@ -171,7 +208,9 @@ switch (_mode) do
 
 				private _price = _control getVariable ["price", 0];
 				private _supply = A3A_building_EHDB # AVAILABLE_MONEY;
-				if (_price > _supply) exitWith {};			// TODO: Should disable buttons based on available money?
+				if (_price > _supply) exitWith {
+					[localize "STR_antistasi_teamleader_placer_title", localize "STR_A3A_Utility_Items_Insufficient_Funds"] call A3A_fnc_customHint;
+				};
 
 				A3A_building_EHDB set [BUILD_OBJECT_SELECTED_STRING, _className];		// why does this exist?
 				A3A_building_EHDB set [OBJECT_PRICE, _price];

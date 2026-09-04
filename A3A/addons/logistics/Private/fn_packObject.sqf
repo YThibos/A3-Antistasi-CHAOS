@@ -24,7 +24,11 @@ if(!(isNull attachedTo _object)) exitWith {};
 
 //search the object will be the package
 private _packageClassName = getText (configFile >> "A3A" >> "A3A_Logistics_Packable" >> typeOf _object >> "packObject"); 
-if (_packageClassName isEqualTo "") then {_packageClassName = "CargoNet_01_box_F"};
+if (_packageClassName isEqualTo "") then {
+    // FIXME: We should create our own type of CargoNet class type which is able to store the information of what was packed in the first place.
+    // If we then garage such a box, we can deduce the information and put it properly inside the Antistasi Garage.
+    _packageClassName = "CargoNet_01_box_F";
+};
 
 private _objectPrice = _object getVariable ['A3A_itemPrice', 0];
 //create package

@@ -42,42 +42,32 @@ Dependencies:
 private _tiers = call A3A_fnc_siteTiers;
 private _hqPos = markerPos "Synd_HQ";
 
-private _weighted = [];
+private _candidates = [];
 {
     private _marker = _x;
     if (_marker in destroyedSites) then { continue };
     if !((sidesX getVariable [_marker, sideUnknown]) isEqualTo teamPlayer) then { continue };
 
-    // NO spawner guard. An earlier version skipped markers whose spawner state was
-    // not 0, believing 0 meant "quiet". It is the opposite: fn_distance defines
-    // ENABLED 0 / DISABLED 1, and fn_initZones seeds every marker at 2, so 0 means
-    // the marker is currently SPAWNED IN around a player. The guard therefore
-    // rejected every site that was not loaded at that moment, which in practice is
-    // nearly all of them, and Petros always answered "nothing to develop".
-    //
-    // There is no guard here now because there is nothing to guard against: the
-    // site is already ours, and whether it happens to be rendered says nothing
-    // about whether we can be tasked to upgrade it. The container spawns at HQ
-    // either way.
-
     private _tier = _tiers getOrDefault [_marker, 0];
-    if (_tier >= 2) then { continue };                  // fully upgraded
+    if (_tier >= 2) then { continue };
 
-    // Tier 0 first: spread warehouses before adding generators.
-    private _tierWeight = [10, 3] select _tier;
-    // A factory upgrade multiplies the whole cash sum; a resource upgrade only
-    // adds to it, so a factory is the better mission when both are available.
-    private _kindWeight = [1, 1.5] select (_marker in factories);
-
-    // Mild distance preference. Never a cutoff - see the header. Bottoms out at
-    // 0.35 rather than 0, so the far side of the map stays reachable content.
+    private _isFactory = _marker in factories;
     private _dist = (markerPos _marker) distance2D _hqPos;
-    private _distWeight = linearConversion [1000, 6000, _dist, 1, 0.35, true];
 
-    _weighted append [[_marker, _tier + 1], _tierWeight * _kindWeight * _distWeight];
+    _candidates pushBack [_marker, _tier, _isFactory, _dist];
 
 } forEach (resourcesX + factories);
 
-if (_weighted isEqualTo []) exitWith { false };
+if (_candidates isEqualTo []) exitWith { false };
 
-[1, [selectRandomWeighted _weighted]]
+// Sort by: tier ASC (0 is highest priority), kind (Resources [false] before Factories [true]), distance ASC (closest first).
+_candidates = [_candidates, [], {
+    _x params ["", "_tier", "_isFactory", "_dist"];
+    // _tier * 1000000 ensures tier 0 < tier 1. 
+    // Factory adds 100000, so resources are lower value (higher priority).
+    // Dist adds the remainder.
+    (_tier * 1000000) + ([0, 100000] select _isFactory) + _dist
+}, "ASCEND"] call BIS_fnc_sortBy;
+
+private _best = _candidates select 0;
+[1, [_best # 0, (_best # 1) + 1]]

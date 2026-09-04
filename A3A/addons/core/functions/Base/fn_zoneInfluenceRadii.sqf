@@ -116,4 +116,8 @@ private _citySlope = (_cityMultMax - _cityMultMin) / (_citySizeMax - _citySizeMi
 // number for a different job (see A3A_fnc_hqBuildRadius) and is not used here.
 [["Synd_HQ"], 1.25] call _fnc_set;
 
+// Carriers: 1.5km fixed equivalent, so approx 1.875 multiplier.
+[["NATO_carrier", "CSAT_carrier"], 1500 / _refRange] call _fnc_set;
+
+
 _radii

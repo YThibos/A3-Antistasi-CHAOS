@@ -1,5 +1,6 @@
 params ["_marker"];
 private _garrison = A3A_garrison get _marker;
+if (isNil "_garrison") exitWith { 0 };
 private _buildings = _garrison getOrDefault ["buildings", []];
 private _total = 0;
 {

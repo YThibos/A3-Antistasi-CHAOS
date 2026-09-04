@@ -25,7 +25,7 @@ private _invalidate = { A3A_influenceSignature = nil };
     "A3A_CHAOS_influenceOverlayEnabled",
     "CHECKBOX",
     [localize "STR_A3A_CHAOS_mapOverlay_enable", localize "STR_A3A_CHAOS_mapOverlay_enable_tt"],
-    ["Antistasi CHAOS", "Map Overlay"],
+    ["[CHAOS] Antistasi", "Map Overlay"],
     true,    // default: enabled
     0,
     {},
@@ -36,7 +36,7 @@ private _invalidate = { A3A_influenceSignature = nil };
     "A3A_CHAOS_influenceShowClaimAreas",
     "CHECKBOX",
     [localize "STR_A3A_CHAOS_mapOverlay_claims", localize "STR_A3A_CHAOS_mapOverlay_claims_tt"],
-    ["Antistasi CHAOS", "Map Overlay"],
+    ["[CHAOS] Antistasi", "Map Overlay"],
     true,    // default: enabled
     0,
     {},
@@ -52,7 +52,7 @@ private _invalidate = { A3A_influenceSignature = nil };
     "A3A_CHAOS_influenceRange",
     "SLIDER",
     [localize "STR_A3A_CHAOS_mapOverlay_range", localize "STR_A3A_CHAOS_mapOverlay_range_tt"],
-    ["Antistasi CHAOS", "Map Overlay"],
+    ["[CHAOS] Antistasi", "Map Overlay"],
     [100, 1400, 800, 0],    // min, max, default, 0 decimal places
     // GLOBAL, not per-client. This number defines the shape of the world: the
     // server derives supply connectivity from it in A3A_fnc_computeSupplyGraph,
@@ -76,7 +76,7 @@ private _invalidate = { A3A_influenceSignature = nil };
     "A3A_CHAOS_influenceReach",
     "SLIDER",
     [localize "STR_A3A_CHAOS_mapOverlay_reach", localize "STR_A3A_CHAOS_mapOverlay_reach_tt"],
-    ["Antistasi CHAOS", "Map Overlay"],
+    ["[CHAOS] Antistasi", "Map Overlay"],
     [0, 3.0, 2.0, 1],       // min, max, default, 1 decimal place
     // GLOBAL for the same reason as the range above: it multiplies every
     // radius, so it moves both the drawn border and the supply corridors.
@@ -89,7 +89,7 @@ private _invalidate = { A3A_influenceSignature = nil };
     "A3A_CHAOS_influenceThickness",
     "SLIDER",
     [localize "STR_A3A_CHAOS_mapOverlay_thickness", localize "STR_A3A_CHAOS_mapOverlay_thickness_tt"],
-    ["Antistasi CHAOS", "Map Overlay"],
+    ["[CHAOS] Antistasi", "Map Overlay"],
     [1, 8, 4, 0],           // min, max, default, 0 decimal places
     0,
     {},                     // drawn per frame, no recompute needed
@@ -100,7 +100,7 @@ private _invalidate = { A3A_influenceSignature = nil };
     "A3A_CHAOS_influenceFill",
     "CHECKBOX",
     [localize "STR_A3A_CHAOS_mapOverlay_fill", localize "STR_A3A_CHAOS_mapOverlay_fill_tt"],
-    ["Antistasi CHAOS", "Map Overlay"],
+    ["[CHAOS] Antistasi", "Map Overlay"],
     false,   // default: outline only
     0,
     _invalidate,            // the fill triangles are only built when this is on
@@ -111,7 +111,7 @@ private _invalidate = { A3A_influenceSignature = nil };
     "A3A_CHAOS_influenceFillOpacity",
     "SLIDER",
     [localize "STR_A3A_CHAOS_mapOverlay_fillOpacity", localize "STR_A3A_CHAOS_mapOverlay_fillOpacity_tt"],
-    ["Antistasi CHAOS", "Map Overlay"],
+    ["[CHAOS] Antistasi", "Map Overlay"],
     [0.02, 0.8, 0.25, 2],   // min, max, default, 2 decimal places
     0,
     {},                     // read per frame, no recompute needed
@@ -129,7 +129,7 @@ private _invalidate = { A3A_influenceSignature = nil };
         "Note: ACE Fortify's own 'Time-Cost Coefficient' setting has no effect on either system - " +
         "Antistasi build boxes use vanilla hold-actions and BAR only checks ACE_Fortify as an item prerequisite."
     ],
-    ["Antistasi CHAOS", "Construction"],
+    ["[CHAOS] Antistasi", "Construction"],
     [0.1, 5.0, 1.0, 1],   // min, max, default, decimal places
     2,                     // isGlobal: server setting, broadcast to all clients
     {},
@@ -144,7 +144,7 @@ private _invalidate = { A3A_influenceSignature = nil };
         "Use ACE Arsenal",
         "When enabled, uses ACE Arsenal instead of Jeroen's Arsenal with full stock enforcement and guest membership limits."
     ],
-    ["Antistasi CHAOS", "Arsenal"],
+    ["[CHAOS] Antistasi", "Arsenal"],
     false,                 // default: false (Legacy JNA)
     2,                     // isGlobal: server setting synced to clients
     {},
@@ -158,7 +158,7 @@ private _invalidate = { A3A_influenceSignature = nil };
         "Enforce Guest Limits in ACE Arsenal",
         "Apply non-member guest item restrictions to ACE Arsenal item availability."
     ],
-    ["Antistasi CHAOS", "Arsenal"],
+    ["[CHAOS] Antistasi", "Arsenal"],
     true,                  // default: true
     2,
     {},
@@ -172,7 +172,7 @@ private _invalidate = { A3A_influenceSignature = nil };
         "Allow Default Loadouts in ACE Arsenal",
         "Allow loading default faction/role loadouts in ACE Arsenal."
     ],
-    ["Antistasi CHAOS", "Arsenal"],
+    ["[CHAOS] Antistasi", "Arsenal"],
     true,                  // default: true
     2,
     {},
@@ -189,7 +189,7 @@ private _invalidate = { A3A_influenceSignature = nil };
     "A3A_CHAOS_supplyShowEdges",
     "CHECKBOX",
     [localize "STR_A3A_CHAOS_supply_showEdges", localize "STR_A3A_CHAOS_supply_showEdges_tt"],
-    ["Antistasi CHAOS", "Map Overlay"],
+    ["[CHAOS] Antistasi", "Map Overlay"],
     true,
     0,
     {},
@@ -212,7 +212,7 @@ private _invalidate = { A3A_influenceSignature = nil };
     "A3A_CHAOS_supplyRateFloor",
     "SLIDER",
     [localize "STR_A3A_CHAOS_supply_rateFloor", localize "STR_A3A_CHAOS_supply_rateFloor_tt"],
-    ["Antistasi CHAOS", "Supply"],
+    ["[CHAOS] Antistasi", "Supply"],
     [0, 1, 0.75, 2],
     2,                      // server forces setting on clients
     {},
@@ -225,7 +225,7 @@ private _invalidate = { A3A_influenceSignature = nil };
     "A3A_CHAOS_barFactoryYield",
     "SLIDER",
     [localize "STR_A3A_CHAOS_supply_factoryYield", localize "STR_A3A_CHAOS_supply_factoryYield_tt"],
-    ["Antistasi CHAOS", "Supply"],
+    ["[CHAOS] Antistasi", "Supply"],
     [0, 1000, 200, 0],
     2,                      // server forces setting on clients
     {},
@@ -238,7 +238,7 @@ private _invalidate = { A3A_influenceSignature = nil };
     "A3A_CHAOS_barDepotCap",
     "SLIDER",
     [localize "STR_A3A_CHAOS_supply_depotCap", localize "STR_A3A_CHAOS_supply_depotCap_tt"],
-    ["Antistasi CHAOS", "Supply"],
+    ["[CHAOS] Antistasi", "Supply"],
     [500, 20000, 3000, 0],
     2,                      // server forces setting on clients
     {},
@@ -254,7 +254,7 @@ private _invalidate = { A3A_influenceSignature = nil };
     "A3A_CHAOS_supplyMaxEdge",
     "SLIDER",
     [localize "STR_A3A_CHAOS_supply_maxEdge", localize "STR_A3A_CHAOS_supply_maxEdge_tt"],
-    ["Antistasi CHAOS", "Supply"],
+    ["[CHAOS] Antistasi", "Supply"],
     [500, 5000, 1500, 0],
     2,                      // server forces setting on clients
     {},
@@ -269,7 +269,7 @@ private _invalidate = { A3A_influenceSignature = nil };
     "A3A_CHAOS_supplyMaxLinks",
     "SLIDER",
     [localize "STR_A3A_CHAOS_supply_maxLinks", localize "STR_A3A_CHAOS_supply_maxLinks_tt"],
-    ["Antistasi CHAOS", "Supply"],
+    ["[CHAOS] Antistasi", "Supply"],
     [1, 10, 3, 0],
     2,                      // server forces setting on clients
     {},

@@ -48,6 +48,7 @@ Public: No
 
 private _fnc_createCargo = {
     params ["_pos", "_targetTier"];
+    if (_targetTier isEqualType "") then { _targetTier = parseNumber _targetTier; };
     private _class = ["Land_Cargo10_blue_F", "Land_PowerGenerator_F"] select (_targetTier >= 2);
     private _obj = _class createVehicle _pos;
     _obj enableRopeAttach true;
@@ -60,8 +61,9 @@ private _fnc_createCargo = {
     // AFTER initObject, which sets A3A_itemPrice from the catalogue (-1, since
     // neither object is purchasable). fn_lockBuilderBox turns this into the
     // build budget, so it has to be the warehouse's exact price.
-    if (_targetTier < 2) then {
+    if (typeOf _obj == "Land_Cargo10_blue_F") then {
         _obj setVariable ["A3A_itemPrice", UPGRADE_WAREHOUSE_PRICE, true];
+        _obj setVariable ["A3A_build_money", UPGRADE_WAREHOUSE_PRICE, true];
     };
 
     [_obj, teamPlayer] call A3A_fnc_AIVEHinit;
@@ -89,6 +91,7 @@ private _task = createHashMap;
 
 if (isNil "_checkpoint") then {
     _params params ["_marker", "_targetTier"];
+    if (_targetTier isEqualType "") then { _targetTier = parseNumber _targetTier; };
 
     private _hqPos = getMarkerPos respawnTeamPlayer;
     private _spawnPos = _hqPos findEmptyPosition [1, 75, "C_Van_01_box_F"];
@@ -106,6 +109,7 @@ if (isNil "_checkpoint") then {
 }
 else {
     _params params ["_marker", "_targetTier", "_cargoPos", "_remTime"];
+    if (_targetTier isEqualType "") then { _targetTier = parseNumber _targetTier; };
 
     _task set ["_marker", _marker];
     _task set ["_targetTier", _targetTier];
@@ -121,7 +125,7 @@ A3A_activeTasks pushBack "ECON";
 
 _task set ["checkpoint", "c_started"];
 _task set ["state", "s_deliver"];
-_task set ["interval", 5];
+_task set ["interval", 2];
 _task set ["_hintTitle", localize "STR_A3A_Tasks_ECON_SiteUpgrade_title"];
 
 _task set ["c_started", {
@@ -138,8 +142,7 @@ _task set ["_fnc_deliveredCondition", {
     private _marker = _this get "_marker";
     if (isNull _cargo || {!alive _cargo}) exitWith { false };
     if (!isNull attachedTo _cargo || {!isNull ropeAttachedTo _cargo}) exitWith { false };
-    private _radius = [_marker] call A3A_fnc_garrisonVehicleRadius;
-    if (_radius <= 0) then { _radius = 100 };
+    private _radius = ([_marker] call A3A_fnc_garrisonVehicleRadius) max 75;
     (_cargo distance2D markerPos _marker) <= _radius
 }];
 
@@ -174,6 +177,7 @@ _task set ["s_build", {
     // fn_lockBuilderBox deletes the moment its budget is spent. So the tier is
     // the only thing worth testing, and fn_buildingComplete has already
     // recomputed it by the time the structure exists.
+    call A3A_fnc_siteTiers;
     private _tierData = [_marker] call A3A_fnc_siteTier;
     if ((_tierData # 0) >= 1) exitWith { _this set ["state", "s_succeeded"]; false };
 
@@ -212,15 +216,21 @@ _task set ["s_cleanup", {
     // generator is the upgrade, so neither is cleaned up here. Only an
     // undelivered container left lying at HQ on a failure is worth removing.
     private _cargo = _this get "_cargo";
-    if (!isNull _cargo && {(_this get "_targetTier") < 2} && {!(_this call (_this get "_fnc_deliveredCondition"))}) then {
-        deleteVehicle _cargo;
+    if (!isNull _cargo) then {
+        if (!isNil {_cargo getVariable "markerX"}) then {
+            [_cargo] call A3A_fnc_garrisonServer_remVehicle;
+        };
+        if ((_this get "_targetTier") < 2 && {!(_this call (_this get "_fnc_deliveredCondition"))}) then {
+            deleteVehicle _cargo;
+        };
     };
 
-    [1200, _this get "_taskId"] spawn {
+    A3A_activeTasks deleteAt (A3A_activeTasks find "ECON");
+    publicVariable "A3A_activeTasks";
+
+    [10, _this get "_taskId"] spawn {
         params ["_delay", "_taskId"];
         sleep _delay;
-        A3A_activeTasks deleteAt (A3A_activeTasks find "ECON");
-        publicVariable "A3A_activeTasks";
         [_taskId, true, true] call BIS_fnc_deleteTask;
     };
 
