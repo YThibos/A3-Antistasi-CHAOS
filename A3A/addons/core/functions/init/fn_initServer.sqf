@@ -434,6 +434,11 @@ A3A_garrisonOps = [];
     };
 };
 
+// Supply network distance cap derived from this map's own marker geometry. Once,
+// at init: it is a property of the terrain, not of who owns what. The CBA slider
+// overrides it when set above zero.
+[] call A3A_fnc_computeMaxSupplyEdge;
+
 // Zone of influence map overlay (CHAOS): server half publishes the refresh signal
 [] call A3A_fnc_initMapOverlay;
 

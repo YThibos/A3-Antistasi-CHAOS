@@ -82,38 +82,88 @@ that persistent rather than duplicating it.
 **[DONE — decided]** Keep both gates (pool multiplier *and* fulfilment gating) and
 soften the floor: `A3A_CHAOS_supplyRateFloor` default raised 0.5 → 0.75.
 
-**[OPEN]** Maximum edge length. Deferred deliberately — retest with real markers on a
-real map before tuning. The concern is that one long airfield-to-airfield link keeps an
-isolated pocket alive and makes severing feel arbitrary. Lever is either a hard metre
-cap on top of the radius-derived one, or retuning `influenceReach`.
+**[DONE]** Maximum edge length. Resolved by deriving the cap from the map's own
+marker geometry rather than tuning a constant — see §1.4b.
 
-### 1.3 Graph membership
+### 1.3 Graph membership **[DONE]**
 
-**[TODO]** Outposts and airfields IN as nodes, alongside resources and factories.
-Roadblocks and watchposts OUT.
+Two tiers, settled:
 
-Rationale: roadblocks and watchposts are the player's influence-shaping tools, placed
-specifically to sever corridors. If they were also nodes they would repair the network
-they exist to cut — one object doing two contradictory jobs. They keep projecting
-influence either way; this is about graph topology, not the field.
+- **Hubs (backbone, can relay):** `Synd_HQ`, cities, tier-1+ resources and
+  factories, **airfields, seaports**, and for the enemy sides their off-map
+  support corridor. Airfields and seaports were promoted out of the spoke set on
+  2026-09-04, on every side, player included: an airfield already gates
+  airstrikes and a seaport is a port of debarkation, not a leaf — both are where
+  supply *enters* a theatre. Only resources and factories are tier-gated; ports
+  and airfields are hubs unconditionally. There are a handful of each per map and
+  `A3A_CHAOS_supplyMaxLinks` bounds degree structurally, so this does not re-mesh
+  the graph and needed no new limiter. This is also the groundwork for the
+  vehicle-import idea, which only means anything at a port genuinely connected.
+- **Spokes (leaves, never relay):** outposts, and only outposts. They are the
+  numerous class and the reason the original flat model meshed.
+- **Not nodes at all:** roadblocks and watchposts (`outpostsFIA`, `controlsX`).
+  They are the player's influence-shaping tools, placed specifically to sever
+  corridors; making them nodes would let them repair the network they exist to
+  cut. They keep projecting influence either way — that is how they sever.
 
-Current state: `A3A_fnc_influenceContext` collects `markersX + outpostsFIA + controlsX`,
-so every zone is currently both an influence contributor and a graph node. The split is
-small and local.
+**Corridor test relaxed (2026-09-04).** It used to require that *every* interior
+sample be owned by the side. It now requires only that **no** interior sample be
+dominated by a side hostile to it: neutral and unowned ground no longer cuts a
+line. Militarily correct — you do not need to hold every metre of a road, you
+need it not to be interdicted — and mechanically necessary, because a
+map-spanning occupier's backbone died anywhere it crossed empty wilderness, which
+is most of Altis. Roadblocks and watchposts still sever exactly as before: they
+sever by projecting *hostile* influence across the corridor. `A3A_fnc_influenceAt`
+returns `-1` both for ground no side reaches and for an exact tie, and both are
+treated as neutral.
 
-### 1.4 Enemy supply rooted at map edges
+### 1.4 Enemy supply rooted at map edges **[DONE]**
 
-**[IDEA]** Root Occupant and Invader networks at map-border entry points rather than at
-an HQ-equivalent. Models reinforcement flowing in from off-map, which is what an
-occupying army is, and makes a lateral thrust to a border or coast meaningful — cutting
-across the corridor severs everything behind it.
+Occupant and Invader networks are rooted at `NATO_carrier` / `CSAT_carrier`, the
+off-map support corridors, rather than at an HQ-equivalent. `A3A_fnc_influenceContext`
+gives each corridor its side and a flat radius (`A3A_CHAOS_supplyCarrierRadius`).
 
-Air and sea entry needs no special case: player watchposts and roadblocks enforcing
-influence are typically manned with AA and statics, so overflying a cut already carries
-real risk.
+The corridor is offshore, so it was structurally isolated on three counts: too far
+from any marker for the distance cap, open water in between that no ground test
+could pass, and its nearest markers were spokes that could not relay. Fixed
+2026-09-04:
 
-Current state: enemy roots are "best owned airfield, else best outpost, else largest
-holding", re-picked every rebuild.
+- **Seed links.** Each enemy corridor gets an explicit link to **the nearest
+  airfield and the nearest seaport that side actually owns**, one of each, chosen
+  by distance *from the corridor* so the network starts local rather than reaching
+  across the map. Seeds skip the ground test — you cannot interdict open water
+  with a roadblock — and skip link pruning, but they are not unconditional: they
+  are rebuilt from current ownership every pass, so **capturing the port severs
+  the region behind it.**
+- **Fallback.** A side owning neither an airfield nor a seaport seeds to its
+  nearest owned city instead, so it degrades into a weakened faction rather than
+  collapsing to zero supply. That matters because unsupplied status stacks with
+  the vanilla no-airport penalty in `fn_aggressionUpdateLoop`. Which seed was
+  chosen is logged at Debug level.
+- Ports and airfields being hubs (§1.3) is what lets a seed branch at all.
+
+Air and sea entry needs no special case: player watchposts and roadblocks
+enforcing influence are typically manned with AA and statics, so overflying a cut
+already carries real risk.
+
+### 1.4b Maximum edge length **[DONE]**
+
+Resolved the `[OPEN]` from §1.2. `A3A_fnc_computeMaxSupplyEdge` derives the cap
+from the map's own geometry once at init: a minimum spanning tree over every
+hub-class marker (cities, resources, factories, airfields, seaports), **ownership
+ignored**, so the number is a stable property of the terrain and does not flap as
+territory changes hands.
+
+Deliberately **not** the largest MST edge — that is precisely the threshold at
+which the map barely connects as one chain with no alternate routes, so any single
+cut fragments everything. It takes the **90th-percentile** MST edge (one remote
+outlier marker cannot set the number for the whole map) and multiplies by **1.3**
+for redundancy. Both constants are named at the top of the function.
+
+`A3A_CHAOS_supplyMaxEdge` is now an explicit **override where 0 means auto**, and
+0 is the default. The derived value lives in its own variable
+(`A3A_supplyMaxEdgeAuto`); init never writes the CBA variable, which would have
+silently discarded a server owner's setting and fought CBA's broadcast.
 
 ### 1.5 Deliberately not decided
 

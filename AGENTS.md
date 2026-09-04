@@ -257,6 +257,15 @@ specific version.
 - 2026-09-04: **`fn_buildingComplete` never declared `_className`.** It took `_target` and
   `_finished` only, so the flagpole test threw on every build. Inherited from upstream; if a
   merge reintroduces it, the fix is `typeOf _building`.
+- 2026-09-04: **The supply network's design record lives in `RESEARCH.md` §1**, and it is
+  authoritative - hub/spoke membership, the corridor test's semantics, the enemy corridor seeds
+  and the per-map edge cap are all specified there before they are code. Two facts that bite:
+  `A3A_fnc_influenceAt` returns owner index `-1` for BOTH unreached ground and an exact tie, so
+  any consumer must treat -1 as neutral explicitly rather than assuming an index; and
+  `A3A_CHAOS_supplyMaxEdge` is a `isGlobal 2` CBA slider where **0 means auto** - never write a
+  registered CBA setting's variable from init, compute into a separate variable
+  (`A3A_supplyMaxEdgeAuto`) and let the consumer choose.
+
 - 2026-08-20: **`Tools/StreetArtist`** is a standalone navGrid-generation mission tool (separate
   Arma 3 mission, not part of the mod). Its `findDisplay 12 displayCtrl 51` usage is inside an
   `EachFrame` EH that already guards `!visibleMap`, making it useless as a general reference for

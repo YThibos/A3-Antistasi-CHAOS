@@ -11,13 +11,26 @@ Maintainer: Antistasi CHAOS
     everything. The structure is now explicitly two-tier, which is both far
     sparser and easier to reason about.
 
-      HUBS      Synd_HQ, resources, factories, cities - plus, for the enemy
-                sides, their off-map support corridor. These form the BACKBONE:
-                a sparse hub-to-hub network, distance-capped and link-limited.
+      HUBS      Synd_HQ, resources, factories, cities, airfields, seaports -
+                plus, for the enemy sides, their off-map support corridor. These
+                form the BACKBONE: a sparse hub-to-hub network, distance-capped
+                and link-limited.
 
-      SPOKES    Outposts, airfields, seaports. Never part of the backbone. A
-                spoke is connected when it sits within hub range of a hub that
-                is itself connected, and it hangs off that hub by a single line.
+                Airfields and seaports are hubs on every side, the player
+                included. An airfield already gates airstrikes and a seaport is
+                a port of debarkation, not a leaf: both are the points at which
+                supply ENTERS a theatre, which is the definition of a hub here.
+                It is also the groundwork for vehicle import, which only means
+                anything at a port genuinely wired into the network. There are
+                only a handful of each per map and the per-hub link cap bounds
+                degree structurally, so promoting them does not re-mesh the
+                graph.
+
+      SPOKES    Outposts, and only outposts. They are the numerous class - the
+                reason the original flat model meshed - and they are leaves by
+                design. A spoke is connected when it sits within hub range of a
+                hub that is itself connected, and it hangs off that hub by a
+                single line. A spoke never relays.
 
       NOT NODES Roadblocks and watchposts (outpostsFIA, controlsX). Never, under
                 any setting. They are the player's influence-shaping tools,
@@ -28,7 +41,21 @@ Maintainer: Antistasi CHAOS
 
     Player resources and factories additionally need Tier 1 (A3A_fnc_siteTiers)
     before they count as hubs at all. Enemy sites have no tiers and are always
-    hubs. Cities are hubs unconditionally on every side.
+    hubs. Cities, airfields and seaports are hubs unconditionally on every side -
+    only resources and factories are tier-gated.
+
+    ---- The enemy corridors have to be seeded -------------------------------
+    An off-map support corridor sits offshore, kilometres from the nearest
+    marker, with open water in between. It therefore fails the distance cap AND
+    the ground test, and would be a permanently isolated root. Each enemy side
+    is given explicit SEED links instead: one to its nearest owned airfield and
+    one to its nearest owned seaport, chosen by distance from the corridor so
+    they stay local. Seeds skip the ground test - you cannot interdict open
+    water with a roadblock - but they are not unconditional: they exist only
+    while that side still owns that port or airfield, so capturing one severs
+    the region behind it. A side owning neither degrades to its nearest owned
+    city rather than collapsing to zero supply, which matters because unsupplied
+    status stacks with the vanilla no-airport penalty in fn_aggressionUpdateLoop.
 
     ---- Why the backbone is capped twice ----------------------------------
     The candidate test asks whether two zones' outer cones could overlap, which
@@ -74,7 +101,16 @@ _ctx params ["_sideList", "_sideZones", "_consts"];
 _consts params ["", "", "", "", "_reachMult"];
 
 // ---- Settings -----------------------------------------------------------
-private _maxEdge = missionNamespace getVariable ["A3A_CHAOS_supplyMaxEdge", 1500];
+// The slider is an explicit override: above zero it wins outright, at zero (the
+// default) the per-map value A3A_fnc_computeMaxSupplyEdge derived at init is
+// used. Writing the slider's own variable from init would silently override the
+// captain's setting and fight CBA's broadcast, so the derived value lives in its
+// own variable and the choice is made here.
+private _maxEdge = missionNamespace getVariable ["A3A_CHAOS_supplyMaxEdge", 0];
+if !(_maxEdge isEqualType 0 && {_maxEdge > 0}) then {
+    _maxEdge = missionNamespace getVariable ["A3A_supplyMaxEdgeAuto", 0];
+};
+// Neither set: the map was too small to measure, or init has not run yet.
 if !(_maxEdge isEqualType 0 && {_maxEdge > 0}) then { _maxEdge = 1500 };
 
 private _maxLinks = missionNamespace getVariable ["A3A_CHAOS_supplyMaxLinks", 3];
@@ -99,15 +135,28 @@ private _airports  = missionNamespace getVariable ["airportsX", []];
 private _seaports  = missionNamespace getVariable ["seaports", []];
 
 private _tierGated = _resources + _factories;
-private _spokeMarkers = _outposts + _airports + _seaports;
+private _spokeMarkers = _outposts;
+private _portMarkers = _airports + _seaports;
 private _carriers = ["NATO_carrier", "CSAT_carrier"];
 
-// Shared corridor test. Returns true when every interior sample along the
-// segment is owned by _sideIdx. Endpoints are deliberately not sampled: they are
-// zone centres, trivially owned, and testing them would mask a cut right at the
-// shoulder of a zone.
+// Shared corridor test. Returns true when NO interior sample along the segment is
+// dominated by a side hostile to this one. Endpoints are deliberately not
+// sampled: they are zone centres, trivially owned, and testing them would mask a
+// cut right at the shoulder of a zone.
+//
+// This used to demand that every sample be OWNED by the side, which is the wrong
+// model twice over. Militarily you do not need to hold every metre of a road,
+// you need it not to be interdicted; mechanically, a map-spanning occupier's
+// backbone died the moment it crossed empty wilderness, which is most of Altis.
+// Roadblocks and watchposts sever exactly as before, because they sever by
+// projecting HOSTILE influence across the corridor, and that still fails here.
+//
+// A3A_fnc_influenceAt returns -1 for ground no side reaches and for an exact tie
+// between two sides. Both are neutral, not hostile, so both pass - which is why
+// this tests membership in an explicit hostile-index list rather than comparing
+// against the side's own index.
 private _fnc_corridorOk = {
-    params ["_ax", "_ay", "_bx", "_by", "_dist", "_sideIdx"];
+    params ["_ax", "_ay", "_bx", "_by", "_dist", "_hostileIdxs"];
     private _samples = (round (_dist / _sampleStep)) max _samplesMin min _samplesMax;
     private _ok = true;
     for "_s" from 1 to _samples do {
@@ -115,10 +164,17 @@ private _fnc_corridorOk = {
         private _sx = _ax + (_bx - _ax) * _t;
         private _sy = _ay + (_by - _ay) * _t;
         private _owner = ([_ctx, [_sx, _sy]] call A3A_fnc_influenceAt) # 0;
-        if (_owner != _sideIdx) exitWith { _ok = false };
+        if (_owner in _hostileIdxs) exitWith { _ok = false };
     };
     _ok
 };
+
+// The three Antistasi factions are mutually hostile by construction, so hostility
+// is "a different one of the three". Anything else that ends up in _sideList -
+// civilians, say - is neutral ground and does not cut a line.
+private _fightingSides = [teamPlayer];
+if !(isNil "Occupants") then { _fightingSides pushBackUnique Occupants };
+if !(isNil "Invaders")  then { _fightingSides pushBackUnique Invaders };
 
 private _ratios = createHashMap;
 private _allEdges = [];
@@ -130,6 +186,11 @@ private _playerConnected = [];
     private _zones = _sideZones select _sideIdx;
     private _isPlayer = _side isEqualTo teamPlayer;
 
+    private _hostileIdxs = [];
+    {
+        if (!(_x isEqualTo _side) && {_x in _fightingSides}) then { _hostileIdxs pushBack _forEachIndex };
+    } forEach _sideList;
+
     // ---- Split this side's zones into hubs and spokes -------------------
     private _hubs = [];
     private _spokes = [];
@@ -139,6 +200,7 @@ private _playerConnected = [];
 
         private _isHub = (_mrk isEqualTo "Synd_HQ")
                       || {_mrk in _cities}
+                      || {_mrk in _portMarkers}
                       || {_mrk in _carriers}
                       || {_mrk in _tierGated};
 
@@ -156,6 +218,61 @@ private _playerConnected = [];
         continue;
     };
 
+    // ---- Enemy corridor seed links --------------------------------------
+    // The corridor is offshore and would otherwise be an isolated root: too far
+    // from any marker for the distance cap, with open water in between that no
+    // ground test can pass. It is seeded to the nearest airfield and the nearest
+    // seaport this side actually owns - one of each, nearest by distance from the
+    // corridor, so the network starts local instead of reaching across the map.
+    // If the side owns neither, it degrades to its nearest owned city.
+    //
+    // Seeds are index pairs into _hubs, exempt from the ground test and from the
+    // link pruning, but never unconditional: they are rebuilt from CURRENT
+    // ownership on every pass, so taking the port takes the link with it.
+    private _seedEdges = [];
+    if (!_isPlayer) then {
+        private _carrierIdx = _hubs findIf { (_x # 3) in _carriers };
+        if (_carrierIdx >= 0) then {
+            (_hubs select _carrierIdx) params ["_cx", "_cy"];
+
+            // Nearest hub of each class, by distance from the corridor.
+            private _fnc_nearestOf = {
+                params ["_classMarkers"];
+                private _bestIdx = -1;
+                private _bestDist = 1e11;
+                {
+                    if (_forEachIndex != _carrierIdx && {(_x # 3) in _classMarkers}) then {
+                        private _d = sqrt ((((_x # 0) - _cx) ^ 2) + (((_x # 1) - _cy) ^ 2));
+                        if (_d < _bestDist) then { _bestDist = _d; _bestIdx = _forEachIndex };
+                    };
+                } forEach _hubs;
+                [_bestIdx, _bestDist]
+            };
+
+            ([_airports] call _fnc_nearestOf) params ["_airIdx", "_airDist"];
+            ([_seaports] call _fnc_nearestOf) params ["_seaIdx", "_seaDist"];
+
+            if (_airIdx >= 0) then {
+                _seedEdges pushBack [_carrierIdx, _airIdx, _airDist];
+                Debug_3("computeSupplyGraph: side %1 corridor seeded to airfield %2 at %3 m", _side, (_hubs select _airIdx) # 3, round _airDist);
+            };
+            if (_seaIdx >= 0) then {
+                _seedEdges pushBack [_carrierIdx, _seaIdx, _seaDist];
+                Debug_3("computeSupplyGraph: side %1 corridor seeded to seaport %2 at %3 m", _side, (_hubs select _seaIdx) # 3, round _seaDist);
+            };
+
+            if (_seedEdges isEqualTo []) then {
+                ([_cities] call _fnc_nearestOf) params ["_cityIdx", "_cityDist"];
+                if (_cityIdx >= 0) then {
+                    _seedEdges pushBack [_carrierIdx, _cityIdx, _cityDist];
+                    Debug_3("computeSupplyGraph: side %1 holds no port or airfield - corridor seeded to city %2 at %3 m", _side, (_hubs select _cityIdx) # 3, round _cityDist);
+                } else {
+                    Debug_1("computeSupplyGraph: side %1 has nothing to seed its corridor to", _side);
+                };
+            };
+        };
+    };
+
     // ---- Backbone candidates --------------------------------------------
     private _cands = [];
     private _hubCount = count _hubs;
@@ -167,7 +284,18 @@ private _playerConnected = [];
             private _dy = _by - _ay;
             private _d2 = _dx * _dx + _dy * _dy;
             private _lim = ((_ar + _br) * _reachMult) min _maxEdge;
-            if (_d2 <= _lim * _lim) then { _cands pushBack [_a, _b, sqrt _d2] };
+            if (_d2 <= _lim * _lim) then {
+                // Never generate a candidate that a seed already covers, or the
+                // pair would be emitted twice.
+                private _dupe = _seedEdges findIf {
+                    private _u = _x # 0;
+                    private _v = _x # 1;
+                    ((_u == _a) && {_v == _b}) || {(_u == _b) && {_v == _a}}
+                };
+                if (_dupe < 0) then {
+                    _cands pushBack [_a, _b, sqrt _d2];
+                };
+            };
         };
     };
 
@@ -177,7 +305,7 @@ private _playerConnected = [];
         _x params ["_a", "_b", "_dist"];
         (_hubs select _a) params ["_ax", "_ay"];
         (_hubs select _b) params ["_bx", "_by"];
-        if ([_ax, _ay, _bx, _by, _dist, _sideIdx] call _fnc_corridorOk) then {
+        if ([_ax, _ay, _bx, _by, _dist, _hostileIdxs] call _fnc_corridorOk) then {
             _survivors pushBack [_a, _b, _dist];
         };
     } forEach _cands;
@@ -214,6 +342,13 @@ private _playerConnected = [];
             };
         };
     } forEach _incident;
+
+    // Seeds join the survivor list only now, already kept: they must not be
+    // eligible for pruning, or a busy port could drop the one link that feeds it.
+    {
+        _survivors pushBack _x;
+        _keep pushBack true;
+    } forEach _seedEdges;
 
     private _adj = [];
     { _adj pushBack [] } forEach _hubs;
@@ -293,7 +428,7 @@ private _playerConnected = [];
 
         if (_bestIdx >= 0) then {
             (_hubs select _bestIdx) params ["_hx", "_hy"];
-            if ([_sx, _sy, _hx, _hy, _bestDist, _sideIdx] call _fnc_corridorOk) then {
+            if ([_sx, _sy, _hx, _hy, _bestDist, _hostileIdxs] call _fnc_corridorOk) then {
                 _connected pushBack _sMrk;
                 _allEdges pushBack [_sMrk, (_hubs select _bestIdx) # 3, _side, true];
             };
@@ -305,7 +440,11 @@ private _playerConnected = [];
 
     if (_isPlayer) then { _playerConnected = _connected };
 
-    Debug_4("computeSupplyGraph: side %1 - %2 hubs, %3 spokes, %4 connected", _side, count _hubs, count _spokes, count _connected);
+    // Hub composition is logged as well as the total: promoting airfields and
+    // seaports is the change most likely to surprise on an unfamiliar map, and
+    // "how many hubs did that actually produce" is the number to sanity-check.
+    private _portHubs = count (_hubs select { (_x # 3) in _portMarkers });
+    Debug_5("computeSupplyGraph: side %1 - %2 hubs (%3 ports/airfields), %4 spokes, %5 connected", _side, count _hubs, _portHubs, count _spokes, count _connected);
 
 } forEach _sideZones;
 
