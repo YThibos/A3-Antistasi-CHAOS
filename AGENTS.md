@@ -220,10 +220,20 @@ specific version.
 - 2026-09-02: **Derive state from the world before you store it.** CHAOS site tiers were
   designed as a saved number per marker and shipped as a derivation instead: the tier IS
   which structures stand on the site (`A3A_fnc_siteTiers`). That removed the save/load work
-  entirely, made "destroy it and the tier drops" free, and dodged a real trap - a building
-  restored from a save does NOT carry its custom `setVariable` data back, so a
-  variable-based marker would have wiped every tier on campaign reload. Class plus
-  proximity survives anything that can restore the building at all.
+  entirely and dodged a real trap - a building restored from a save does NOT carry its
+  custom `setVariable` data back, so a variable-based marker would have wiped every tier on
+  campaign reload. Amended 2026-09-04: "destroy it and the tier drops" was NOT free, because
+  the derivation reads the garrison RECORD and upstream never removes a destroyed building
+  from one. Deriving from a record means you inherit every gap in that record's own
+  bookkeeping - here, destruction. `fn_siteTiers` now reconciles before it derives.
+- 2026-09-04: **Destruction bookkeeping in this repo goes through the `BuildingChanged`
+  mission event handler** (installed in `fn_initServer`, handled by `fn_buildingChangedEH`),
+  which is how police stations and antennas already work. Two facts to reuse: Arma leaves
+  the destroyed original in place with `damage 1` and adds a separate `Ruins` object beside
+  it, so `nearestObject [pos, class]` still finds the original and `alive` is the test; and
+  `A3A_destroyedBuildings` is useless for garrison buildings, because `fn_saveLoop` stores it
+  as positions and `fn_loadStat` resolves them with `nearestObjects` during load, long before
+  any garrison has spawned.
 - 2026-09-02: **`fn_runTask`'s stage/constructor framework is commented out.** Lines 1-104
   of `A3A/addons/tasks/Core/fn_runTask.sqf` are one big block comment; the live driver is
   the state-machine loop below it (`state` / `checkpoint` / `interval` keys on a task
