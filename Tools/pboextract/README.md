@@ -79,7 +79,26 @@ $pbo = "C:\Program Files (x86)\Steam\steamapps\common\Arma 3\!Workshop\@BuildAnd
 py Tools/pboextract/pboextract.py $pbo build/bar_extracted --exts sqf,hpp,cpp -v
 ```
 
+## Companion: `derapify.py` — reading binarised configs
+
+`pboextract.py` gets you the files; `derapify.py` reads a binarised
+`config.bin` (any `\0raP` file) so you can check a **vanilla** class's real
+values instead of guessing at them.
+
+```bash
+ARMA="/mnt/c/Program Files (x86)/Steam/steamapps/common/Arma 3"
+python3 Tools/pboextract/pboextract.py "$ARMA/Addons/structures_f_ind.pbo" out --exts bin
+python3 Tools/pboextract/derapify.py out/WindPowerPlant/config.bin PowerGenerator_F
+```
+
+It prints one `path | name = value` line per entry, plus a synthetic
+`>>parent` line per class, and takes an optional case-insensitive filter.
+That parent chain is usually the answer: it is what tells you whether a class
+is a PhysX `ThingX` or a `House_*` static, which decides whether the object can
+fall, be slung, or be pushed.
+
 ## History
 
 - 2026-08-19: Created, replacing the ad-hoc `build/extract_bar.py` and `build/extract_bar2.py`.
+- 2026-09-04: Added `derapify.py`.
 

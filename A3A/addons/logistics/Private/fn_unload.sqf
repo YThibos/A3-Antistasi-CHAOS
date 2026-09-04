@@ -119,6 +119,25 @@ if !(_cargo isEqualTo objNull) then {//cargo not deleted
     if (isNull _cargo || isNull _vehicle) exitWith {};//vehicle or cargo deleted
     detach _cargo;
 
+    // CHAOS: settle building-class cargo on the terrain.
+    //
+    // The slide above walks the attachment offset along the vehicle's Y axis, so
+    // detach happens at bed height, behind the truck. A ThingX cargo (every
+    // container, pallet and crate the logistics system was written for) has a
+    // PhysX body and simply falls the last half metre - which is why the ordinary
+    // haul flow looks right. A Building/House class has simulation "house": no
+    // rigid body, nothing for gravity to act on, so it hangs in the air exactly
+    // where detach left it and stays there for the rest of the campaign.
+    //
+    // Only the classes the engine will never settle for us are touched; moving a
+    // PhysX object here would turn a drop into a teleport and break the flow that
+    // currently works.
+    if (_cargo isKindOf "Building") then {
+        private _pos = getPosATL _cargo;
+        _cargo setPosATL [_pos#0, _pos#1, 0];
+        _cargo setVectorUp surfaceNormal (getPosATL _cargo);
+    };
+
     [_cargo] call A3A_Logistics_fnc_toggleAceActions;
     [_vehicle, _cargo, true, _instant] call A3A_Logistics_fnc_addOrRemoveObjectMass;
     _cargo lockDriver false;
