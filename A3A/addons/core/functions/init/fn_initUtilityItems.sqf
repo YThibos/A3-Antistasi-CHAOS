@@ -58,7 +58,11 @@ private _items = [
 // time as A3A_itemPrice, which fn_lockBuilderBox turns into build money - and
 // because fn_lockBuilderBox deletes a box released with nothing left, the
 // container disposes of itself once the warehouse is paid for.
-_items pushBack ["Land_Cargo10_blue_F", -1, "sitecontainer", "", ["place","save","noclear","build","sitetier"]];
+// NOT "save": the container is mission scaffolding, not an upgrade. The task's
+// own checkpoint records its position and respawns it on load (see
+// A3A_Tasks_fnc_ECON_SiteUpgrade), so persisting it as well would put two
+// containers at the site after a campaign reload.
+_items pushBack ["Land_Cargo10_blue_F", -1, "sitecontainer", "", ["place","noclear","build","sitetier"]];
 // The Tier 2 power generator. Registered so that "save" persists it once set
 // down - it IS the upgrade, so losing it on reload would silently downgrade the
 // site. Not buildable and not purchasable: the mission delivers it finished.

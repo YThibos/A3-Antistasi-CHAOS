@@ -37,7 +37,10 @@ if (_take) then {
     if (isNil "_curOwner" or { _player != _curOwner }) exitWith {
         Error("Attempted to release builder box by player who wasn't controlling it");
     };
-    if (_money <= 0) exitWith { deleteVehicle _box };                   // get rid of the box if it's empty
+    // Get rid of the box if it's empty. Through remVehicle rather than a bare
+    // deleteVehicle so a box that happens to be in a garrison leaves no stale
+    // record behind; remVehicle just deletes it when it is not in one.
+    if (_money <= 0) exitWith { [_box, true] call A3A_fnc_garrisonServer_remVehicle };
 
     _box setVariable ["A3A_itemPrice", _money, true];
     _box setVariable ["A3A_build_owner", nil, true];

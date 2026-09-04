@@ -4,6 +4,22 @@ Newest entries at the top. One line per change when possible.
 
 ---
 
+## 2026-09-04 (tier persistence, mission cleanup, QoL)
+
+- **Fix: a built site upgrade was invisible to everything that read it.** `fn_buildingComplete` threw twice on every completed construction — it compared `sidesX getVariable ""` (which is `nil`) to a side whenever `fn_getMarkerForPos` found no enclosing marker, and it tested an undeclared `_className` for the flagpole case. Both aborted the function before the tier recompute at its end ever ran. Fixed, and site structures placed just outside a small resource/factory outline now claim the nearest rebel-held site within `max(markerExtent, 150 m)`.
+- **Fix: site tiers are derived from the garrison record, not from a world scan.** `fn_siteTiers` scanned `allMissionObjects`, which is only true while a site is spawned — `fn_garrisonLocal_despawn` deletes a marker's structures and `..._spawn` recreates them from the server record. Upgraded sites therefore read as Tier 0 for as long as nobody was standing in them, and the supply graph flapped as players drove past. `A3A_garrison` is now the single source of truth: correct spawned, despawned and freshly loaded, and it is what the save carries. No fallback scans, no second save list.
+- **Fix: the Tier 2 power generator did not persist.** It relied on `fn_rebelVehPlacedWorker`, which routes through `fn_getMarkerForPos` and silently drops anything set down outside a marker's outline. The mission now files it against the site marker it already knows.
+- **Fix: a completed site upgrade could leave its delivery container at the site forever.** Cleanup relied on `fn_lockBuilderBox` deleting the box when the player released it with the budget spent — which never happens if the player disconnects or hands the box off. `s_cleanup` now removes the container itself on success; the generator is kept only when the run actually succeeded.
+- **Fix: `A3A_buildingPriceHM` stored whole catalogue entries for appended structures** instead of prices, so `fn_calcBuildingCosts` added an array to a number and threw for any base holding one. Also guarded `fn_calcBuildingCosts` against a marker with no garrison record yet.
+- **New class `a3a_warehouse`** over `Land_Warehouse_03_F` for the Tier 1 supply warehouse — own class, because tier is derived from class name and the vanilla warehouse occurs as scenery on several terrains. Carries a display name and an editor preview so it renders properly in the RTS placer. `fn_siteTiers` still counts the vanilla class, so existing saves keep their tier.
+- **The site upgrade container is no longer saved.** It is mission scaffolding; the task's own checkpoint respawns it on load, so persisting it as well put two containers at the site after a campaign reload.
+- **A freshly placed BAR resource depot starts with a tenth of its capacity** in each material, instead of arriving empty after a 3000-credit, yard-gated purchase.
+- **Site info panels show the upgrade tier** for resources and factories.
+- **Garrison claim radius for watchposts and roadblocks is now `40 + 11 * tierWar`** (51 m → 150 m), replacing `30 * tierWar` — 300 m was far too large for a radius and 30 m was smaller than many roadblock footprints.
+- **New keybind: toggle the influence overlay** (default Ctrl+Alt+I, under Configure > Controls > Antistasi CHAOS). Writes `A3A_CHAOS_influenceOverlayEnabled` through CBA settings, so it persists like any other option.
+
+---
+
 ## 2026-09-02 (in-game fixes, round 2)
 
 - **Fix: the Economy mission announced itself but never created a task.** `fn_ECON_SiteUpgrade_p` returned `[1, [[marker, tier]]]`, double-nesting its arguments — `fn_requestTask` passes `_params#1` as the task's *whole* argument list, so the task bound `_marker` to an array and `_targetTier` to `nil` and threw on the first comparison. Because the throw happened before `A3A_activeTasks pushBack`, the request was infinitely repeatable. Now returns `[1, [marker, tier]]`.

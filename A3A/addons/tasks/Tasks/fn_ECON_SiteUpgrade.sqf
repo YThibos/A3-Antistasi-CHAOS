@@ -15,13 +15,16 @@ Maintainer: Antistasi CHAOS
         and the player should get to decide how it sits.
 
         The container's build budget is exactly the warehouse's price, so
-        fn_lockBuilderBox deletes the empty container on release. No cleanup
-        needed and no leftover box at the site.
+        fn_lockBuilderBox usually deletes the empty container when the player
+        releases it. That is a convenience, not a guarantee - s_cleanup deletes
+        the container itself so a finished mission can never leave one standing.
 
     Tier 2 - power generator
         A generator spawns at HQ instead. It is finished freight: set it down
         inside the marker and the site is Tier 2. Standing in for the heavy
         machinery the design wanted, since Arma has no excavator worth using.
+        On delivery it is filed into the site's garrison record, which is both
+        what makes it persist and what A3A_fnc_siteTiers reads.
 
     Both objects are logistics cargo and rope-attachable, so they load onto
     anything from an offroad up, exactly like the supply-delivery pallet.
@@ -138,8 +141,11 @@ _task set ["_fnc_deliveredCondition", {
     private _marker = _this get "_marker";
     if (isNull _cargo || {!alive _cargo}) exitWith { false };
     if (!isNull attachedTo _cargo || {!isNull ropeAttachedTo _cargo}) exitWith { false };
-    private _radius = [_marker] call A3A_fnc_garrisonVehicleRadius;
-    if (_radius <= 0) then { _radius = 100 };
+    // Floored, because resource and factory markers are routinely smaller than
+    // the site they name. Kept well under the 150 m claim radius that
+    // fn_buildingComplete and fn_siteTiers use, so a container accepted here
+    // can still put its warehouse 50 m further out and have it counted.
+    private _radius = ([_marker] call A3A_fnc_garrisonVehicleRadius) max 75;
     (_cargo distance2D markerPos _marker) <= _radius
 }];
 
@@ -147,6 +153,7 @@ _task set ["s_deliver", {
     if ((_this get "_endTime") < time) exitWith { _this set ["state", "s_failed"]; false };
 
     private _cargo = _this get "_cargo";
+    private _marker = _this get "_marker";
     if (isNull _cargo || {!alive _cargo}) exitWith {
         // Destroyed in transit. Nothing to recover, so the run is lost.
         _this set ["state", "s_failed"]; false
@@ -156,6 +163,14 @@ _task set ["s_deliver", {
 
     // Tier 2 is finished freight: setting it down IS the upgrade.
     if ((_this get "_targetTier") >= 2) exitWith {
+        // File it into the site's garrison explicitly. The generator carries the
+        // "save" flag, so fn_rebelVehPlacedWorker would normally garrison it -
+        // but that path routes through fn_getMarkerForPos, which returns "" for
+        // anything set down outside the marker's own outline and silently drops
+        // the object. Naming the marker here is the whole point: the mission
+        // already knows which site this is, and the garrison record is what
+        // A3A_fnc_siteTiers reads and what the save carries.
+        [_marker, _cargo] call A3A_fnc_garrisonServer_addVehicle;
         call A3A_fnc_siteTiers;
         [] call A3A_fnc_refreshSupplyGraph;
         _this set ["state", "s_succeeded"]; false
@@ -173,7 +188,10 @@ _task set ["s_build", {
     // The warehouse is what completes this, not the container - which
     // fn_lockBuilderBox deletes the moment its budget is spent. So the tier is
     // the only thing worth testing, and fn_buildingComplete has already
-    // recomputed it by the time the structure exists.
+    // recomputed it by the time the structure exists. Recomputed here anyway:
+    // it is one pass over a handful of markers every 5 s, and it means the
+    // mission never depends on someone else having remembered to refresh.
+    call A3A_fnc_siteTiers;
     private _tierData = [_marker] call A3A_fnc_siteTier;
     if ((_tierData # 0) >= 1) exitWith { _this set ["state", "s_succeeded"]; false };
 
@@ -197,6 +215,7 @@ _task set ["s_succeeded", {
     [0, 150 * _bonus] remoteExec ["A3A_fnc_resourcesFIA", 2];
 
     [_this get "_taskId", "SUCCEEDED"] call BIS_fnc_taskSetState;
+    _this set ["_succeeded", true];
     _this set ["state", "s_cleanup"]; false;
 }];
 
@@ -208,12 +227,22 @@ _task set ["s_failed", {
 }];
 
 _task set ["s_cleanup", {
-    // The container deletes itself once its budget is spent, and a delivered
-    // generator is the upgrade, so neither is cleaned up here. Only an
-    // undelivered container left lying at HQ on a failure is worth removing.
+    // Dispose of the delivery object explicitly. The Tier 1 container used to be
+    // left to fn_lockBuilderBox, which deletes a builder box released with no
+    // budget left - but nothing guarantees the player ever releases it cleanly.
+    // Build the warehouse and disconnect, or hand the box off, and a blue
+    // container sits at the site for the rest of the campaign. The mission
+    // delivered it, so the mission removes it.
+    //
+    // The Tier 2 generator is the opposite: on success it IS the upgrade and
+    // must stay. It is only removed when the run did not succeed.
     private _cargo = _this get "_cargo";
-    if (!isNull _cargo && {(_this get "_targetTier") < 2} && {!(_this call (_this get "_fnc_deliveredCondition"))}) then {
-        deleteVehicle _cargo;
+    private _keepCargo = (_this get "_targetTier") >= 2 && { _this getOrDefault ["_succeeded", false] };
+    if (!isNull _cargo && {!_keepCargo}) then {
+        // remVehicle deletes on its own if the object was never garrisoned, so
+        // this covers both the loose container and a generator that got filed
+        // into the site before the run timed out.
+        [_cargo, true] call A3A_fnc_garrisonServer_remVehicle;
     };
 
     [1200, _this get "_taskId"] spawn {

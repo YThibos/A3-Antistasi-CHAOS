@@ -11,8 +11,8 @@ Maintainer: Antistasi CHAOS
     position. The rules differ by marker type:
 
       Watchpost / roadblock (outpostsFIA)
-          Circular area around the marker centre, scaling with war tier (30 m at
-          war tier 1 growing to 300 m at war tier 10). fn_getMarkerForPos uses
+          Circular area around the marker centre, scaling with war tier (51 m at
+          war tier 1 growing to 150 m at war tier 10). fn_getMarkerForPos uses
           outpostsFIA inAreaArrayIndexes [_pos, _wpRadius, _wpRadius], which
           treats the area as an ellipse / circle.
 
@@ -31,7 +31,7 @@ Arguments:
 
 Return Value:
     <NUMBER> Claim radius in metres.
-             Watchpost / roadblock, or no marker given : 30 m (tier 1) to 300 m (tier 10).
+             Watchpost / roadblock, or no marker given : 51 m (tier 1) to 150 m (tier 10).
              Any other marker                          : max(markerSize#0, markerSize#1)
 
 Scope: Anywhere
@@ -46,10 +46,16 @@ Example:
 params [["_marker", "", [""]]];
 
 // ---- Watchpost / roadblock (outpostsFIA) -----------------------------------
-// Circular claim radius scaling with war tier: 30 m at tier 1 to 300 m at tier 10.
+// Circular claim radius scaling with war tier: 51 m at tier 1 to 150 m at tier 10.
+//
+// This used to be 30 * _tier. Both ends of that were wrong for a RADIUS: 300 m
+// at tier 10 claims most of a small valley, while 30 m at tier 1 is smaller than
+// many roadblock footprints, so a static parked at the far end of the post
+// stopped counting as part of it. 40 + 11 * _tier keeps the sensible cap and
+// starts somewhere usable.
 if (_marker isEqualTo "" || {!isNil "outpostsFIA" && {_marker in outpostsFIA}}) exitWith {
     private _tier = (missionNamespace getVariable ["tierWar", 1]) max 1 min 10;
-    30 * _tier
+    40 + 11 * _tier
 };
 
 // ---- All other garrison markers --------------------------------------------

@@ -51,6 +51,16 @@ if ("barempty" in _flags) then {
     _object setVariable ["BuildAndRessources_ressources", [0,0,0,0], true];
 };
 
+// CHAOS: a freshly placed BAR depot starts with a tenth of its capacity in each
+// material rather than bone empty. The depot costs 3000 credits and is gated
+// behind the Construction Yard; arriving with nothing in it means the player
+// pays for the gate and then waits several income ticks before it does anything.
+// fn_factoryDepotTick tops it up from there and enforces the same cap.
+if (typeOf _object isEqualTo "RessourceDepot") then {
+    private _seed = floor ((missionNamespace getVariable ["A3A_CHAOS_barDepotCap", 3000]) / 10);
+    _object setVariable ["BuildAndRessources_depotStocks", [_seed, _seed, _seed, _seed], true];
+};
+
 if ("save" in _flags) then {
     [_object] remoteExec ["A3A_fnc_rebelVehPlacedWorker", 2];
     [_object] remoteExecCall ["A3A_fnc_addVehAttachDetachEH", 2];
