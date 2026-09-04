@@ -190,6 +190,15 @@ class Land_Cargo10_blue_F: TRIPLES(ADDON,Cargo,Base)
     size = 4;
 };
 
+// The Tier 2 crate. Same model dimensions as the Tier 1 container above - it is
+// the same Cargo10 shell in a different colour - so the same offset and size.
+class Land_Cargo10_light_blue_F: TRIPLES(ADDON,Cargo,Base)
+{
+    offset[] = {0,0.1,1.35};
+    rotation[] = {1,0,0};
+    size = 4;
+};
+
 class Land_PowerGenerator_F: TRIPLES(ADDON,Cargo,Base)
 {
     offset[] = {0,0,0.9};

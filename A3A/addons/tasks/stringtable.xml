@@ -153,13 +153,16 @@
         <Original>%1 can be brought onto our supply network, but it needs a warehouse first. A shipping container is waiting at HQ. Get it to the site - it will load onto any truck or flatbed, or you can sling it under a helicopter - set it down inside the site, then build the warehouse from it. You will be able to position the building before you commit to it. Until this is done the site earns as it always has, but it is not connected to anything. Time remaining: %2.</Original>
       </Key>
       <Key ID="STR_A3A_Tasks_ECON_SiteUpgrade_description_t2">
-        <Original>%1 has a warehouse but no power for the machinery. A generator is waiting at HQ. Load it onto a vehicle, sling it, or drive it out on a flatbed, and set it down inside the site. Time remaining: %2.</Original>
+        <Original>%1 has a warehouse but no power for the machinery. A crated generator is waiting at HQ. Load it onto a vehicle, sling it under a helicopter, or drive it out on a flatbed, and set it down inside the site - it is unpacked where it lands. Time remaining: %2.</Original>
       </Key>
       <Key ID="STR_A3A_Tasks_ECON_SiteUpgrade_nowBuild">
         <Original>Container delivered. Use the build action on it to place the warehouse.</Original>
       </Key>
       <Key ID="STR_A3A_Tasks_ECON_SiteUpgrade_done">
-        <Original>Site upgraded. It is now part of our supply network.</Original>
+        <Original>%1 upgraded to Tier %2, and it is on our supply network.</Original>
+      </Key>
+      <Key ID="STR_A3A_Tasks_ECON_SiteUpgrade_doneUnlinked">
+        <Original>%1 upgraded to Tier %2. It is not on our supply network yet - nothing we hold is close enough to run a line to it, or the ground between is held against us. It joins the moment a connected site comes within reach.</Original>
       </Key>
       <Key ID="STR_A3A_Tasks_ECON_SiteUpgrade_failed">
         <Original>The site upgrade was not completed in time.</Original>
