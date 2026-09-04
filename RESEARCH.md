@@ -30,7 +30,14 @@ Status keys: **[DONE]** shipped and in the tree · **[TODO]** agreed, not built 
   rates, stacking with the existing no-airport penalty.
 - **[DONE]** BAR crates are empty freight (250 credits); the BAR resource depot is
   gated behind the Construction Yard; connected factories deliver material into the
-  depots inside the HQ build radius each income tick, clamped per depot.
+  depots inside the HQ build radius each income tick, clamped per depot. A newly
+  placed depot is seeded with a tenth of the cap in each material, so paying for the
+  gate does something immediately. **Considered and declined (2026-09-04):** moving
+  `RessourceDepot` out of the utility-item list into the general build catalogue. It
+  reads like a consolidation but silently drops the item's `save`, `barsupply` and
+  `yardonly` flags — the depot would stop persisting, lose its resupply action and
+  lose the Construction Yard gate the design asks for. It already *is* gated behind
+  the yard where it is.
 
 **Correction to carry forward:** enemies received a rate *multiplier*, not extra cash
 income. There is no separate enemy cash pool. Anything designed against the "extra
@@ -130,8 +137,10 @@ held as constants in `A3A_fnc_siteTier` rather than CBA settings while they are 
 
 A mission picks a player-owned resource or factory that has no tier yet.
 The player brings a container (`Land_Cargo10_blue_F` as the base — flatbed-loadable and
-sling-loadable), drops it at the site, and builds a warehouse (`Land_Warehouse_03_F`)
-from it.
+sling-loadable), drops it at the site, and builds a warehouse (`a3a_warehouse`, a CHAOS class over
+`Land_Warehouse_03_F`) from it. Own class, for the same reason the Construction Yard
+has one: tier is derived from class name and the vanilla warehouse occurs as scenery
+on several terrains.
 
 Build interaction: reuse the existing placer chain so the structure can be *aligned*
 before it is committed, because it persists —
@@ -170,13 +179,43 @@ the supply chain actually biting.
    retroactively *lower* `tierWar`. Any dynamic-site feature must keep surveyed sites in
    a separate list excluded from `tierCheck`.
 3. **Tier state turned out NOT to need the save path.** The original plan was a stored
-   number per marker. It is instead **derived** from the structures standing on the site
+   number per marker. It is instead **derived** from the structures on the site
    (`A3A_fnc_siteTiers`): warehouse → Tier 1, warehouse + generator → Tier 2. The
-   structures are already persisted, so the tier persists with them, and the agreed
-   "destroy the warehouse and the site drops to Tier 0" rule needs no code at all.
-   Deliberately no marker variable on the structures — a restored building does not
-   carry custom variables back, so a variable-based test would silently wipe every tier
-   on campaign reload.
+   structures are already persisted, so the tier persists with them. Deliberately no
+   marker variable on the structures — a restored building does not carry custom
+   variables back, so a variable-based test would silently wipe every tier on campaign
+   reload.
+
+   **Corrected 2026-09-04, once the first build actually ran.** Two things above were
+   wrong as originally written:
+
+   - *"the structures standing on the site"* meant a world scan (`allMissionObjects`),
+     and a world scan is only true while the site is spawned.
+     `A3A_fnc_garrisonLocal_despawn` **deletes** a marker's buildings and vehicles on
+     despawn and `..._spawn` recreates them from the server-side record. Sites are
+     despawned nearly all the time, so the scan reported Tier 0 for almost every
+     upgraded site and the supply graph flapped whenever a player drove past one. The
+     **`A3A_garrison` record is the single source of truth** — true spawned, despawned
+     and freshly loaded, and it is what the save carries. No fallback scan and no
+     second save list: a second source can only disagree with the first.
+   - *"destroy the warehouse and the site drops to Tier 0 needs no code at all"* is not
+     achievable and is no longer claimed. Upstream keeps destroyed garrison buildings in
+     the record and **rebuilds them intact on the next spawn cycle**, so the structure
+     genuinely comes back; a tier that dropped on destruction would contradict the
+     world. Making destruction stick is a separate change to `A3A_fnc_buildingChangedEH`
+     (drop the ruined building from its garrison record) — worth doing on its own
+     merits, but not part of the tier ladder, and moot until something actually attacks
+     these structures (see §1.5).
+
+4. **Nothing files itself into a garrison reliably.** Both attribution paths run through
+   `A3A_fnc_getMarkerForPos`, which returns `""` for any position outside every marker
+   outline — the normal case for a structure placed at the edge of a small resource or
+   factory marker. `fn_buildingComplete` then compared `nil` to a side and threw (taking
+   the tier recompute at the end of that function down with it), and
+   `fn_rebelVehPlacedWorker` silently dropped the object. Site structures now claim the
+   nearest rebel-held resource/factory within `max(markerExtent, 150 m)`
+   (`A3A/addons/core/Includes/siteTiers.hpp`), and the Tier 2 generator is filed against
+   the mission's own marker rather than left to position lookup.
 
 ---
 
@@ -282,15 +321,17 @@ table if testing says the enemy is too soft.
 
 ## 5. Tweaks and fixes
 
-- **[TODO]** Garrison radius at max tier. `fn_garrisonVehicleRadius.sqf` uses
+- **[DONE]** Garrison radius at max tier. `fn_garrisonVehicleRadius.sqf` used
   `30 * _tier` — 30 m at tier 1 to 300 m at tier 10, and 300 m is too big (it is a
   radius, not a diameter). Proposed `15 * _tier` caps at 150 m but gives **15 m at tier
   1**, which is smaller than many roadblock footprints — a static parked 20 m away would
   stop counting. `40 + 11 * _tier` (51 m → 150 m) keeps the cap while staying usable
-  early.
-- **[TODO]** Custom keybind to toggle the influence / border overlay on and off. CBA
-  keybind; the setting `A3A_CHAOS_influenceOverlayEnabled` already exists and is read
-  per-frame, so the binding only has to flip it.
+  early. Shipped as `40 + 11 * _tier`.
+- **[DONE]** Custom keybind to toggle the influence / border overlay on and off.
+  Registered in `fn_initCHAOSSettings` via `CBA_fnc_addKeybind`, default **Ctrl+Alt+I**,
+  under Configure > Controls > Antistasi CHAOS. It writes
+  `A3A_CHAOS_influenceOverlayEnabled` through `CBA_settings_fnc_set`, so the value
+  persists like any other option rather than living in a parallel toggle variable.
 - **[TODO]** AAS (Antistasi Support System) — the orange-smoke bypass lets supports be
   called without buying the tents that are supposed to gate them. High priority bug fix.
   Then gate support tents behind the Construction Yard, and revisit support pricing

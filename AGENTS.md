@@ -231,6 +231,25 @@ specific version.
   Paired with `fn_lockBuilderBox`, which DELETES a builder box released with no budget
   left, a mission container whose `A3A_itemPrice` equals its one buildable's price
   disposes of itself the moment that building is paid for.
+- 2026-09-04: **A garrison's world objects are ephemeral; its RECORD is the state.**
+  `fn_garrisonLocal_despawn` deletes a marker's buildings and vehicles and `..._spawn`
+  recreates them from `A3A_garrison`, so `allMissionObjects` answers "what is built here?"
+  correctly only while a player is standing in the zone - which is almost never. Anything
+  that has to be true for a despawned or freshly loaded marker must read `A3A_garrison`
+  (`buildings` = `[class, posWorld, vecDir, vecUp]`, `vehicles` = `[class, [pos,dir,up] |
+  spawnPlaceIndex, state, vehID]`; class at index 0 in both). Corollary: a destroyed
+  garrison building is NOT removed from the record, so it comes back intact on the next
+  spawn cycle.
+- 2026-09-04: **`fn_getMarkerForPos` returns `""` for anything outside every marker
+  outline**, and both garrison-attribution paths used to mishandle that. `sidesX getVariable
+  ""` is `nil`, and comparing `nil` to a side THROWS - in `fn_buildingComplete` that killed
+  every completed build's follow-up code silently. `fn_rebelVehPlacedWorker` just drops the
+  object. Most zone markers are small rectangles, so "outside the outline" is the normal
+  case for anything a player places at a site. Name the marker explicitly whenever the
+  caller already knows it, and use `sidesX getVariable [_marker, sideUnknown]`.
+- 2026-09-04: **`fn_buildingComplete` never declared `_className`.** It took `_target` and
+  `_finished` only, so the flagpole test threw on every build. Inherited from upstream; if a
+  merge reintroduces it, the fix is `typeOf _building`.
 - 2026-08-20: **`Tools/StreetArtist`** is a standalone navGrid-generation mission tool (separate
   Arma 3 mission, not part of the mod). Its `findDisplay 12 displayCtrl 51` usage is inside an
   `EachFrame` EH that already guards `!visibleMap`, making it useless as a general reference for

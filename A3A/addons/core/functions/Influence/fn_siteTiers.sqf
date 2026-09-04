@@ -1,35 +1,42 @@
 #include "..\..\script_component.hpp"
 FIX_LINE_NUMBERS()
+#include "..\..\Includes\siteTiers.hpp"
 /*
 Maintainer: Antistasi CHAOS
     Recomputes the CHAOS upgrade tier of every rebel-held resource and factory,
     and publishes the result.
 
     ---- Tier is DERIVED, never stored -------------------------------------
-    A site's tier is read off the structures standing on it:
+    A site's tier is read off the structures the site's garrison record says
+    stand on it:
 
         Tier 0  nothing built                       - vanilla behaviour
-        Tier 1  a supply warehouse on the site      - Land_Warehouse_03_F
+        Tier 1  a supply warehouse on the site      - a3a_warehouse
         Tier 2  warehouse + power generator         - Land_PowerGenerator_F
 
     Deriving it rather than storing a number per marker is what keeps this out
-    of the save system entirely. The structures are already persisted (they go
-    into the marker's garrison via fn_buildingComplete, or into
-    A3A_buildingsToSave), so the tier persists with them for free, and it also
-    means the agreed destruction rule needs no code at all: blow up the
-    warehouse and the site is Tier 0 again on the next recompute, eligible for
-    the upgrade mission once more.
+    of the save system entirely: the garrison record is already saved and
+    reloaded, so the tier persists with it for free.
 
-    There is deliberately NO marker variable on the structures. A saved and
-    restored building does not carry custom variables back, so a variable-based
-    test would silently drop every tier on campaign reload - the exact class of
-    bug hard rule 8 exists to prevent. Class plus proximity survives anything
-    that can restore the building at all.
+    ---- Why the GARRISON RECORD and not the world ------------------------
+    An earlier version scanned allMissionObjects for the structure classes.
+    That is wrong for every site a player is not currently standing in.
+    A3A_fnc_garrisonLocal_despawn DELETES a marker's buildings and vehicles
+    when the marker despawns, and A3A_fnc_garrisonLocal_spawn recreates them
+    from the server-side record on the way back in. Sites are despawned nearly
+    all of the time, so a world scan reported Tier 0 for almost every upgraded
+    site, and the supply graph flapped every time a player drove past one.
 
-    The side effect of testing by class is that a warehouse built at a resource
-    site by any other route also counts. That is treated as correct rather than
-    as a loophole: the fiction is "this site has a warehouse", not "this site
-    has a warehouse issued by the quartermaster".
+    A3A_garrison is the only representation that is true whether the site is
+    spawned, despawned or freshly loaded from a save, so it is the single
+    source of truth here. There is deliberately no fallback scan and no
+    separate save list: a second source can only ever disagree with the first.
+
+    Note the consequence, which corrects RESEARCH.md 2.4.3: blowing up your own
+    warehouse does NOT drop the site to Tier 0. It cannot, because upstream
+    keeps destroyed garrison buildings in the record and rebuilds them intact
+    on the next spawn cycle - the structure genuinely comes back. Tier follows
+    the record, which follows the game.
 
     ---- What tier does ----------------------------------------------------
       - Tier 0 sites are NOT nodes in the player's supply graph
@@ -48,8 +55,7 @@ Scope: Server
 Environment: Unscheduled
 Public: No
 Dependencies:
-    resourcesX, factories, sidesX, destroyedSites, teamPlayer  (globals)
-    A3A_fnc_garrisonVehicleRadius
+    resourcesX, factories, sidesX, destroyedSites, teamPlayer, A3A_garrison (globals)
 */
 
 if (!isServer) exitWith {
@@ -57,48 +63,30 @@ if (!isServer) exitWith {
     missionNamespace getVariable ["A3A_siteTiers", createHashMap]
 };
 
-#define TIER_WAREHOUSE_CLASS "Land_Warehouse_03_F"
-#define TIER_GENERATOR_CLASS "Land_PowerGenerator_F"
-
 private _tiers = createHashMap;
 
 private _sites = (missionNamespace getVariable ["resourcesX", []])
                + (missionNamespace getVariable ["factories", []]);
-
-// One scan of each class for the whole map, rather than a nearObjects call per
-// site: there are only ever a handful of these, and the site count is not.
-private _warehouses = (allMissionObjects TIER_WAREHOUSE_CLASS) select { alive _x };
-private _generators = (allMissionObjects TIER_GENERATOR_CLASS) select { alive _x };
-
-if (_warehouses isEqualTo []) exitWith {
-    // Nothing built anywhere: every site is Tier 0. Publish the empty map so
-    // consumers do not have to distinguish "no tiers" from "not computed yet".
-    A3A_siteTiers = _tiers;
-    publicVariable "A3A_siteTiers";
-    _tiers
-};
 
 {
     private _marker = _x;
     if (_marker in destroyedSites) then { continue };
     if !((sidesX getVariable [_marker, sideUnknown]) isEqualTo teamPlayer) then { continue };
 
-    private _pos = getMarkerPos _marker;
-    if (_pos isEqualTo [0,0,0]) then { continue };
+    private _garrison = A3A_garrison getOrDefault [_marker, createHashMap];
 
-    // The marker's own extent, from the same helper the garrison attribution
-    // uses, so "on the site" means the same thing here as it does there.
-    // The marker's own extent, floored at 150 m. The floor matters: the upgrade
-    // container places its warehouse within 50 m of itself, so a container set
-    // down near the edge of a small marker can legitimately put the building
-    // just outside the marker. Detecting only inside the marker would leave the
-    // player staring at a finished warehouse that the mission refuses to accept.
-    private _radius = ([_marker] call A3A_fnc_garrisonVehicleRadius) max 150;
+    // Both record formats put the class name at index 0:
+    //   buildings  [class, posWorld, vecDir, vecUp]
+    //   vehicles   [class, [posWorld, vecDir, vecUp] | spawnPlaceIndex, state, vehID]
+    // The warehouse is a building (it is constructed); the generator is a
+    // registered utility item, so it files as a vehicle. Read both.
+    private _entries = (_garrison getOrDefault ["buildings", []])
+                     + (_garrison getOrDefault ["vehicles", []]);
+    if (_entries isEqualTo []) then { continue };
 
-    private _hasWarehouse = -1 != _warehouses findIf { (_x distance2D _pos) <= _radius };
-    if (!_hasWarehouse) then { continue };
+    if (_entries findIf { (_x # 0) in TIER_WAREHOUSE_CLASSES } < 0) then { continue };
 
-    private _hasGenerator = -1 != _generators findIf { (_x distance2D _pos) <= _radius };
+    private _hasGenerator = (_entries findIf { (_x # 0) isEqualTo TIER_GENERATOR_CLASS }) >= 0;
     _tiers set [_marker, [1, 2] select _hasGenerator];
 
 } forEach _sites;
@@ -106,7 +94,6 @@ if (_warehouses isEqualTo []) exitWith {
 A3A_siteTiers = _tiers;
 publicVariable "A3A_siteTiers";
 
-private _dbgCount = count _tiers;
-Debug_2("siteTiers: %1 upgraded sites of %2 resource/factory markers", _dbgCount, count _sites);
+Debug_2("siteTiers: %1 upgraded sites of %2 resource/factory markers", count _tiers, count _sites);
 
 _tiers

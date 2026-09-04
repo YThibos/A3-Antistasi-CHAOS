@@ -16847,6 +16847,12 @@
       <Key ID="STR_A3A_Utility_Items_Name_constructionyard">
         <Original>Construction Yard</Original>
       </Key>
+      <Key ID="STR_A3A_Utility_Items_Name_aircontrolcenter">
+        <Original>Air Control Center</Original>
+      </Key>
+      <Key ID="STR_A3A_Utility_Items_Name_supplywarehouse">
+        <Original>Supply Warehouse</Original>
+      </Key>
       <Key ID="STR_A3A_Utility_Items_HQ_Only">
         <Original>This item must be placed within %1 m of the HQ.</Original>
       </Key>
@@ -16901,6 +16907,21 @@
       </Key>
       <Key ID="STR_A3A_Utility_Items_Name_sitegenerator">
         <Original>Site Power Generator</Original>
+      </Key>
+      <Key ID="STR_A3A_CHAOS_mapOverlay_toggleKey">
+        <Original>Toggle influence overlay</Original>
+      </Key>
+      <Key ID="STR_A3A_CHAOS_mapOverlay_toggleKey_tt">
+        <Original>Show or hide the zone of influence overlay and supply lines on the map, without opening Addon Options.</Original>
+      </Key>
+      <Key ID="STR_A3A_CHAOS_mapOverlay_toggledOn">
+        <Original>Influence overlay ON</Original>
+      </Key>
+      <Key ID="STR_A3A_CHAOS_mapOverlay_toggledOff">
+        <Original>Influence overlay OFF</Original>
+      </Key>
+      <Key ID="STR_A3A_CHAOS_siteInfo_tier">
+        <Original>%1&lt;br/&gt;Upgrade Tier: %2</Original>
       </Key>
       <Key ID="STR_A3A_CHAOS_supply_showEdges">
         <Original>Show supply lines</Original>

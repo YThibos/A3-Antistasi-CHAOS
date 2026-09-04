@@ -330,3 +330,32 @@ private _invalidate = { A3A_influenceSignature = nil };
     {},
     false
 ] call CBA_fnc_addSetting;
+
+// ---- Overlay toggle keybind ----
+// The overlay draw handler reads A3A_CHAOS_influenceOverlayEnabled every frame
+// (fn_mapDrawInfluenceEH), so a keybind only has to flip the setting - there is
+// no separate toggle state to keep in sync. Written through CBA_settings_fnc_set
+// rather than a bare missionNamespace assignment so the value survives a
+// settings refresh and is remembered between sessions like any other option.
+//
+// Registered here rather than in a postInit because CBA_fnc_addKeybind wants to
+// be called at preInit, before the controls menu is built.
+//
+// Default Ctrl+Alt+I: unused by both vanilla Arma and CBA, and "I" for influence.
+// Anyone who disagrees rebinds it in Configure > Controls > Antistasi CHAOS.
+[
+    "Antistasi CHAOS",
+    "A3A_CHAOS_toggleInfluenceOverlay",
+    [localize "STR_A3A_CHAOS_mapOverlay_toggleKey", localize "STR_A3A_CHAOS_mapOverlay_toggleKey_tt"],
+    {
+        private _new = !(missionNamespace getVariable ["A3A_CHAOS_influenceOverlayEnabled", true]);
+        ["A3A_CHAOS_influenceOverlayEnabled", _new] call CBA_settings_fnc_set;
+        [
+            localize "STR_A3A_CHAOS_mapOverlay_enable",
+            localize (["STR_A3A_CHAOS_mapOverlay_toggledOff", "STR_A3A_CHAOS_mapOverlay_toggledOn"] select _new)
+        ] call A3A_fnc_customHint;
+        true                                    // key handled
+    },
+    {false},
+    [23, [false, true, true]]                   // DIK_I, [shift, ctrl, alt]
+] call CBA_fnc_addKeybind;

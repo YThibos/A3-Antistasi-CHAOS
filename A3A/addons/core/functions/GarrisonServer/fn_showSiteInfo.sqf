@@ -64,11 +64,18 @@ private _text = call {
     };
     if (_marker in resourcesX) exitWith {
         if (_marker in destroyedSites) exitWith { format ["%1 Resource<br/>DESTROYED", _nameFaction] };
-        format [localize "STR_A3A_fn_init_cityinfo_reso_1", _nameFaction];
+        // CHAOS: the site's upgrade tier is what puts it on the supply graph, so
+        // it belongs on the site's own info panel. siteTier reads the published
+        // A3A_siteTiers map, so this is a lookup, not a recompute.
+        format [localize "STR_A3A_CHAOS_siteInfo_tier",
+                format [localize "STR_A3A_fn_init_cityinfo_reso_1", _nameFaction],
+                ([_marker] call A3A_fnc_siteTier) # 0];
     };
     if (_marker in factories) exitWith {
         if (_marker in destroyedSites) exitWith { format ["%1 Factory<br/>DESTROYED", _nameFaction] };
-        format [localize "STR_A3A_fn_init_cityinfo_fact_1", _nameFaction];
+        format [localize "STR_A3A_CHAOS_siteInfo_tier",
+                format [localize "STR_A3A_fn_init_cityinfo_fact_1", _nameFaction],
+                ([_marker] call A3A_fnc_siteTier) # 0];
     };
     if (_marker in outpostsFIA) exitWith {
         format ["%1 %2", _nameFaction, ["Watchpost", "Roadblock"] select isOnRoad markerPos _marker];

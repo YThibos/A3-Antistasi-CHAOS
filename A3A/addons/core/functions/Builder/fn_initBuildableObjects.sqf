@@ -18,6 +18,10 @@ if (!isClass _mapInfo) then {_mapInfo = configFile/"A3A"/"mapInfo"/toLower world
 A3A_buildableObjects = getArray (_mapInfo/"buildObjects");
 
 A3A_buildingPriceHM = createHashMapFromArray A3A_buildableObjects; // you can feed 3-element arrays to createHashMapFromArray, it will ignore anything after the first two for each entry
+// So the map's values are PRICES, not catalogue entries - A3A_fnc_calcBuildingCosts
+// reads them as numbers. Every `set` below has to keep that shape; the appends
+// used to store the whole 3-element entry, which made calcBuildingCosts add an
+// array to a number and throw for any base holding one of those structures.
 
 // WP4b: append global military-tier (basetier) and airport-tier (airtier) catalogues.
 // Uses vanilla structures available on all maps.
@@ -28,7 +32,7 @@ A3A_buildingPriceHM = createHashMapFromArray A3A_buildableObjects; // you can fe
 // in fn_teamLeaderRTSPlacerDialog: disabled when a yard already exists or player is outside HQ.
 if !("a3a_constructionYard" in A3A_buildingPriceHM) then {
     A3A_buildableObjects pushBack ["a3a_constructionYard", 5000, "constructionyard"];
-    A3A_buildingPriceHM set ["a3a_constructionYard", ["a3a_constructionYard", 5000, "constructionyard"]];
+    A3A_buildingPriceHM set ["a3a_constructionYard", 5000];
 };
 
 // Air Control Center — one per campaign, must be built inside the HQ radius, requires Construction Yard,
@@ -36,13 +40,13 @@ if !("a3a_constructionYard" in A3A_buildingPriceHM) then {
 // in fn_teamLeaderRTSPlacerDialog: disabled when ACC exists, Yard missing, or outside HQ.
 if !("a3a_airControlCenter" in A3A_buildingPriceHM) then {
     A3A_buildableObjects pushBack ["a3a_airControlCenter", 8000, "aircontrolcenter"];
-    A3A_buildingPriceHM set ["a3a_airControlCenter", ["a3a_airControlCenter", 8000, "aircontrolcenter"]];
+    A3A_buildingPriceHM set ["a3a_airControlCenter", 8000];
 };
 
 {
     if !(_x#0 in A3A_buildingPriceHM) then {
         A3A_buildableObjects pushBack _x;
-        A3A_buildingPriceHM set [_x#0, _x];
+        A3A_buildingPriceHM set [_x#0, _x#1];
     };
 } forEach [
     // Military base tier (Military Construction Kit)
@@ -66,7 +70,7 @@ if !("a3a_airControlCenter" in A3A_buildingPriceHM) then {
     // Only the warehouse is BUILT. The Tier 2 power generator is delivered as a
     // finished object and simply set down where the player wants it, so it never
     // enters a build catalogue.
-    ["Land_Warehouse_03_F",          1500, "sitetier"],
+    ["a3a_warehouse",                1500, "sitetier"],
 
     // Airport tier (Airport Construction Kit)
     ["Land_Hangar_F",                 5000, "airtier"],
