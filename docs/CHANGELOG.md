@@ -4,6 +4,12 @@ Newest entries at the top. One line per change when possible.
 
 ---
 
+## 2026-09-04 (Tier 2 generator delivered crated)
+
+- **The Tier 2 site upgrade now delivers a crate, not a bare generator.** `Land_PowerGenerator_F` is a `House_Small_F` — `Static`-derived, `simulation = "house"` — so it has no PhysX body, no mass, and no `slingLoadCargoMemoryPoints` anywhere in its parent chain: the vanilla Sling Load Assistant can never list it and Advanced Sling Loading ropes to something the physics engine will not lift. Neither is reachable from script. The mission now delivers `Land_Cargo10_light_blue_F` — the same blue container family as the Tier 1 box, a different subclass of it — and creates the generator at the drop point when the crate is set down inside the marker, consuming the crate. Verified against the shipped configs (`Tools/pboextract` + `derapify.py`): the class exists at `scope = 2`, its chain is `Cargo10_base_F` → `Cargo_base_F` → `ThingX`, and `Cargo10_base_F` is where `slingLoadCargoMemoryPoints[]` is declared. `TIER_GENERATOR_CLASS` / `TIER_STRUCTURE_CLASSES` are untouched, so tier detection, destruction reconciliation and the supply graph see exactly what they saw before.
+
+---
+
 ## 2026-09-04 (mission object fixes)
 
 - **The supply warehouse has a build-menu picture again.** Its `editorPreview` pointed at `EditorPreviews_F_Enoch`, but `Land_Warehouse_03_F` is an APEX asset whose preview ships in `EditorPreviews_F_Exp`. The RTS placer `fileExists`-checks the path and silently substitutes its "No Vehicle Preview" placeholder, so the wrong prefix cost the tile its thumbnail. Verified against the shipped game files.

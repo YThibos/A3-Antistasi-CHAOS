@@ -16905,6 +16905,9 @@
       <Key ID="STR_A3A_Utility_Items_Name_sitecontainer">
         <Original>Site Upgrade Container</Original>
       </Key>
+      <Key ID="STR_A3A_Utility_Items_Name_sitegeneratorcrate">
+        <Original>Site Generator Crate</Original>
+      </Key>
       <Key ID="STR_A3A_Utility_Items_Name_sitegenerator">
         <Original>Site Power Generator</Original>
       </Key>

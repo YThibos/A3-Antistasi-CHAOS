@@ -1,5 +1,6 @@
 #include "..\script_component.hpp"
 FIX_LINE_NUMBERS()
+#include "\x\A3A\addons\core\Includes\siteTiers.hpp"
 /*
 Maintainer: Antistasi CHAOS
     CHAOS site upgrade mission. Delivers the infrastructure that raises a rebel
@@ -19,12 +20,24 @@ Maintainer: Antistasi CHAOS
         releases it. That is a convenience, not a guarantee - s_cleanup deletes
         the container itself so a finished mission can never leave one standing.
 
-    Tier 2 - power generator
-        A generator spawns at HQ instead. It is finished freight: set it down
-        inside the marker and the site is Tier 2. Standing in for the heavy
-        machinery the design wanted, since Arma has no excavator worth using.
-        On delivery it is filed into the site's garrison record, which is both
-        what makes it persist and what A3A_fnc_siteTiers reads.
+    Tier 2 - power generator, delivered crated
+        A second blue container spawns at HQ - a different subclass of the same
+        family, so the two missions read as one set of freight. Set it down
+        inside the marker and the generator is created at the drop point; the
+        crate is consumed. The generator is then filed into the site's garrison
+        record, which is both what makes it persist and what A3A_fnc_siteTiers
+        reads, so the tier bookkeeping sees exactly what it saw before.
+
+        ---- Why crated ----------------------------------------------------
+        Land_PowerGenerator_F is a House_Small_F: Static-derived, simulation
+        "house". It has no PhysX rigid body and no mass, and no
+        slingLoadCargoMemoryPoints anywhere in its parent chain, so the vanilla
+        Sling Load Assistant has nothing to offer and Advanced Sling Loading
+        ropes to something the physics engine will not lift. Neither is
+        reachable from script. Cargo10_base_F declares the memory points and
+        derives from ThingX, so the crate both falls and flies. Delivering the
+        generator crated is what makes the mission sling-loadable without
+        touching TIER_GENERATOR_CLASS, which the supply-network work owns.
 
     Both objects are logistics cargo and rope-attachable, so they load onto
     anything from an offroad up, exactly like the supply-delivery pallet.
@@ -58,10 +71,14 @@ Public: No
 */
 
 #define UPGRADE_WAREHOUSE_PRICE 1500
+// Verified against the shipped configs (Tools/pboextract + derapify.py):
+// Land_Cargo10_light_blue_F -> Cargo10_base_F -> Cargo_base_F -> ThingX, and
+// Cargo10_base_F is where slingLoadCargoMemoryPoints[] is declared.
+#define UPGRADE_GENERATOR_CRATE "Land_Cargo10_light_blue_F"
 
 private _fnc_createCargo = {
     params ["_pos", "_targetTier"];
-    private _class = ["Land_Cargo10_blue_F", "Land_PowerGenerator_F"] select (_targetTier >= 2);
+    private _class = ["Land_Cargo10_blue_F", UPGRADE_GENERATOR_CRATE] select (_targetTier >= 2);
     private _obj = _class createVehicle _pos;
     _obj enableRopeAttach true;
 
@@ -171,8 +188,49 @@ _task set ["s_deliver", {
 
     if !(_this call (_this get "_fnc_deliveredCondition")) exitWith { false };
 
-    // Tier 2 is finished freight: setting it down IS the upgrade.
+    // Tier 2: the crate is the delivery, the generator is what the site keeps.
+    // Setting the crate down inside the marker unpacks it in place.
     if ((_this get "_targetTier") >= 2) exitWith {
+        // Resume guard. A save taken in the few seconds between this state and
+        // s_cleanup checkpoints the GENERATOR as the mission's cargo, so a load
+        // respawns a crate on top of a site that is already Tier 2 - the
+        // generator itself comes back from the garrison record. Consume the
+        // crate and finish; creating a second generator would leave a permanent
+        // duplicate at the site.
+        call A3A_fnc_siteTiers;
+        if ((([_marker] call A3A_fnc_siteTier) # 0) >= 2) exitWith {
+            [_cargo, true] call A3A_fnc_garrisonServer_remVehicle;
+            _this set ["_cargo", objNull];
+            _this set ["state", "s_succeeded"]; false
+        };
+
+        private _pos = getPosATL _cargo;
+        private _dir = getDir _cargo;
+
+        // Crate consumed. remVehicle deletes outright when the object was never
+        // garrisoned, which is this crate's whole life - it is not "save"-flagged
+        // and no state files it anywhere.
+        [_cargo, true] call A3A_fnc_garrisonServer_remVehicle;
+
+        // CAN_COLLIDE so the engine puts the generator exactly where the crate
+        // stood rather than nudging it clear of whatever the player parked next
+        // to it. Then settled the way A3A_Logistics_fnc_unload settles building-
+        // class cargo: a House_Small_F has no rigid body, so nothing will drop it
+        // to the ground or level it to the slope on its own.
+        private _gen = createVehicle [TIER_GENERATOR_CLASS, [0, 0, 0], [], 0, "CAN_COLLIDE"];
+        _gen setDir _dir;
+        _gen setPosATL [_pos # 0, _pos # 1, 0];
+        _gen setVectorUp surfaceNormal (getPosATL _gen);
+
+        // Same registration the crate got, so the generator arrives with its
+        // flags, price and scroll actions rather than as a bare prop.
+        [_gen] call A3A_fnc_initObject;
+        [_gen, teamPlayer] call A3A_fnc_AIVEHinit;
+
+        // From here on the generator IS the mission's cargo: it is what the
+        // checkpoint records and what s_cleanup keeps on success.
+        _this set ["_cargo", _gen];
+
         // File it into the site's garrison explicitly. The generator carries the
         // "save" flag, so fn_rebelVehPlacedWorker would normally garrison it -
         // but that path routes through fn_getMarkerForPos, which returns "" for
@@ -180,7 +238,7 @@ _task set ["s_deliver", {
         // the object. Naming the marker here is the whole point: the mission
         // already knows which site this is, and the garrison record is what
         // A3A_fnc_siteTiers reads and what the save carries.
-        [_marker, _cargo] call A3A_fnc_garrisonServer_addVehicle;
+        [_marker, _gen] call A3A_fnc_garrisonServer_addVehicle;
         call A3A_fnc_siteTiers;
         [] call A3A_fnc_refreshSupplyGraph;
         _this set ["state", "s_succeeded"]; false
@@ -272,8 +330,10 @@ _task set ["s_cleanup", {
     // container sits at the site for the rest of the campaign. The mission
     // delivered it, so the mission removes it.
     //
-    // The Tier 2 generator is the opposite: on success it IS the upgrade and
-    // must stay. It is only removed when the run did not succeed.
+    // The Tier 2 object is the opposite: on success "_cargo" is no longer the
+    // crate but the generator created out of it, which IS the upgrade and must
+    // stay. It is only removed when the run did not succeed - in which case
+    // "_cargo" is whichever of the two the mission was still holding.
     private _cargo = _this get "_cargo";
     private _keepCargo = (_this get "_targetTier") >= 2 && { _this getOrDefault ["_succeeded", false] };
     if (!isNull _cargo && {!_keepCargo}) then {

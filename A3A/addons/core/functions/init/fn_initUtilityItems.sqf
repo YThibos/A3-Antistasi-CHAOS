@@ -63,9 +63,22 @@ private _items = [
 // A3A_Tasks_fnc_ECON_SiteUpgrade), so persisting it as well would put two
 // containers at the site after a campaign reload.
 _items pushBack ["Land_Cargo10_blue_F", -1, "sitecontainer", "", ["place","noclear","build","sitetier"]];
-// The Tier 2 power generator. Registered so that "save" persists it once set
-// down - it IS the upgrade, so losing it on reload would silently downgrade the
-// site. Not buildable and not purchasable: the mission delivers it finished.
+// CHAOS: the Tier 2 crate. Same blue container family as the Tier 1 box and a
+// different subclass of it, so the two missions read as one set of freight while
+// staying tellable apart. It exists because Land_PowerGenerator_F is a
+// House_Small_F: no PhysX body, no mass, and no slingLoadCargoMemoryPoints
+// anywhere in its chain, so the vanilla Sling Load Assistant will never list it
+// and no script can make it. Cargo10_base_F declares those memory points and
+// sits on ThingX, so the crate flies. The generator is created at the drop point
+// when the delivery completes (A3A_Tasks_fnc_ECON_SiteUpgrade).
+// Flagged like the Tier 1 container and for the same reasons: NOT "save" -
+// it is mission scaffolding whose position the task's own checkpoint records,
+// and no "build", because it is not a builder box.
+_items pushBack ["Land_Cargo10_light_blue_F", -1, "sitegeneratorcrate", "", ["place","noclear"]];
+// The Tier 2 power generator. Registered so that "save" persists it once it has
+// been created at the site - it IS the upgrade, so losing it on reload would
+// silently downgrade the site. Not buildable and not purchasable: the mission
+// creates it out of the crate above.
 _items pushBack ["Land_PowerGenerator_F", -1, "sitegenerator", "", ["place","save","noclear"]];
 
 if (LootToCrateRadius == 0) then { _items deleteAt 0 };

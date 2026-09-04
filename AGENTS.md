@@ -305,3 +305,12 @@ specific version.
   `A3A_Logistics_fnc_unload` papers over the first symptom only. If an object has to be slung,
   pick a `ThingX` class that ships `slingLoadCargoMemoryPoints` - `Land_PowerGenerator_F` is
   `House_Small_F` and never will be.
+- 2026-09-04: **`slingLoadCargoMemoryPoints` lives on `Cargo10_base_F` alone, not on the shipping
+  container family as a whole.** Verified in the shipped configs: `Cargo_base_F` (structures_f_ind)
+  declares none, and `Land_Cargo20_*` / `Land_Cargo40_*` inherit straight from it, so the bigger
+  containers are `ThingX` - they fall, they have mass - but the vanilla Sling Load Assistant will
+  never list them. Only the Heli-DLC `Cargo10_base_F` subclasses (`Land_Cargo10_blue_F`,
+  `..._light_blue_F`, ...) are assistant-sling-loadable. "Bigger container" is therefore not a free
+  choice when the object has to fly. A p3d string search for the memory-point names does NOT settle
+  it either way: the ODOL selection names are compressed, so even the Cargo10 models return zero
+  hits. Read the config.
