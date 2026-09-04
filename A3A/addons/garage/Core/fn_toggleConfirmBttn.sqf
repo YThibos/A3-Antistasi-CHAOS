@@ -57,8 +57,10 @@ private _hqRadius = call A3A_fnc_hqBuildRadius;
 private _isAtHQ = (_accessObj inArea "Synd_HQ") || { (_accessObj distance2D (getMarkerPos "Synd_HQ")) <= _hqRadius };
 
 if (_selVehicleCat in HR_GRG_HELIPADACCESSIBLE) exitWith {
+    // CHAOS: the HQ-wide clause now goes through A3A_fnc_hasHQHelipad, the same call the
+    // store path makes, so retrieve and store cannot disagree about whether the HQ has a pad.
     private _hasNearbyHelipad = (count (nearestObjects [_accessObj, ["a3a_helipad", "Helipad_Base_F"], 50, true]) > 0)
-        || (_isAtHQ && { count (nearestObjects [getMarkerPos "Synd_HQ", ["a3a_helipad", "Helipad_Base_F"], _hqRadius, true]) > 0 });
+        || (_isAtHQ && { call A3A_fnc_hasHQHelipad });
 
     if (_hasNearbyHelipad) then {
         call _fnc_enable;
