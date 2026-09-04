@@ -4,6 +4,15 @@ Newest entries at the top. One line per change when possible.
 
 ---
 
+## 2026-09-04 (build placer: two rings)
+
+- RTS building placer now draws a second, amber dashed ring around the **marker centre**
+  whenever the build box stands inside a rebel-held zone, alongside the existing white
+  ring around the box. The white ring is the placement gate; the amber ring is the area
+  `A3A_fnc_getMarkerForPos` will actually claim a finished building for, and the two only
+  coincide when the box is parked dead centre. Visualisation only - no build rule, radius
+  value or garrison-recording rule changed. New `A3A_fnc_placerClaimRing`.
+
 ## 2026-09-04 (enemy supply networks)
 
 - **Enemy supply networks now exist.** The Occupant and Invader off-map corridors (`NATO_carrier` / `CSAT_carrier`) were structurally isolated roots and produced no edges at all. Each enemy corridor now gets explicit seed links to the nearest airfield and the nearest seaport that side actually owns — one of each, nearest by distance from the corridor, so the network starts local. Seeds skip the ground test (open water cannot be interdicted with a roadblock) and skip link pruning, but are rebuilt from current ownership every pass: taking a side's port takes the link with it. A side owning neither an airfield nor a seaport falls back to its nearest owned city, so it degrades rather than collapsing to zero supply on top of the vanilla no-airport penalty.
