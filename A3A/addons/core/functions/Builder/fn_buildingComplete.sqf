@@ -96,6 +96,27 @@ if (_marker != "" && { (sidesX getVariable [_marker, sideUnknown]) isEqualTo tea
     };
 };
 
+// CHAOS: a buildable that is ALSO a registered utility item (the BAR resource
+// depot) needs the utility-item init to run on it, or the built copy is a bare
+// prop: no "barsupply" resupply action, no "noclear" cargo protection, no
+// initial BAR stock. Calling the shared init is deliberate - duplicating those
+// three behaviours here would let the build and respawn paths drift apart.
+//
+// Ordering matters. This runs AFTER the garrison attribution above, so markerX
+// is already set by the time initObject's "save" flag spawns
+// fn_rebelVehPlacedWorker; that worker exits early on a vehicle that already has
+// a marker, so no second garrison entry is created. Nothing else here relies on
+// initObject, so the null check simply covers garrisonServer_addVehicle deleting
+// the object when its marker is despawned.
+if (!isNull _building && {_class in A3A_utilityItemHM}) then {
+    _building call A3A_fnc_initObject;
+    // initObject sets A3A_itemPrice from the catalogue, which is -1 for a
+    // build-only item. Overwrite it with what the build actually cost so the
+    // garage refunds the right amount if the structure is stored again.
+    private _buildPrice = _target getVariable ["A3A_build_price", 0];
+    if (_buildPrice > 0) then { _building setVariable ["A3A_itemPrice", _buildPrice, true] };
+};
+
 // Allowing flagpole construction is probably not a good idea due to how markerChange handles flags atm
 if (_class isEqualTo (A3A_faction_reb get "flag")) then {
     _building setFlagTexture (A3A_faction_reb get "flagTexture");

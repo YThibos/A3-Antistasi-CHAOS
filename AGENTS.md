@@ -107,6 +107,13 @@ Source Sans 3 prose and JetBrains Mono for formulae, and layered section numberi
 only where the content genuinely stacks. Load the `artifact-design` skill and treat
 that page as the house baseline rather than starting a new visual identity.
 
+## Maintaining this file
+
+Keep this file for knowledge useful to almost every future agent session in this project.
+Do not repeat what the codebase already shows; point to the authoritative file or command instead.
+Prefer rewriting or pruning existing entries over appending new ones.
+When updating this file, preserve this bar for all agents and keep entries concise.
+
 ## Notes for future work
 
 Append durable, non-obvious findings about Arma 3 scripting or this codebase here (or into the
@@ -254,3 +261,11 @@ specific version.
   Arma 3 mission, not part of the mod). Its `findDisplay 12 displayCtrl 51` usage is inside an
   `EachFrame` EH that already guards `!visibleMap`, making it useless as a general reference for
   map overlay code. Do not cite it to justify display/control access patterns in the mod.
+- 2026-09-04: **Garrison storage bucket is decided by `A3A_utilityItemHM` membership.**
+  `fn_garrisonServer_addVehicle` files a crewless object under `vehicles` if its class is a
+  registered utility item and under `buildings` otherwise, and only the `vehicles` array is
+  respawned through `fn_AIVEHinit` -> `fn_initObject`. So a class that needs per-object init
+  (actions, cargo protection, mod variables) to survive a despawn/respawn or a campaign
+  reload MUST stay in the utility-item list - price `-1` if it should not be purchasable.
+  The BAR `RessourceDepot` is the worked example: built from the construction catalogue,
+  registered at `-1`, and given the shared init by `fn_buildingComplete`.

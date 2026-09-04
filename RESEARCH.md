@@ -31,13 +31,20 @@ Status keys: **[DONE]** shipped and in the tree · **[TODO]** agreed, not built 
 - **[DONE]** BAR crates are empty freight (250 credits); the BAR resource depot is
   gated behind the Construction Yard; connected factories deliver material into the
   depots inside the HQ build radius each income tick, clamped per depot. A newly
-  placed depot is seeded with a tenth of the cap in each material, so paying for the
-  gate does something immediately. **Considered and declined (2026-09-04):** moving
-  `RessourceDepot` out of the utility-item list into the general build catalogue. It
-  reads like a consolidation but silently drops the item's `save`, `barsupply` and
-  `yardonly` flags — the depot would stop persisting, lose its resupply action and
-  lose the Construction Yard gate the design asks for. It already *is* gated behind
-  the yard where it is.
+  created depot is seeded with a tenth of the cap in each material, so paying for the
+  gate does something immediately.
+- **[DONE]** **Reversed (2026-09-04, captain's call):** the depot *has* moved out of the
+  purchase list into the general construction catalogue at 3000 credits. The earlier
+  refusal was aimed at the naive move, which deleted the item entry outright and with
+  it `save`, `barsupply` and `yardonly`. The proper move keeps the item entry priced
+  `-1` — registered in `A3A_utilityItemHM`, filtered out of `A3A_utilityItemList` —
+  so all three behaviours survive: `fn_garrisonServer_addVehicle` still files it under
+  `vehicles` (the array that respawns through `fn_AIVEHinit` → `fn_initObject`),
+  `barsupply` still hangs the resupply action, and the yard gate moves from
+  `fn_buyItem` to a `"bardepot"` ability case in `fn_teamLeaderRTSPlacerDialog`,
+  alongside `constructionyard`/`aircontrolcenter`. `fn_buildingComplete` calls the
+  shared `fn_initObject` on a completed depot so the build path and the respawn path
+  cannot drift.
 
 **Correction to carry forward:** enemies received a rate *multiplier*, not extra cash
 income. There is no separate enemy cash pool. Anything designed against the "extra

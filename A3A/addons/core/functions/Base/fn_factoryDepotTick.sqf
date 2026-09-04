@@ -64,7 +64,7 @@ if (!isServer) exitWith {
 
 if (!(missionNamespace getVariable ["A3A_hasBAR", false])) exitWith { 0 };
 
-// No yard, no depots: the depot is yard-gated in fn_initUtilityItems, so this
+// No yard, no depots: the depot is yard-gated in fn_teamLeaderRTSPlacerDialog, so this
 // is only ever a fast exit, never a silent block on production.
 if (!(call A3A_fnc_hasConstructionYard)) exitWith { 0 };
 
