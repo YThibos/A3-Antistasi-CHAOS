@@ -181,6 +181,7 @@ class CfgFunctions
             class getVehiclesGroundTransport {};
             class hasAirControlCenter {};
             class hasConstructionYard {};
+            class hasHQHelipad {};
             class hasWeapons {};
             class hideCorpses {};
             class hqBuildRadius {};

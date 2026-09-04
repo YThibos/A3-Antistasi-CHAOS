@@ -40,10 +40,23 @@ if (!isNull attachedTo _vehicle) exitWith {["STR_HR_GRG_Feedback_addVehicle_Atta
     //Valid area
 private _friendlyMarkers = (["Synd_HQ"] +outposts + seaports + airportsX + factories + resourcesX) select {sidesX getVariable [_x,sideUnknown] == teamPlayer}; //rebel locations with a flag
 private _inArea = _friendlyMarkers findIf { count ([_player, _vehicle] inAreaArray _x) > 1 };
-private _nearHelipads = nearestObjects [_vehicle, ["a3a_helipad", "Helipad_Base_F"], 30, true];
-private _isNearHelipad = (count _nearHelipads > 0) && (_vehicle isKindOf "Helicopter");
 private _hqRadius = call A3A_fnc_hqBuildRadius;
-private _isAtHQ = (_player inArea "Synd_HQ") || { (_player distance2D (getMarkerPos "Synd_HQ")) <= _hqRadius };
+private _hqPos = getMarkerPos "Synd_HQ";
+private _isAtHQ = (_player inArea "Synd_HQ") || { (_player distance2D _hqPos) <= _hqRadius };
+private _nearHelipads = nearestObjects [_vehicle, ["a3a_helipad", "Helipad_Base_F"], 30, true];
+// CHAOS: a helicopter may be stored anywhere inside the HQ build radius once the faction
+// has built a helipad in it, not only within 30 m of that pad. The retrieve path already
+// worked that way (HR_GRG_fnc_toggleConfirmBttn), and the garage places air vehicles up to
+// 150 m from the player (HR_GRG_placeDistance), so a heli taken out at HQ routinely landed
+// outside the radius that would let it be put back. Both ends now ask the same question.
+private _isNearHelipad = (_vehicle isKindOf "Helicopter") && {
+    (count _nearHelipads > 0)
+    || {
+        _isAtHQ
+        && { (_vehicle inArea "Synd_HQ") || { (_vehicle distance2D _hqPos) <= _hqRadius } }
+        && { call A3A_fnc_hasHQHelipad }
+    }
+};
 private _isAccPlane = (_vehicle isKindOf "Plane") && _isAtHQ && (call A3A_fnc_hasAirControlCenter);
 if (_inArea == -1 && {!_isNearHelipad}) exitWith {["STR_HR_GRG_Feedback_addVehicle_badLocation",[FactionGet(reb,"name")]] remoteExec ["HR_GRG_fnc_Hint", _client]; false };
 

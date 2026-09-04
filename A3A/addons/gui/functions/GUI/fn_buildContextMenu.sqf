@@ -114,9 +114,20 @@ switch (true) do {
                         private _friendlyMarkers = (airportsX) select {sidesX getVariable [_x,sideUnknown] == teamPlayer};
                         private _nearestHelipads = (nearestObjects [_vehicle, ["a3a_helipad", "Helipad_Base_F"], 30, true]);
                         private _hqRadius = call A3A_fnc_hqBuildRadius;
-                        private _isAtHQ = (player inArea "Synd_HQ") || { (player distance2D (getMarkerPos "Synd_HQ")) <= _hqRadius };
+                        private _hqPos = getMarkerPos "Synd_HQ";
+                        private _isAtHQ = (player inArea "Synd_HQ") || { (player distance2D _hqPos) <= _hqRadius };
                         private _isAccPlane = (_vehType == 4) && _isAtHQ && (call A3A_fnc_hasAirControlCenter);
-                        _inArea = ((_friendlyMarkers findIf { _vehicle inArea _x} != -1) || (count _nearestHelipads > 0 && (_vehicle isKindOf "Helicopter")) || _isAccPlane);
+                        // CHAOS: mirrors the server rule in A3A_fnc_addVehicle - a built helipad
+                        // inside the HQ radius makes the whole radius valid for rotary storage.
+                        private _isNearHelipad = (_vehicle isKindOf "Helicopter") && {
+                            (count _nearestHelipads > 0)
+                            || {
+                                _isAtHQ
+                                && { (_vehicle inArea "Synd_HQ") || { (_vehicle distance2D _hqPos) <= _hqRadius } }
+                                && { call A3A_fnc_hasHQHelipad }
+                            }
+                        };
+                        _inArea = ((_friendlyMarkers findIf { _vehicle inArea _x} != -1) || _isNearHelipad || _isAccPlane);
                     };
                     if !(_inArea) exitWith {
                         _button ctrlEnable false;

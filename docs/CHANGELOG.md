@@ -4,6 +4,14 @@ Newest entries at the top. One line per change when possible.
 
 ---
 
+## 2026-09-04 (helicopter garaging at HQ)
+
+- **A helicopter can be garaged anywhere inside the HQ build radius once a helipad stands in it.** Storing a heli previously demanded it be within 30 m of a pad (`A3A_fnc_addVehicle` / `fn_buildContextMenu`), while *retrieving* one already only demanded a pad somewhere in the HQ radius — and the garage places air vehicles up to 150 m from the player, so a heli taken out at HQ routinely landed outside the radius that would let it be put back. Both ends now ask the same question.
+- **New `A3A_fnc_hasHQHelipad`** is the single source of truth for that question, shared by the store path and `HR_GRG_fnc_toggleConfirmBttn`. Built pads are found by class enumeration of `a3a_helipad` (a build-catalogue-only class, so `allMissionObjects` on it is the build system's own record); a terrain `Helipad_Base_F` inside the radius still counts, because the retrieve path always accepted those.
+- Unchanged: ground-vehicle garaging, the HQ radius itself, the existing 30 m pad rule away from HQ, and the plane/Air Control Center gate.
+
+---
+
 ## 2026-09-04 (enemy supply networks)
 
 - **Enemy supply networks now exist.** The Occupant and Invader off-map corridors (`NATO_carrier` / `CSAT_carrier`) were structurally isolated roots and produced no edges at all. Each enemy corridor now gets explicit seed links to the nearest airfield and the nearest seaport that side actually owns — one of each, nearest by distance from the corridor, so the network starts local. Seeds skip the ground test (open water cannot be interdicted with a roadblock) and skip link pruning, but are rebuilt from current ownership every pass: taking a side's port takes the link with it. A side owning neither an airfield nor a seaport falls back to its nearest owned city, so it degrades rather than collapsing to zero supply on top of the vanilla no-airport penalty.
