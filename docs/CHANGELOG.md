@@ -4,6 +4,15 @@ Newest entries at the top. One line per change when possible.
 
 ---
 
+## 2026-09-04 (enemy supply networks)
+
+- **Enemy supply networks now exist.** The Occupant and Invader off-map corridors (`NATO_carrier` / `CSAT_carrier`) were structurally isolated roots and produced no edges at all. Each enemy corridor now gets explicit seed links to the nearest airfield and the nearest seaport that side actually owns — one of each, nearest by distance from the corridor, so the network starts local. Seeds skip the ground test (open water cannot be interdicted with a roadblock) and skip link pruning, but are rebuilt from current ownership every pass: taking a side's port takes the link with it. A side owning neither an airfield nor a seaport falls back to its nearest owned city, so it degrades rather than collapsing to zero supply on top of the vanilla no-airport penalty.
+- **Airfields and seaports are supply hubs on every side, player included.** Promoted out of the spoke set: an airfield already gates airstrikes and a seaport is a port of debarkation, not a leaf. Outposts stay spokes. Only resources and factories remain tier-gated; ports and airfields are hubs unconditionally. `A3A_CHAOS_supplyMaxLinks` still bounds degree, so no new limiter was needed.
+- **The corridor test no longer requires owning the ground, only that nobody hostile dominates it.** Neutral and unowned samples pass; a sample dominated by a hostile side still cuts the link, so roadblocks and watchposts sever exactly as before. Previously a map-spanning faction's backbone died anywhere it crossed empty wilderness.
+- **The supply distance cap is derived per map.** New `A3A_fnc_computeMaxSupplyEdge` builds a minimum spanning tree over every hub-class marker at init, ownership ignored, and takes the 90th-percentile edge × 1.3 — not the maximum, which is the length at which the map barely connects as a single breakable chain. `A3A_CHAOS_supplyMaxEdge` becomes an override where **0 means auto**, and 0 is the new default; the derived value lives in `A3A_supplyMaxEdgeAuto` so init never overwrites the CBA setting.
+
+---
+
 ## 2026-09-04 (BAR depot moved into the construction catalogue)
 
 - **The BAR resource depot is built, not bought.** It moved out of the garage purchase list into the general construction catalogue at 3000 credits, buildable from any construction kit and gated on an existing Construction Yard through a new `"bardepot"` ability case in `fn_teamLeaderRTSPlacerDialog` — the same mechanism as `constructionyard`/`aircontrolcenter`, replacing the old `yardonly` purchase gate. Its utility-item entry stays, priced `-1`: registered in `A3A_utilityItemHM` (so the garrison files it under `vehicles` and respawns it through `fn_AIVEHinit` → `fn_initObject`, keeping persistence, the `barsupply` resupply action and `noclear`) but filtered out of the purchase list. `fn_buildingComplete` now calls the shared `fn_initObject` on any completed build whose class is a registered utility item, so the build path and the respawn path cannot drift, and overwrites `A3A_itemPrice` with what the build actually cost so a stored depot refunds correctly.

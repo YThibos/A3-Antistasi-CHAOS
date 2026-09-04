@@ -16933,7 +16933,7 @@
         <Original>Max supply line length (m)</Original>
       </Key>
       <Key ID="STR_A3A_CHAOS_supply_maxEdge_tt">
-        <Original>The longest a single supply line may be. Two zones further apart than this are never linked directly, however much territory joins them. Without a cap, a faction holding most of the map links every site to every other one and the network stops meaning anything. Lower values make supply a chain of short local hops with real chokepoints; higher values let distant holdings support each other directly.</Original>
+        <Original>The longest a single supply line may be. Two zones further apart than this are never linked directly, however much territory joins them. Without a cap, a faction holding most of the map links every site to every other one and the network stops meaning anything. Lower values make supply a chain of short local hops with real chokepoints; higher values let distant holdings support each other directly. Leave this at 0 for AUTO: the cap is then derived from how far apart this map's own sites actually are, which is the right number on a map that is not Altis. Any value above 0 overrides that.</Original>
       </Key>
       <Key ID="STR_A3A_CHAOS_supply_maxLinks">
         <Original>Max supply lines per site</Original>

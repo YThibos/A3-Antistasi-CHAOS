@@ -250,12 +250,18 @@ private _invalidate = { A3A_influenceSignature = nil };
 // defaults, which is far enough that a side holding most of the map links
 // everything to everything - measured in game as a solid fan of lines from every
 // marker. This is the cutoff that turns it back into a neighbour network.
+//
+// ZERO MEANS AUTO, and is the default: A3A_fnc_computeMaxSupplyEdge derives the
+// cap from the map's own marker spacing at init. Any value above zero is an
+// explicit override and wins outright. The derived value is kept in its own
+// variable rather than written here, so init never fights CBA's broadcast or
+// silently discards a value the server owner actually set.
 [
     "A3A_CHAOS_supplyMaxEdge",
     "SLIDER",
     [localize "STR_A3A_CHAOS_supply_maxEdge", localize "STR_A3A_CHAOS_supply_maxEdge_tt"],
     ["Antistasi CHAOS", "Supply"],
-    [500, 5000, 1500, 0],
+    [0, 5000, 0, 0],
     2,                      // server forces setting on clients
     {},
     false
