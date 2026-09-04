@@ -4,6 +4,12 @@ Newest entries at the top. One line per change when possible.
 
 ---
 
+## 2026-09-04 (supply-network state and messaging)
+
+- **Destroying a site's warehouse or generator now drops the site's tier.** `A3A_fnc_siteTiers` derives tier from the garrison record, and upstream never removes a destroyed building from one — `fn_garrisonLocal_spawn` rebuilt it intact and the save carried the stale entry, so a site whose warehouse had been blown up stayed Tier 1 and was still offered a generator mission. `fn_siteTiers` now reconciles the record against the world before deriving: a recorded tier structure that is standing there DESTROYED is deleted from `A3A_garrison`. Only that — a *missing* object is the normal state of a despawned site and never prunes anything. `fn_buildingChangedEH` triggers the reconcile the moment a tier structure is ruined, so the correction is in the record before the next save.
+- **The site-upgrade completion message is now derived from the graph instead of asserting.** It claimed "It is now part of our supply network" unconditionally; reaching a tier only makes a site *eligible* to be a hub, and the mission picker deliberately has no HQ distance limit, so a far site can be upgraded and unreachable. `s_succeeded` now forces the graph rebuild (the delivery states only armed the 5 s debounce, so `A3A_supplyConnected` was a rebuild out of date) and picks between `..._done` and the new `..._doneUnlinked`, both naming the site and its new tier.
+- **The upgrade task's description is rewritten on success and failure**, the way `fn_cityBattle` already does. It previously kept the "Until this is done … it is not connected to anything" briefing text next to the success notification.
+
 ## 2026-09-04 (enemy supply networks)
 
 - **Enemy supply networks now exist.** The Occupant and Invader off-map corridors (`NATO_carrier` / `CSAT_carrier`) were structurally isolated roots and produced no edges at all. Each enemy corridor now gets explicit seed links to the nearest airfield and the nearest seaport that side actually owns — one of each, nearest by distance from the corridor, so the network starts local. Seeds skip the ground test (open water cannot be interdicted with a roadblock) and skip link pruning, but are rebuilt from current ownership every pass: taking a side's port takes the link with it. A side owning neither an airfield nor a seaport falls back to its nearest owned city, so it degrades rather than collapsing to zero supply on top of the vanilla no-airport penalty.

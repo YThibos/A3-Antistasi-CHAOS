@@ -29,6 +29,16 @@ Maintainer: Antistasi CHAOS
     Both objects are logistics cargo and rope-attachable, so they load onto
     anything from an offroad up, exactly like the supply-delivery pallet.
 
+    ---- Upgrading is not the same as being connected ----------------------
+    Completing this mission raises the site's tier, and tier is what makes a
+    resource or factory ELIGIBLE to be a hub in A3A_fnc_computeSupplyGraph. It
+    does not connect it. The graph still has to find a corridor to it that is
+    inside the edge cap and not interdicted, and the params function below
+    deliberately offers sites at any distance from HQ, so "upgraded but not on
+    the network" is a normal, legitimate outcome rather than a failure. The
+    completion message is therefore chosen from A3A_supplyConnected at the
+    moment it fires, not assumed.
+
     ---- No HQ distance limit ----------------------------------------------
     A3A_Tasks_fnc_ECON_SiteUpgrade_p deliberately does not filter targets by
     distanceMission; see its header. Timeouts here are correspondingly generous,
@@ -209,7 +219,33 @@ _task set ["s_succeeded", {
     private _targetTier = _this get "_targetTier";
     private _bonus = [1, 2] select (_targetTier >= 2);
 
-    [_this get "_hintTitle", localize "STR_A3A_Tasks_ECON_SiteUpgrade_done", markerPos _marker, 300] call FUNC(hintNear);
+    // ---- Say what is actually true ------------------------------------
+    // Reaching a tier makes the site a CANDIDATE hub. It does not put it on the
+    // network: A3A_fnc_computeSupplyGraph still has to find it a corridor that
+    // survives the distance cap and is not interdicted, and this mission has no
+    // distance cutoff at all (see the params function), so a site upgraded on
+    // the far side of the map can legitimately end up upgraded and unlinked.
+    //
+    // The states above call A3A_fnc_refreshSupplyGraph WITHOUT _force, which
+    // only arms the 5 s debounce, so A3A_supplyConnected here would still be the
+    // pre-upgrade graph. Force it before reading it, or the answer is one
+    // rebuild out of date whichever way it goes.
+    call A3A_fnc_siteTiers;
+    [true] call A3A_fnc_refreshSupplyGraph;
+
+    private _tier = ([_marker] call A3A_fnc_siteTier) # 0;
+    private _connected = _marker in (missionNamespace getVariable ["A3A_supplyConnected", []]);
+    private _nameDest = [_marker] call A3A_fnc_localizar;
+    private _doneKey = ["STR_A3A_Tasks_ECON_SiteUpgrade_doneUnlinked", "STR_A3A_Tasks_ECON_SiteUpgrade_done"] select _connected;
+    private _doneText = format [localize _doneKey, _nameDest, _tier];
+
+    [_this get "_hintTitle", _doneText, markerPos _marker, 300] call FUNC(hintNear);
+
+    // The description is what the player reads in the task list after the
+    // notification has gone, and it still said the site was not connected to
+    // anything. Rewrite it to the outcome, the way fn_cityBattle does on every
+    // state change.
+    [_this get "_taskId", [_doneText, _this get "_hintTitle", ""]] call BIS_fnc_taskSetDescription;
 
     [20 * _bonus, false, markerPos _marker, 300] call FUNC(rewardPlayers);
     [0, 150 * _bonus] remoteExec ["A3A_fnc_resourcesFIA", 2];
@@ -220,7 +256,9 @@ _task set ["s_succeeded", {
 }];
 
 _task set ["s_failed", {
-    [_this get "_hintTitle", localize "STR_A3A_Tasks_ECON_SiteUpgrade_failed", markerPos (_this get "_marker"), 300] call FUNC(hintNear);
+    private _failText = localize "STR_A3A_Tasks_ECON_SiteUpgrade_failed";
+    [_this get "_hintTitle", _failText, markerPos (_this get "_marker"), 300] call FUNC(hintNear);
+    [_this get "_taskId", [_failText, _this get "_hintTitle", ""]] call BIS_fnc_taskSetDescription;
     [-10, theBoss] call A3A_fnc_playerScoreAdd;
     [_this get "_taskId", "FAILED"] call BIS_fnc_taskSetState;
     _this set ["state", "s_cleanup"]; false;
